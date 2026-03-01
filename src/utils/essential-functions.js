@@ -16,7 +16,7 @@ import {
 } from './data-transmission-utils';
 import { hash256 } from './encryption-utils';
 import { setCloudMemory } from '../reducers/profileActionsReducer';
-import { command, fileTypes } from '../constants';
+import { command, fileTypes, defaultProxyPort } from '../constants';
 import { setScreenBehavior } from '../reducers/screenControllerReducer';
 import { setFavoritesList, setLocation } from '../reducers/fileReducer';
 import {
@@ -129,7 +129,7 @@ async function entryPointToProxy(ep) {
     if (proxy.replace('://', '').indexOf(':') == -1) {
         proxy = proxy + ':' + defaultProxyPort;
     }
-    
+
     console.log('Proxy set to: ' + proxy);
 
     store.dispatch(setProxy(proxy));
