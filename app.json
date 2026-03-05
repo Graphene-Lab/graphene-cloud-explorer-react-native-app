@@ -4,7 +4,7 @@
     "slug": "cloud-storage",
     "icon": "./assets/Cloud-service.png",
     "scheme": "com.cloudapp",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
