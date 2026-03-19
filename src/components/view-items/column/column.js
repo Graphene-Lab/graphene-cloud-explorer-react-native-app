@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Pressable } from 'react-native'
+import { View, Text, TouchableOpacity, Pressable, InteractionManager } from 'react-native'
 import { ColumnStyles } from '../styles'
 import DotsIcon from '../../../assets/icons/viewer/dotsvertical.svg';
 import StarIcon from '../../../assets/icons/viewer/star2.svg';
@@ -54,9 +54,9 @@ export const Column = ({ item, contentSetter }) => {
 
 
     const settingOnPress = (file) => {
-        bottomSheetController(2, name);
         dispatch(setSelectedFile({ ...file, screen: name, isFavorite: favorites?.includes(file.path) }))
         dispatch(setFound(null))
+        InteractionManager.runAfterInteractions(() => bottomSheetController(2, name))
     }
 
     const onLongPressHandler = (file) => {

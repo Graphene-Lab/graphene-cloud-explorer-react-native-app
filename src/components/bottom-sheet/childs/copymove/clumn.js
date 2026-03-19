@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Keyboard, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, Keyboard, Pressable, InteractionManager } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { useContextApi } from '../../../../context/ContextApi';
 import { setFound, setLocation, setSelectedFile } from '../../../../reducers/fileReducer';
@@ -33,7 +33,7 @@ export const Cloumn = ({ item, locationEditor, search, close }) => {
     const settingOnPress = (file) => {
         dispatch(setSelectedFile(file));
         Keyboard.dismiss();
-        bottomSheetController(2);
+        InteractionManager.runAfterInteractions(() => bottomSheetController(2));
     };
 
     const handlePress = () => {

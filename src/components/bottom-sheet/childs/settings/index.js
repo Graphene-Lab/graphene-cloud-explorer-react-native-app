@@ -1,4 +1,4 @@
-import { View } from "react-native"
+import { Text, View } from "react-native"
 import { OptionButton } from '../../..//option-button'
 import StarIcon from '../../../../assets/icons/bottomSheet/star.svg'
 import DownIcon from '../../../../assets/icons/bottomSheet/down.svg'
@@ -7,13 +7,14 @@ import CopyIcon from '../../../../assets/icons/bottomSheet/copy.svg'
 import MoveIcon from '../../../../assets/icons/bottomSheet/move.svg'
 import DeleteIcon from '../../../../assets/icons/bottomSheet/delete.svg'
 import RenameIcon from '../../../../assets/icons/bottomSheet/rename.svg'
-import { addToFavorite, openCopyMoveSheet, downloadFile, remove, removeFromFavorite, renameFile, shareFile } from "../../../../utils/settings-utils"
+import { addToFavorite, openCopyMoveSheet, remove, removeFromFavorite, renameFile, shareFile } from "../../../../utils/settings-utils"
 import { useDispatch, useSelector } from "react-redux"
 import { useContextApi } from "../../../../context/ContextApi"
 import { memo } from "react"
 import { downloadManager } from "../../../view-items/functions"
 import { fileExistsCheck } from "../../../../utils/local-files"
 import { openModal } from "../../../../reducers/modalReducer"
+import { styles } from "./styles"
 
 
 const Settings = () => {
@@ -23,6 +24,9 @@ const Settings = () => {
 
     const { bottomSheetController, closeBottomSheet } = useContextApi()
     const dispatch = useDispatch();
+    const fullFileName = selectedFile?.name || (selectedFile?.path ? selectedFile.path.split('/').reverse()[0] : '') || '';
+    const selectedItemLabel = selectedFile?.type === 'folder' ? 'Folder' : 'File';
+
     const downloadFile = async (file) => {
         const { uri, source } = await fileExistsCheck(file);
         if (uri || source) {
@@ -40,6 +44,12 @@ const Settings = () => {
 
     return (
         <View>
+            {!!fullFileName && (
+                <View style={styles.fileNameContainer}>
+                    <Text style={styles.fileNameLabel}>{selectedItemLabel}</Text>
+                    <Text style={styles.fileNameText}>{fullFileName}</Text>
+                </View>
+            )}
             {
                 favorites?.includes(selectedFile?.path) ?
                     <OptionButton text='Remove from favorites' func={removeFromFavorite} icon={<StarIcon />} />
