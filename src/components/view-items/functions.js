@@ -98,13 +98,21 @@ export const openFileNatively = async (uri, mime, source) => {
     return true;
 }
 
-export const titleShortener = (title, name) => {
-    const [lastName, folder, other] = title.split('/').reverse();
+const hideExtension = (fileName) => {
+    if (!fileName) return fileName;
+    const dotIndex = fileName.lastIndexOf('.');
+    if (dotIndex <= 0 || dotIndex === fileName.length - 1) return fileName;
+    return fileName.slice(0, dotIndex);
+}
 
-    if (name === "CloudScreen") return lastName;
-    else if (other) return `../${folder}/${lastName}`
-    else if (folder) return `${folder}/${lastName}`
-    return lastName
+export const titleShortener = (title, name, type) => {
+    const [lastName, folder, other] = title.split('/').reverse();
+    const normalizedLastName = type === 'folder' ? lastName : hideExtension(lastName);
+
+    if (name === "CloudScreen") return normalizedLastName;
+    else if (other) return `../${folder}/${normalizedLastName}`
+    else if (folder) return `${folder}/${normalizedLastName}`
+    return normalizedLastName
 }
 
 

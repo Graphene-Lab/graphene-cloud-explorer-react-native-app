@@ -148,7 +148,13 @@ export const Column = ({ item, contentSetter }) => {
                     )}
                 </View>
                 <View style={ColumnStyles.textArea}>
-                    <Text style={ColumnStyles.title} numberOfLines={1}>{titleShortener(item.path, name)}</Text>
+                    <Text
+                        style={ColumnStyles.title}
+                        numberOfLines={1}
+                        ellipsizeMode="middle"
+                    >
+                        {titleShortener(item.path, name, item.type)}
+                    </Text>
                     <Text style={ColumnStyles.description}>{item.description}</Text>
                 </View>
             </View>
