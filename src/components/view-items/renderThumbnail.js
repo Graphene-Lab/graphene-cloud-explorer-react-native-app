@@ -26,7 +26,8 @@ const thumbnails = {
         color="#415EB6"
     />,
     archive: <FontAwesome name="file-archive-o" size={20} color="#415EB6" />,
-    code: <FontAwesome name="code" size={20} color="#415EB6" />
+    code: <FontAwesome name="code" size={20} color="#415EB6" />,
+    image: <MaterialIcons name="image" size={20} color="#415EB6" />
 
 }
 
@@ -46,7 +47,13 @@ export const renderThumbnail = (item, border) => {
         height: '100%',
     };
 
-    if (item.local) {
+    const hasLocalPreview = item.local && item.source;
+    const hasRemotePreview = !item.local && item.source && item.allowRemotePreview;
+    if (!hasLocalPreview && !hasRemotePreview) {
+        return thumbnails.image;
+    }
+
+    if (hasLocalPreview) {
         return (
             <View style={imageFrameStyle}>
                 <Image

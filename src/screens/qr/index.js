@@ -1,9 +1,9 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Layout } from '../../layout';
 import { PasswordModal } from '../../components/modal/password';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import BarcodeMask from 'react-native-barcode-mask';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { openSettings } from 'react-native-permissions';
 import { openModal } from '../../reducers/modalReducer';
@@ -11,7 +11,9 @@ import { openModal } from '../../reducers/modalReducer';
 const QRScreen = ({ route }) => {
     const [hasPermission, setHasPermission] = useState(null);
     const [scanned, setScanned] = useState(false);
+    const [transitioning, setTransitioning] = useState(false);
     const [barcode, setBarcode] = useState(null);
+    const scanLockedRef = useRef(false);
     const { QrScreen } = useSelector(state => state.rerender)
     const dispatch = useDispatch();
 
@@ -36,15 +38,26 @@ const QRScreen = ({ route }) => {
     }
 
     useEffect(() => {
+        scanLockedRef.current = false;
+        setTransitioning(false);
         getBarCodeScannerPermissions();
     }, [QrScreen]);
 
     const handleBarCodeScanned = ({ data }) => {
-        setScanned(true);
-        setBarcode(data)
+        if (scanLockedRef.current) {
+            return;
+        }
+        scanLockedRef.current = true;
+        setBarcode(data);
+        setTransitioning(true);
+        setTimeout(() => {
+            setScanned(true);
+        }, 0);
     };
 
     const cancelBarcodeScanning = () => {
+        scanLockedRef.current = false;
+        setTransitioning(false);
         setScanned(false);
         setBarcode(null)
     }
@@ -62,21 +75,36 @@ const QRScreen = ({ route }) => {
         </Layout>;
     }
 
+    if (transitioning || scanned) {
+        return (
+            <View style={styles.authRoot}>
+                <StatusBar barStyle='dark-content' />
+                <SafeAreaView style={styles.authSafe}>
+                    <View style={styles.authStep}>
+                        {
+                            scanned ?
+                                <PasswordModal setScanned={setScanned} barcode={barcode} cancel={cancelBarcodeScanning} /> :
+                                <ActivityIndicator color="#415EB6" size='large' />
+                        }
+                    </View>
+                </SafeAreaView>
+            </View>
+        );
+    }
+
     return (
-
         <Layout name={route.name}>
-
             <BarCodeScanner
-                onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                onBarCodeScanned={handleBarCodeScanned}
                 style={StyleSheet.absoluteFillObject}
             />
             {
                 barcode ?
-                    <View style={{ backgroundColor: 'green', height: 30, borderRadius: 10, width: 150, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', marginTop: 10, }}>
-                        <Text style={{ color: '#fff' }}>Scanned</Text>
+                    <View style={styles.statusSuccess}>
+                        <Text style={styles.statusSuccessText}>Scanned</Text>
                     </View>
-                    : <View style={{ backgroundColor: 'gray', height: 30, borderRadius: 10, width: 150, alignSelf: 'center', alignItems: 'center', justifyContent: 'center', flexDirection: 'row', marginTop: 10, }}>
-                        <Text style={{ marginRight: 5 }}>Not Scanned</Text>
+                    : <View style={styles.statusIdle}>
+                        <Text style={styles.statusIdleText}>Not Scanned</Text>
                         <ActivityIndicator size={10} style={{ marginLeft: 5 }} color='#fff' />
                     </View>
 
@@ -92,13 +120,52 @@ const QRScreen = ({ route }) => {
                 outerMaskOpacity={0.1}
                 width={180} height={180}
             />
-            <View style={{ height: '100%', alignItems: 'center', justifyContent: 'center' }}>
-                {
-                    scanned && <PasswordModal setScanned={setScanned} barcode={barcode} cancel={cancelBarcodeScanning} />
-                }
-            </View>
         </Layout >
     )
 }
+
+const styles = StyleSheet.create({
+    authRoot: {
+        flex: 1,
+        backgroundColor: '#F5F7FB',
+    },
+    authSafe: {
+        flex: 1,
+    },
+    authStep: {
+        flex: 1,
+        paddingHorizontal: 20,
+        justifyContent: 'center',
+        backgroundColor: '#F5F7FB',
+    },
+    statusSuccess: {
+        backgroundColor: 'green',
+        height: 30,
+        borderRadius: 10,
+        width: 150,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginTop: 10,
+    },
+    statusSuccessText: {
+        color: '#fff',
+    },
+    statusIdle: {
+        backgroundColor: 'gray',
+        height: 30,
+        borderRadius: 10,
+        width: 150,
+        alignSelf: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        marginTop: 10,
+    },
+    statusIdleText: {
+        marginRight: 5,
+    },
+});
 
 export default QRScreen

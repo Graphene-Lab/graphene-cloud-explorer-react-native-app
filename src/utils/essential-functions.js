@@ -52,7 +52,9 @@ export async function generateKeyRSA() {
     );
     const privateKey = keyPair.privateKey;
     const publicKey = keyPair.publicKey;
-    await setUserPublicAndPrivetKeyMMKV(publicKey, privateKey);
+    const publicJwk = await window.crypto.subtle.exportKey('jwk', publicKey);
+    const privateJwk = await window.crypto.subtle.exportKey('jwk', privateKey);
+    await setUserPublicAndPrivetKeyMMKV(publicJwk, privateJwk);
     store.dispatch(setUserSecretDataToRedux({ publicKey, privateKey }));
     return exportCryptoKey(publicKey);
 }
@@ -96,8 +98,8 @@ export async function onQrCodeAcquires(qrCode) {
             let serverId = bufferToHex(hash.slice(0, 8));
             store.dispatch(setUserSecretDataToRedux({ serverId }));
             await setUserServerIdMMKV(serverId);
-            importRsaPublicKey(modulus, exponent).then((rsaPubKey) => {
-                setClient(rsaPubKey);
+            return importRsaPublicKey(modulus, exponent).then((rsaPubKey) => {
+                return setClient(rsaPubKey);
             });
         });
     } else if (type == 2) {
@@ -106,10 +108,11 @@ export async function onQrCodeAcquires(qrCode) {
         offset += 24;
         let serverId = bufferToHex(qr.slice(offset, offset + 8));
         store.dispatch(setUserSecretDataToRedux({ serverId }));
+        await setUserServerIdMMKV(serverId);
         offset += 8;
         let entryPoint = bufferToString(qr.slice(offset)); //proxy ;
         await entryPointToProxy(entryPoint);
-        executeRequest(command.GetEncryptedQR);
+        return executeRequest(command.GetEncryptedQR);
     } else {
         throw new Error('QR code format not supported!');
     }
@@ -159,10 +162,18 @@ export const parseDateTime = (dateTime) => {
     return date.toLocaleDateString();
 };
 
-const getPathByName = (name) => {
-    const location = store.getState().files.location;
-    if (location.length) return `${location}/${name}`;
-    else return name;
+const normalizeRelativePath = (value) => {
+    if (!value) return '';
+    return value.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
+};
+
+const buildFullPath = (name, loc) => {
+    const cleanName = normalizeRelativePath(name);
+    const cleanLoc = normalizeRelativePath(loc ?? store.getState().files.location);
+    if (!cleanLoc) return cleanName;
+    if (cleanName === cleanLoc || cleanName.startsWith(cleanLoc + '/')) return cleanName;
+    if (!cleanName) return cleanLoc;
+    return `${cleanLoc}/${cleanName}`;
 };
 
 export const lastNameGenerator = (name) => name?.split('/').reverse()[0];
@@ -177,6 +188,8 @@ export const parseFile = (fileContent, not, loc) => {
     const files = [];
     fileContent?.filter((e) => {
         const name = e.Name.replace('loudBoxNuget/Cloud0/', '');
+        const fullPath = buildFullPath(name, loc);
+        const location = loc ? normalizeRelativePath(loc) : locationGenerator(name);
         e.Name !== '..' &&
             files.push({
                 title: name,
@@ -185,8 +198,9 @@ export const parseFile = (fileContent, not, loc) => {
                 source: 'data:image/png;base64,' + e.Thumbnail,
                 Thumbnail: e.Thumbnail,
                 description: parseDateTime(e.Date),
-                path: not ? getPathByName(name) : name,
-                location: loc ?? locationGenerator(name),
+                rawDate: e.Date,
+                path: fullPath,
+                location,
                 Length: e.Length,
                 // favorite: store.getState().files.favorites?.includes(path),
             });
@@ -218,7 +232,7 @@ export const navigateToBack = async (routeName) => {
         const data = await getDir(targetPath);
         store.dispatch(setLocation(targetPath));
         blocker = data ? true : false;
-        return parseFile(data);
+        return parseFile(data, true, targetPath);
     } finally {
         store.dispatch(setScreenBehavior({ routeName, loader: false, blocker }));
     }

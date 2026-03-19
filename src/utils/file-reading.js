@@ -1,7 +1,8 @@
 import { enqueue, forceEnqueue } from "../reducers/refreshQueueReducer";
 import { store } from "../store";
 import { setFileStream } from "./data-transmission-utils";
-import { clearUploadNotification, displayUploadNotification } from "./notification-utils";
+import { clearUploadNotification, displayUploadNotification, errorMessageNotification } from "./notification-utils";
+import { finishUploadProgress } from "./files-trasnfer";
 import BackgroundService from 'react-native-background-actions';
 
 let currentScreenList = {
@@ -37,18 +38,34 @@ export const processStart = async () => {
     let forceRefresh = null;
     let enqueueList = ['CloudScreen', 'ProfileScreen', 'FavoriteScreen', 'MediaScreen'];
     if (object[index] !== undefined) {
-        displayUploadNotification(object[index].name, object[index].path);
-        let f = wm.get(object[index]);
+        const currentFile = object[index];
+        displayUploadNotification(currentFile.name, currentFile.path);
+        let f = wm.get(currentFile);
         f.push('for additional index')
         var i = 0;
-        for (const BINARY of f) {
-            await setFileStream(BINARY, object[index], i + 1, object[index].path);
-            i++
+        try {
+            for (const BINARY of f) {
+                await setFileStream(BINARY, currentFile, i + 1, currentFile.path);
+                i++
+            }
+        } catch (error) {
+            finishUploadProgress({ name: currentFile.name, size: 0, chunkNumber: i, parts: f.length });
+            await errorMessageNotification();
+            delete object[index];
+            wm.delete(currentFile);
+            index = index + 1;
+            if (object[index] !== undefined) {
+                processStart();
+                return
+            }
+            await BackgroundService.stop();
+            isStart = false;
+            return;
         }
         let cloudLocation = store.getState().files.location !== "" ? store.getState().files.location + '/' : store.getState().files.location;
         let current = store.getState().bottomSheetManager.current;
-        clearUploadNotification(object[index].name, object[index].path)
-        if (cloudLocation === object[index].path) {
+        clearUploadNotification(currentFile.name, currentFile.path)
+        if (cloudLocation === currentFile.path) {
             forceRefresh = "CloudScreen"
             delete enqueueList[0];
         }
@@ -61,7 +78,7 @@ export const processStart = async () => {
         store.dispatch(forceEnqueue(forceRefresh))
 
         delete object[index];
-        wm.delete(object[index]);
+        wm.delete(currentFile);
         index = index + 1;
         if (object[index] !== undefined) {
             processStart();

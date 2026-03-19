@@ -22,7 +22,7 @@ const modalTypes = {
 
 export const ModalBox = () => {
 
-    const { visible, type } = useSelector(state => state.modalController);
+    const { visible, type, overlayColor } = useSelector(state => state.modalController);
     const dispatch = useDispatch();
     const modalTypeFinder = (type) => {
         if (type === 'input') return styles.forInput
@@ -47,7 +47,7 @@ export const ModalBox = () => {
                 visible={visible}
             >
                 <View style={styles.safe}>
-                    <TouchableOpacity style={styles.container} activeOpacity={1} onPressOut={modalCloser} >
+                    <TouchableOpacity style={[styles.container, overlayColor ? { backgroundColor: overlayColor } : null]} activeOpacity={1} onPressOut={modalCloser} >
                         <TouchableWithoutFeedback>
                             <View style={modalTypeFinder(type)}>
                                 {modalTypes[type]}

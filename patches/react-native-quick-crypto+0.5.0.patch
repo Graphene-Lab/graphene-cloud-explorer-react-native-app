@@ -1,0 +1,18 @@
+diff --git a/node_modules/react-native-quick-crypto/android/build.gradle b/node_modules/react-native-quick-crypto/android/build.gradle
+index 0000000..1111111 100644
+--- a/node_modules/react-native-quick-crypto/android/build.gradle
++++ b/node_modules/react-native-quick-crypto/android/build.gradle
+@@ -435,12 +435,12 @@ task createNativeDepsDirectories {
+ task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
+   def transformedVersion = BOOST_VERSION.replace("_", ".")
+-  def srcUrl = "https://boostorg.jfrog.io/artifactory/main/release/${transformedVersion}/source/boost_${BOOST_VERSION}.tar.gz"
++  def srcUrl = "https://archives.boost.io/release/${transformedVersion}/source/boost_${BOOST_VERSION}.tar.gz"
+   if (REACT_NATIVE_VERSION < 69) {
+     srcUrl = "https://github.com/react-native-community/boost-for-react-native/releases/download/v${transformedVersion}-0/boost_${BOOST_VERSION}.tar.gz"
+   }
+   src(srcUrl)
+   onlyIfNewer(true)
+-  overwrite(false)
++  overwrite(true)
+   dest(boost_file)
+ }

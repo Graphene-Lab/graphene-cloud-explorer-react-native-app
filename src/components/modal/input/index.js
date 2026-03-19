@@ -9,12 +9,16 @@ import { styles } from '../info/styles'
 const InputModal = () => {
 
     const dispatch = useDispatch()
-    const { content, head, icon, callback, wait } = useSelector(state => state.modalController);
+    const { content, head, icon, callback, cancelCallback, wait, cancelButtonText } = useSelector(state => state.modalController);
     const [data, setData] = useState(content)
     const callbackHandler = () => {
         dispatch(setText(data))
         dispatch(setWait(true))
         callback()
+    }
+    const cancelHandler = () => {
+        dispatch(closeModal())
+        cancelCallback && cancelCallback()
     }
     return (
         <View style={styles.container}>
@@ -27,7 +31,7 @@ const InputModal = () => {
                 value={data}
             />
             <View style={styles.buttonGroup}>
-                <Button variant='outlined' text='Cancel' callback={() => dispatch(closeModal())} />
+                <Button variant='outlined' text={cancelButtonText ? cancelButtonText : 'Cancel'} callback={cancelHandler} />
                 <View style={styles.gap}></View>
                 <Button text='Ok' callback={callbackHandler} disabled={content == data || wait} wait={wait} />
             </View>

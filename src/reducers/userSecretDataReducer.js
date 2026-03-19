@@ -2,7 +2,10 @@ import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = {
     loginError: false,
-    wait: false
+    wait: false,
+    zeroKnowledgeMasterKeyB64: null,
+    zeroKnowledgeEnabled: false,
+    zeroKnowledgePrompted: false,
 }
 
 export const userSecretDataReducer = createSlice({
@@ -15,8 +18,8 @@ export const userSecretDataReducer = createSlice({
         setUserSecretDataToRedux: (state, action) => {
             state = Object.assign(state, { ...action.payload });
         },
-        cleanUserSecretsData: (state) => {
-            state = {}
+        cleanUserSecretsData: () => {
+            return { ...initialState };
         },
         setUserLoginError: (state, action) => {
             state.loginError = action.payload

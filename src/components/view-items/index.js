@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { lazy, useState, useCallback, memo } from 'react';
 import { setEmptySelectedFiles, setFound } from '../../reducers/fileReducer';
 import { FlashList } from "@shopify/flash-list";
+import { UploadProgress } from '../upload-progress';
 const ResultsView = lazy(() => import('../tag/result-view'));
 
 
@@ -28,6 +29,7 @@ const ViewItems = ({ content, setContent, name, reload }) => {
   return (
     <View style={styles.container}>
       <ViewItemHeader contentSetter={contentSetter} content={content?.length} />
+      {name === 'CloudScreen' && <UploadProgress />}
       {(filterStatus && name === 'HomeScreen') ? <ResultsView /> : <FlashList
         data={content}
         keyExtractor={(item, index) => item.path + index}

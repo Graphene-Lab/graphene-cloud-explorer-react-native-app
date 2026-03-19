@@ -3,7 +3,77 @@ import { store } from '../store';
 import { decryptXorAB, encryptXorAB } from './encryption-utils';
 import 'text-encoding';
 import { getUserSecretDataMMKV } from './mmkv';
+import { setUserSecretDataToRedux } from '../reducers/userSecretDataReducer';
 import { useErrorAlert } from '../hooks/useErrorAlert';
+
+const getSubtleCrypto = () =>
+    globalThis?.crypto?.subtle || globalThis?.window?.crypto?.subtle || null;
+const isCryptoKey = (key) =>
+    !!key && typeof key === 'object' && typeof key.type === 'string' && typeof key.algorithm === 'object';
+const coerceBytes = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return base64ToBuffer(value);
+    if (value instanceof ArrayBuffer) return value;
+    if (value?.buffer && typeof value.byteLength === 'number') {
+        const start = value.byteOffset || 0;
+        const end = start + value.byteLength;
+        return value.buffer.slice(start, end);
+    }
+    return null;
+};
+const looksLikeJwk = (value) =>
+    !!value && typeof value === 'object' && typeof value.kty === 'string';
+const waitForCryptoKey = async (timeoutMs = 5000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+        const current = store.getState().userSecret.deviceKey;
+        if (current?.IV && isCryptoKey(current.key)) {
+            return current;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    return null;
+};
+const ensureAesDeviceKey = async (deviceKey, storedKey) => {
+    if (deviceKey?.IV && isCryptoKey(deviceKey.key)) {
+        return deviceKey;
+    }
+    const rawKey = storedKey?.keyB64 || storedKey?.key;
+    const rawIv = storedKey?.ivB64 || storedKey?.IV;
+    const keyBytes = coerceBytes(rawKey);
+    const ivBytes = coerceBytes(rawIv);
+    if (keyBytes && ivBytes) {
+        const imported = await importSecretKey(keyBytes);
+        const hydrated = { key: imported, IV: ivBytes };
+        store.dispatch(setUserSecretDataToRedux({ deviceKey: hydrated }));
+        return hydrated;
+    }
+    const waited = await waitForCryptoKey(3000);
+    if (waited) {
+        return waited;
+    }
+    return null;
+};
+
+let hasLoggedCryptoEnv = false;
+const logCryptoEnvOnce = (context, encryptionType, deviceKey) => {
+    if (hasLoggedCryptoEnv) return;
+    hasLoggedCryptoEnv = true;
+    const subtle = getSubtleCrypto();
+    console.log('[crypto-env]', {
+        context,
+        encryptionType,
+        hasGlobalCrypto: !!globalThis?.crypto,
+        hasWindowCrypto: !!globalThis?.window?.crypto,
+        hasSubtle: !!subtle,
+        subtleEncrypt: typeof subtle?.encrypt,
+        subtleDecrypt: typeof subtle?.decrypt,
+        subtleImportKey: typeof subtle?.importKey,
+        hasDeviceKey: !!deviceKey,
+        hasIV: !!deviceKey?.IV,
+        hasKey: !!deviceKey?.key,
+    });
+};
 
 export function decodeBase64Url(input) {
     // Replace non-url compatible chars with base64 standard chars
@@ -191,7 +261,23 @@ export function encryptRsaOaep(publicKey, data) {
 }
 
 export function importSecretKey(rawKey) {
-    return crypto.subtle.importKey('raw', rawKey, 'aes-cbc', false, ['encrypt', 'decrypt']);
+    const subtle = getSubtleCrypto();
+    if (!subtle?.importKey) throw new Error('WebCrypto subtle is unavailable');
+    return subtle.importKey('raw', rawKey, 'aes-cbc', false, ['encrypt', 'decrypt']);
+}
+
+export function importRsaPrivateKeyJwk(jwk) {
+    const subtle = getSubtleCrypto();
+    if (!subtle?.importKey) throw new Error('WebCrypto subtle is unavailable');
+    if (!looksLikeJwk(jwk)) throw new Error('Invalid RSA private key JWK');
+    return subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['decrypt']);
+}
+
+export function importRsaPublicKeyJwk(jwk) {
+    const subtle = getSubtleCrypto();
+    if (!subtle?.importKey) throw new Error('WebCrypto subtle is unavailable');
+    if (!looksLikeJwk(jwk)) throw new Error('Invalid RSA public key JWK');
+    return subtle.importKey('jwk', jwk, { name: 'RSA-OAEP', hash: 'SHA-256' }, true, ['encrypt']);
 }
 
 export function decryptRsaOaep(ciphertext, privateKey) {
@@ -229,23 +315,58 @@ export function decryptRsaOaep(ciphertext, privateKey) {
     });
 }
 
-export async function encryptDataForTheDevice(data) {
+export async function encryptDataForTheDevice(data, commandId) {
     let deviceKey = store.getState().userSecret.deviceKey;
-    const { encryptionType } = await getUserSecretDataMMKV();
+    const { encryptionType, deviceKey: storedKey } = await getUserSecretDataMMKV();
+    logCryptoEnvOnce(`encryptDataForTheDevice:${commandId}`, encryptionType, deviceKey);
     // Data greater than about 12k gives an error in decryption. To send larger data it is recommended to break packets with encryptBigDataForTheDevice()
     if (encryptionType == 'xorAB') {
-        return encryptXorAB(base64ToBuffer(store.getState().userSecret.publicKeyB64), data);
+        const publicKeyB64 = store.getState().userSecret.publicKeyB64;
+        console.log('[xorAB] encrypt start', {
+            commandId,
+            hasPublicKey: !!publicKeyB64,
+            publicKeyLen: publicKeyB64?.length,
+            dataByteLength: data?.byteLength,
+            dataType: Object.prototype.toString.call(data),
+            encryptXorABType: typeof encryptXorAB,
+            base64ToBufferType: typeof base64ToBuffer,
+        });
+        if (!publicKeyB64) {
+            throw new Error('Missing publicKeyB64 for xorAB encryption');
+        }
+        try {
+            return encryptXorAB(base64ToBuffer(publicKeyB64), data);
+        } catch (error) {
+            console.log('[xorAB] encrypt failed', {
+                message: error?.message,
+                name: error?.name,
+                stack: error?.stack,
+            });
+            throw error;
+        }
     } else {
-        return crypto.subtle.encrypt({ name: 'aes-cbc', iv: deviceKey.IV }, deviceKey.key, data);
+        deviceKey = await ensureAesDeviceKey(deviceKey, storedKey);
+        if (!deviceKey || !isCryptoKey(deviceKey.key)) {
+            throw new Error('AES device key is missing or invalid');
+        }
+        const subtle = getSubtleCrypto();
+        if (!subtle?.encrypt) throw new Error('WebCrypto subtle is unavailable');
+        return subtle.encrypt({ name: 'aes-cbc', iv: deviceKey.IV }, deviceKey.key, data);
     }
 }
 
 export async function decryptDataFromTheDevice(data) {
     let deviceKey = store.getState().userSecret.deviceKey;
-    const { encryptionType } = await getUserSecretDataMMKV();
+    const { encryptionType, deviceKey: storedKey } = await getUserSecretDataMMKV();
 
     if (encryptionType == 'xorAB') {
         return decryptXorAB(base64ToBuffer(store.getState().userSecret.publicKeyB64), data);
     }
-    return crypto.subtle.decrypt({ name: 'aes-cbc', iv: deviceKey.IV }, deviceKey.key, data);
+    deviceKey = await ensureAesDeviceKey(deviceKey, storedKey);
+    if (!deviceKey || !isCryptoKey(deviceKey.key)) {
+        throw new Error('AES device key is missing or invalid');
+    }
+    const subtle = getSubtleCrypto();
+    if (!subtle?.decrypt) throw new Error('WebCrypto subtle is unavailable');
+    return subtle.decrypt({ name: 'aes-cbc', iv: deviceKey.IV }, deviceKey.key, data);
 }

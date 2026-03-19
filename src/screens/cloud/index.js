@@ -70,6 +70,7 @@ const CloudScreen = ({ route, navigation }) => {
             <ViewItems
                 content={cloud}
                 setContent={setContent}
+                name={route.name}
                 reload={reloader}
             />
             <FAB

@@ -40,11 +40,18 @@ export const downloadFile = async () => {
     store.dispatch(downloadSetQueue(editedFile.path));
     store.dispatch(downloadSetProgress({ path: editedFile.path, progress: 0 }));
     try {
-        const file = await getFile(editedFile.path, 1)
+        const timingStart = Date.now();
+        console.log('[DL] start', editedFile.path);
+        const file = await getFile(editedFile.path, 1, editedFile.rawDate)
+        console.log('[DL] getFile done', { ms: Date.now() - timingStart });
         const folder = await mkFolder(file);
-        const savedPath = await writeFileToLocal(file.data, editedFile.name, folder);
+        console.log('[DL] mkFolder done', { ms: Date.now() - timingStart });
+        const savedPath = await writeFileToLocal(file, editedFile.name, folder, editedFile);
+        console.log('[DL] writeFileToLocal done', { ms: Date.now() - timingStart, savedPath });
         registerDownloadedPath(editedFile.path, savedPath);
+        console.log('[DL] registerDownloadedPath done', { ms: Date.now() - timingStart });
         await addToMMKV(editedFile);
+        console.log('[DL] addToMMKV done', { ms: Date.now() - timingStart });
     } finally {
         store.dispatch(downloadClearProgress(editedFile.path));
         store.dispatch(downloadRemoveQueue(editedFile.path));
@@ -77,7 +84,7 @@ export const remove = async () => {
                 let current = store.getState().bottomSheetManager.current;
 
                 if (cloudLocation === file.path) {
-                    let parsed = parseFile(res);
+                    let parsed = parseFile(res, true, cloudLocation);
                     store.dispatch(setData(parsed));
                     delete enqueueList[0];
                 }

@@ -1,5 +1,5 @@
 import { View, Text, TouchableOpacity, Pressable } from 'react-native';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { renderThumbnail } from '../renderThumbnail'
@@ -20,9 +20,35 @@ export const Row = ({ item, contentSetter }) => {
     const { selectedFiles, favorites, found } = useSelector(state => state.files);
     const { downloadQueue, downloadProgress } = useSelector(state => state.newFileTransfer);
     const networkInformation = useSelector(state => state.network);
+    const { zeroKnowledgeEnabled } = useSelector(state => state.userSecret);
     const dispatch = useDispatch();
     const { name } = useRoute();
     const { navigate } = useNavigation();
+    const [previewUri, setPreviewUri] = useState(null);
+    const allowRemotePreview = !zeroKnowledgeEnabled;
+    const downloadProgressValue = downloadProgress[item.path];
+    const isDownloading = downloadQueue.includes(item.path);
+
+    useEffect(() => {
+        let active = true;
+        if (item.type !== 'image') {
+            setPreviewUri(null);
+            return () => { active = false; };
+        }
+        if (isDownloading) {
+            return () => { active = false; };
+        }
+        fileExistsCheck(item)
+            .then((res) => {
+                if (!active) return;
+                setPreviewUri(res?.uri || null);
+            })
+            .catch(() => {
+                if (!active) return;
+                setPreviewUri(null);
+            });
+        return () => { active = false; };
+    }, [item.path, item.Length, item.rawDate, item.name, isDownloading, downloadProgressValue]);
 
 
 
@@ -60,7 +86,7 @@ export const Row = ({ item, contentSetter }) => {
         }
 
         if (name !== 'FavoriteScreen') {
-            navigateToFolder(folder.title, 'CloudScreen')
+            navigateToFolder(folder.path || folder.title, 'CloudScreen')
                 .then(content => content && contentSetter(content))
                 .catch(() => null);
             return
@@ -105,7 +131,12 @@ export const Row = ({ item, contentSetter }) => {
             style={rowStyles.rowContainer}
         >
             <View style={[item.type === 'folder' ? { ...rowStyles.box, borderColor: "#00000043" } : rowStyles.box, item.name === found && { borderColor: '#1a4feb' }, selectedFiles.includes(item) && { borderColor: '#1a4feb' }]}>
-                {renderThumbnail(item, 15)}
+                {renderThumbnail(
+                    previewUri
+                        ? { ...item, local: true, source: previewUri }
+                        : { ...item, local: false, allowRemotePreview },
+                    15
+                )}
                 {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={rowStyles.overlay} />}
                 {checkIsFav(item.path)}
                 {downloadQueue.includes(item.path) && <DownloadIcon style={rowStyles.overlayDownload} />}

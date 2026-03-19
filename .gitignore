@@ -121,3 +121,4 @@ dist/
 android/gradle-s.properties
 run-android.ps1
 android/app/google-services.json
+/tmp

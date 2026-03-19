@@ -4,6 +4,17 @@ import { PermissionsAndroid, Platform } from 'react-native';
 
 let lists = {};
 
+const enqueueNotification = (id, task) => {
+    const entry = lists[id];
+    if (!entry || entry.disabled) return Promise.resolve(false);
+    entry.queue = (entry.queue || Promise.resolve())
+        .then(() => task())
+        .catch((err) => {
+            console.log('[notification] error', err);
+        });
+    return entry.queue;
+};
+
 export const ensureNotificationPermission = async () => {
     if (Platform.OS !== 'android' || Platform.Version < 33) return true;
 
@@ -16,7 +27,10 @@ export const ensureNotificationPermission = async () => {
 };
 
 export const displayUploadNotification = async (title, path) => {
-    if (!(await ensureNotificationPermission())) return;
+    if (!(await ensureNotificationPermission())) {
+        lists[id].disabled = true;
+        return;
+    }
     await notifee.requestPermission()
     const channelId = await notifee.createChannel({
         id: 'com.cloudStorage.upload',
@@ -77,7 +91,15 @@ export const errorMessageNotification = async () => {
 // ---------- new arc ---------
 
 export const downloadNotificationRegister = async ({ id, title, size, max }) => {
-    lists[id] = { id, size, max };
+    lists[id] = {
+        id,
+        size,
+        max,
+        queue: Promise.resolve(),
+        lastCurrent: 0,
+        completionQueued: false,
+        disabled: false,
+    };
     if (!(await ensureNotificationPermission())) return;
     await notifee.requestPermission()
     const channelId = await notifee.createChannel({
@@ -86,7 +108,7 @@ export const downloadNotificationRegister = async ({ id, title, size, max }) => 
         playSound: true,
         importance: AndroidImportance.HIGH,
     });
-    await notifee.displayNotification({
+    await enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
         body: `File downloading | ${size}`,
@@ -100,31 +122,37 @@ export const downloadNotificationRegister = async ({ id, title, size, max }) => 
                 importance: AndroidImportance.HIGH,
             }
         }
-    })
+    }));
 }
 
 export const notificationUpdate = async ({ id, current, title }) => {
-
-    await notifee.displayNotification({
+    const entry = lists[id];
+    if (!entry || entry.disabled || entry.completionQueued) return;
+    const safeCurrent = Math.max(entry.lastCurrent || 0, current || 0);
+    entry.lastCurrent = safeCurrent;
+    const percent = entry.max ? Math.floor((safeCurrent * 100) / entry.max) : 0;
+    await enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
-        body: `File downloading: ${Math.floor((current * 100) / lists[id].max)}%`,
+        body: `File downloading: ${percent}%`,
         android: {
             channelId: 'com.cloudStorage.download',
             smallIcon: 'ic_small_icon',
-            style: { type: AndroidStyle.BIGTEXT, text: `Size | ${lists[id].size}` },
+            style: { type: AndroidStyle.BIGTEXT, text: `Size | ${entry.size}` },
             progress: {
-                max: lists[id].max,
-                current,
+                max: entry.max,
+                current: safeCurrent,
                 indeterminate: false,
             }
         }
-    })
+    }));
 }
 
 export const cancelNotification = async ({ id, title }) => {
-    delete lists[id];
-    await notifee.displayNotification({
+    const entry = lists[id];
+    if (!entry) return;
+    entry.completionQueued = true;
+    const completion = enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
         body: "File downloaded successfully | 100%",
@@ -132,7 +160,19 @@ export const cancelNotification = async ({ id, title }) => {
             channelId: 'com.cloudStorage.download',
             smallIcon: 'ic_small_icon',
             importance: AndroidImportance.HIGH,
+            progress: {
+                max: 0,
+                current: 0,
+                indeterminate: false,
+            },
         }
-    })
-
+    }));
+    if (entry.queue) {
+        entry.queue.finally(() => {
+            delete lists[id];
+        });
+    } else {
+        delete lists[id];
+    }
+    return completion;
 }

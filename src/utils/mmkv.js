@@ -57,7 +57,7 @@ export const deleteRouterMMKV = (obj) => obj.type == 'folder' ? deleteFolder(obj
 
 export const dropMMKV = async () => {
     await MMKV.setBoolAsync("auth", false);
-    await MMKV.setMapAsync("userSecretData", { encryptionType: undefined });
+    await MMKV.setMapAsync("userSecretData", {});
     await MMKV.setArrayAsync("lasts", []);
 };
 
@@ -155,6 +155,11 @@ export const setUserSecretDataMMKV = async (clientId, publicKeyB64) => {
     let object = await MMKV.getMapAsync("userSecretData");
     let data = { ...object, clientId, publicKeyB64 };
     await MMKV.setMapAsync("userSecretData", data);
+}
+
+export const mergeUserSecretDataMMKV = async (patch) => {
+    let object = await MMKV.getMapAsync("userSecretData");
+    await MMKV.setMapAsync("userSecretData", { ...object, ...patch });
 }
 
 export const setUserServerIdMMKV = async (serverId) => {

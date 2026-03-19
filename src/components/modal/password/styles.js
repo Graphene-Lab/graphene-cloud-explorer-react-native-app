@@ -63,5 +63,19 @@ export const styles = StyleSheet.create({
     errorText: {
         fontSize: 18,
         textAlign: 'center',
-    }
+    },
+    loadingRoot: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+        paddingVertical: 20,
+    },
+    loadingText: {
+        marginTop: 16,
+        textAlign: 'center',
+        color: '#22215B',
+        fontSize: 16,
+        lineHeight: 22,
+    },
 })

@@ -11,7 +11,9 @@ const initialState = {
     cancelCallback: null,
     wait: false,
     buttonText: null,
-    pending: false
+    cancelButtonText: null,
+    pending: false,
+    overlayColor: null,
 }
 
 export const modalReducer = createSlice({
@@ -29,7 +31,9 @@ export const modalReducer = createSlice({
             state.cancelCallback = null;
             state.wait = false;
             state.buttonText = null;
+            state.cancelButtonText = null;
             state.pending = false;
+            state.overlayColor = null;
         },
         openModal: (state, action) => {
             state.type = action.payload.type;
@@ -38,11 +42,13 @@ export const modalReducer = createSlice({
             state.head = action.payload.head;
             state.icon = action.payload.icon;
             state.buttonText = action.payload.buttonText
+            state.cancelButtonText = action.payload.cancelButtonText;
             state.callback = action.payload.callback;
             state.cancelCallback = action.payload.cancelCallback;
             state.visible = true;
             state.wait = false;
             state.pending = action.payload.pending
+            state.overlayColor = action.payload.overlayColor || null;
 
         },
         setText: (state, action) => {

@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import QRIcon from '../../assets/icons/qr.svg';
 import { Button } from '../../components/button';
@@ -82,20 +82,6 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
             <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
               <Text style={styles.viewGuideText}>View Guide</Text>
             </TouchableOpacity> */}
-             <Button
-              text="Test Crash Reporting"
-              callback={() => {
-                console.log('User clicked pay button');
-                crashlytics().setAttributes({
-                  screen: 'SignInScreen',
-                  flow: 'testCrashButton',
-                });
-                crashlytics().recordError(new Error('Test Non-Fatal Error'));
-                crashlytics().log('User clicked pay button');
-                crashlytics().crash();
-                console.log('CRASH BUTTON PRESSED');
-              }}
-            />
           </View>
         </View>
       </View>
