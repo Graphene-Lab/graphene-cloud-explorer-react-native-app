@@ -147,9 +147,10 @@ export const Row = ({ item, contentSetter }) => {
                 )}
             </View>
             <View style={rowStyles.textSections}>
-                <View>
+                <View style={rowStyles.textContent}>
                     <Text
                         numberOfLines={1}
+                        ellipsizeMode="tail"
                         style={rowStyles.title}
                     >{titleShortener(item.path, name)}</Text>
                     <Text style={rowStyles.date}>{item.description}</Text>

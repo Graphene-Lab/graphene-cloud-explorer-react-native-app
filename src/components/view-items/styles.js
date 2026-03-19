@@ -86,12 +86,17 @@ export const rowStyles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        width: Dimensions.get('window').width / 3 - 20,
+    },
+    textContent: {
+        flex: 1,
+        minWidth: 0,
     },
     title: {
         color: '#22215B',
         fontSize: 14,
         fontWeight: '400',
-        maxWidth: 86,
+        flexShrink: 1,
     },
     date: {
         color: 'rgba(34, 33, 91, 0.5)',
@@ -126,6 +131,7 @@ export const rowStyles = StyleSheet.create({
     },
     setting: {
         padding: 5,
+        marginLeft: 4,
     }
 })
 
