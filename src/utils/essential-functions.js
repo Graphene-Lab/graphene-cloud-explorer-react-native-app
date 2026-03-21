@@ -186,7 +186,7 @@ export const locationGenerator = (full) => {
 
 export const parseFile = (fileContent, not, loc) => {
     const files = [];
-    fileContent?.filter((e) => {
+    fileContent?.forEach((e) => {
         const name = e.Name.replace('loudBoxNuget/Cloud0/', '');
         const fullPath = buildFullPath(name, loc);
         const location = loc ? normalizeRelativePath(loc) : locationGenerator(name);
@@ -256,11 +256,11 @@ export const getFavorites = async () => {
     store.dispatch(setScreenBehavior({ routeName: 'FavoriteScreen', loader: true, blocker: false }));
     let blocker = true;
     try {
-        const data = await getGroup('favorities');
+        const data = await getGroup('favorites');
         blocker = data ? true : false;
         const names = data?.map((items) => items.Name.replace('loudBoxNuget/Cloud0/', ''));
         store.dispatch(setFavoritesList(names));
-        return parseFile(data);
+        return parseFile(Array.isArray(data) ? data : [], undefined, '');
     } finally {
         store.dispatch(
             setScreenBehavior({ routeName: 'FavoriteScreen', loader: false, blocker })

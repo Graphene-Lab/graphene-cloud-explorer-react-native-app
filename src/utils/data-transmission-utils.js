@@ -1750,7 +1750,7 @@ function getNumberAtEnd(str) {
 }
 
 export const getFavoritesNames = async () => {
-  const data = await getGroup('favorities');
+  const data = await getGroup('favorites');
   const names = data?.map((items) => items.Name.replace('loudBoxNuget/Cloud0/', ''));
   store.dispatch(setFavoritesList(names));
   return data;
@@ -1781,13 +1781,21 @@ export const createDir = (path, files) => {
 };
 
 export function addToGroup(groupname, files, clientId) {
-  if (Array.isArray(files)) files = files.join('\t');
-  return executeRequest(command.AddToGroup, groupname + '\t' + files, clientId);
+  if (Array.isArray(files)) {
+    files = files.map((file) => encryptPathForTransport(file)).join('\t');
+  } else if (files) {
+    files = encryptPathForTransport(files);
+  }
+  return executeRequest(command.AddToGroup, groupname + '\t' + (files || ''), clientId);
 }
 
 export function removeFromGroup(groupname, files) {
-  if (Array.isArray(files)) files = files.join('\t');
-  return executeRequest(command.RemoveFromGroup, groupname + '\t' + files);
+  if (Array.isArray(files)) {
+    files = files.map((file) => encryptPathForTransport(file)).join('\t');
+  } else if (files) {
+    files = encryptPathForTransport(files);
+  }
+  return executeRequest(command.RemoveFromGroup, groupname + '\t' + (files || ''));
 }
 
 export function rename(path, files, target) {

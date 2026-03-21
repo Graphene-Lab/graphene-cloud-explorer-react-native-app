@@ -115,11 +115,11 @@ export const addToFavorite = () => {
     store.dispatch(setScreenBehavior({ routeName: 'FavoriteScreen', loader: true, blocker: false }))
     let path = store.getState()?.files.selectedFile.path
 
-    addToGroup("favorities", path)
+    addToGroup("favorites", path)
         .then(favorites => {
             const favoriteNames = favorites.map(items => items.Name.replace('loudBoxNuget/Cloud0/', ''));
             store.dispatch(setFavoritesList(favoriteNames));
-            const data = parseFile(favorites);
+            const data = parseFile(favorites, true, '');
             store.dispatch(setFavoritesContent(data));
         })
         .finally(() => {
@@ -131,11 +131,11 @@ export const removeFromFavorite = () => {
     store.dispatch(setScreenBehavior({ routeName: 'FavoriteScreen', loader: true, blocker: false }))
     const path = store.getState()?.files.selectedFile.path;
 
-    removeFromGroup("favorities", path)
+    removeFromGroup("favorites", path)
         .then((favorites) => {
             const favoriteNames = favorites.map(items => items.Name.replace('loudBoxNuget/Cloud0/', ''));
             store.dispatch(setFavoritesList(favoriteNames));
-            const data = parseFile(favorites);
+            const data = parseFile(favorites, true, '');
             store.dispatch(setFavoritesContent(data));
         })
         .finally(() => {
