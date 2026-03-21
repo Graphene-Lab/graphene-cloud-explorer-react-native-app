@@ -277,9 +277,14 @@ export const storageInfo = async () => {
 
 export function bytesToSize(bytes) {
     var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    if (bytes == -1) return 'Unlimited';
     if (bytes == 0) return '0 Byte';
-    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-    return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+    const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+    const value = bytes / Math.pow(1024, i);
+    const formatted = i === 0
+        ? Math.round(value).toString()
+        : value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    return `${formatted} ${sizes[i]}`;
 }
 
 export function timeConvert(time) {

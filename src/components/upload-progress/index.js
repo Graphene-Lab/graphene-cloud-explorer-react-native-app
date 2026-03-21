@@ -13,6 +13,10 @@ export const UploadProgress = () => {
     const { remaining, current } = Object.values(uploadQueue)[0] ?? dataCase
     const partSize = Object.values(uploadQueue).reduce((accumulator, object) => accumulator + object.current, 0);
     const allSize = Object.values(uploadQueue).reduce((accumulator, object) => accumulator + object.size, 0);
+    const remainingStorageText =
+        totalMemory == -1
+            ? 'Unlimited'
+            : `${bytesToSize(totalMemory - current)} of ${bytesToSize(totalMemory + usedMemory)}`;
 
     return (
         <TouchableOpacity style={[styles.container, { display: Object.keys(uploadQueue).length !== 0 ? 'flex' : 'none' }]} onPress={() => navigate('UpdateScreen')}>
@@ -24,7 +28,7 @@ export const UploadProgress = () => {
             <View style={styles.bottom}>
                 <View style={styles.left}>
                     <Text style={styles.remaining}>Remaining storage</Text>
-                    <Text style={styles.bottomText}>{bytesToSize(totalMemory - current)} of {bytesToSize(totalMemory + usedMemory)}</Text>
+                    <Text style={styles.bottomText}>{remainingStorageText}</Text>
                 </View>
                 <View style={styles.right}>
                     <Text style={styles.remaining}>Remaining time</Text>

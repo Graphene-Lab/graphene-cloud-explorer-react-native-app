@@ -165,6 +165,18 @@ export function bufferToInt(data, offset) {
     return new Int32Array(bytes)[0];
 }
 
+export function bufferToInt64(data, offset) {
+    offset = offset != undefined ? offset : 0;
+    let bytes = data.slice(offset, offset + 8);
+    let view = new DataView(bytes);
+    if (typeof view.getBigInt64 === 'function') {
+        return Number(view.getBigInt64(0, true));
+    }
+    let low = view.getUint32(0, true);
+    let high = view.getInt32(4, true);
+    return high * 4294967296 + low;
+}
+
 export function splitData(data) {
     let offset = 0;
     let datas = [];

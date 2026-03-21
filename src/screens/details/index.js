@@ -8,9 +8,34 @@ import { styles } from './styles';
 
 export const DetailsScreen = () => {
     const widthAndHeight = 150;
+    const MIN_USED_VISUAL_RATIO = 0.01;
     const { totalMemory, usedMemory } = useSelector(state => state.profile);
     const { zeroKnowledgeEnabled } = useSelector(state => state.userSecret);
     const { images, video, documents, music, other } = useSelector(state => state.fileOccupiedInfo);
+    const parsedUsedMemory = Number(usedMemory) || 0;
+    const parsedAvailableMemory = Number(totalMemory) || 0;
+    const isUnlimitedStorage = totalMemory == -1 || usedMemory == -1;
+    const finiteTotalCapacity = Math.max(parsedUsedMemory + parsedAvailableMemory, 0);
+    const categorySeries = [images, video, documents, music, other].map(
+        (value) => (parseInt(value, 10) || 0) + 1
+    );
+    const visualUsedStorage = isUnlimitedStorage
+        ? Math.max(parsedUsedMemory, 1)
+        : Math.max(
+            parsedUsedMemory,
+            Math.ceil(finiteTotalCapacity * MIN_USED_VISUAL_RATIO),
+            1
+        );
+    const storageSeries = isUnlimitedStorage
+        ? [visualUsedStorage]
+        : [visualUsedStorage, Math.max(finiteTotalCapacity, 1)];
+    const storageSliceColor = isUnlimitedStorage ? ['#E5E7EB'] : ['#E5E7EB', '#567DF4'];
+    const totalLabel =
+        totalMemory == -1 || usedMemory == -1
+            ? 'Unlimited'
+            : totalMemory
+                ? bytesToSize(totalMemory + usedMemory)
+                : '...';
 
 
     return (
@@ -20,8 +45,8 @@ export const DetailsScreen = () => {
             <PieChart
                 style={styles.chart}
                 widthAndHeight={widthAndHeight}
-                series={[parseInt(images) + 1, parseInt(video) + 1, parseInt(documents) + 1, parseInt(music) + 1, parseInt(other) + 1]}
-                sliceColor={sliceColor}
+                series={zeroKnowledgeEnabled ? storageSeries : categorySeries}
+                sliceColor={zeroKnowledgeEnabled ? storageSliceColor : sliceColor}
                 doughnut={true}
                 coverRadius={0.62}
                 coverFill={"#fff"}
@@ -34,13 +59,29 @@ export const DetailsScreen = () => {
                     </View>
                     <View>
                         <Text style={[styles.textHead, { textAlign: 'right' }]}>Total</Text>
-                        <Text style={styles.textMain}>{totalMemory ? bytesToSize(totalMemory + usedMemory) : '...'}</Text>
+                        <Text style={styles.textMain}>{totalLabel}</Text>
                     </View>
                 </View>
                 {zeroKnowledgeEnabled && (
-                    <Text style={styles.zeroKnowledgeInfo}>
-                        Zero-knowledge encryption is enabled, so the server does not have file-type metadata meaning usage by file type (images, documents, audio, etc.) cannot be shown.
-                    </Text>
+
+                    <>
+                        <View style={styles.storageLegend}>
+                            <View style={styles.storageLegendItem}>
+                                <View style={[styles.dot, { backgroundColor: '#E5E7EB' }]} />
+                                <Text style={styles.storageLegendLabel}>Available</Text>
+                            </View>
+                            {!isUnlimitedStorage && (
+                                <View style={styles.storageLegendItem}>
+                                    <View style={[styles.dot, { backgroundColor: '#567DF4' }]} />
+                                    <Text style={styles.storageLegendLabel}>Total</Text>
+                                </View>
+                            )}
+                        </View>
+                        <Text style={styles.zeroKnowledgeInfo}>
+                            Zero-knowledge encryption is enabled, so the server does not have file-type metadata meaning usage by file type (images, documents, audio, etc.) cannot be shown.
+                        </Text>
+
+                    </>
                 )}
                 {!zeroKnowledgeEnabled && (
                     <View style={styles.progressView}>
@@ -105,4 +146,3 @@ export const DetailsScreen = () => {
         </View>
     )
 }
-

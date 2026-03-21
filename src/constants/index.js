@@ -24,6 +24,8 @@ export const command = {
     GetStorageInfo: 18,
     GetOccupiedSpace: 19,
     GetEncryptedQR: 20,
+    GetFreeSpace: 21,
+    GetUsedSpace: 22,
 };
 
 export const fileTypes = {

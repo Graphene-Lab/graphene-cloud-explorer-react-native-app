@@ -3,6 +3,7 @@ import {
   bufferToBase64,
   bufferToHex,
   bufferToInt,
+  bufferToInt64,
   bufferToString,
   decryptDataFromTheDevice,
   decryptRsaOaep,
@@ -589,9 +590,14 @@ const makeUtilMarker = (flow) => `UTIL_FLOW_${flow}_${Date.now()}`;
 
 function bytesToSize(bytes) {
   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+  if (bytes == -1) return 'Unlimited';
   if (bytes == 0) return '0 Byte';
-  var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-  return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
+  const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  const value = bytes / Math.pow(1024, i);
+  const formatted = i === 0
+    ? Math.round(value).toString()
+    : value.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  return `${formatted} ${sizes[i]}`;
 }
 
 export async function setClient(rsaPubKey) {
@@ -1498,6 +1504,12 @@ export const onCommandResponse = {
     let usedSpace = bufferToString(params[1]);
     return { usedMemory: usedSpace, totalMemory: freeSpace };
   },
+  GetFreeSpace: function (params) {
+    return bufferToInt64(params[0]);
+  },
+  GetUsedSpace: function (params) {
+    return bufferToInt64(params[0]);
+  },
   GetOccupiedSpace: function (params) {
     let path = bufferToString(params[0]);
     if (path == '') {
@@ -1728,8 +1740,12 @@ export function search(path, wildcards, page, elementForPage) {
   }
 }
 
-export function GetStorageInfo() {
-  return executeRequest(command.GetStorageInfo);
+export async function GetStorageInfo() {
+  const [freeSpace, usedSpace] = await Promise.all([
+    executeRequest(command.GetFreeSpace),
+    executeRequest(command.GetUsedSpace),
+  ]);
+  return { usedMemory: usedSpace, totalMemory: freeSpace };
 }
 
 export function getGroup(groupName) {

@@ -321,7 +321,8 @@ export const onlyPick = async (closeBottomSheet) => {
             allowMultiSelection: false
         })
 
-        if (pickedFile.size > store.getState().profile.totalMemory) {
+        const availableStorage = store.getState().profile.totalMemory;
+        if (availableStorage != -1 && pickedFile.size > availableStorage) {
             return store.dispatch(openModal({
                 content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
                 type: 'info',
@@ -379,7 +380,8 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
             }))
         }
 
-        if (sumOfFileSize > store.getState().profile.totalMemory) {
+        const availableStorage = store.getState().profile.totalMemory;
+        if (availableStorage != -1 && sumOfFileSize > availableStorage) {
             return store.dispatch(openModal({
                 content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
                 type: 'info',
@@ -595,7 +597,7 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
 
 
 
-    if (allSize > storageSize) {
+    if (storageSize != -1 && allSize > storageSize) {
         return store.dispatch(openModal({
             content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
             type: 'info',

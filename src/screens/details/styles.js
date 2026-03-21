@@ -39,6 +39,23 @@ export const styles = StyleSheet.create({
         fontSize: 13,
         lineHeight: 18,
     },
+    storageLegend: {
+        marginTop: 12,
+        paddingHorizontal: 24,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    storageLegendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 16,
+    },
+    storageLegendLabel: {
+        marginLeft: 8,
+        color: '#374151',
+        fontSize: 13,
+        fontWeight: '500',
+    },
     textBox: {
         marginLeft: 10,
     },
