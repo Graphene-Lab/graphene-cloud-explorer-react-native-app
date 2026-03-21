@@ -9,6 +9,7 @@ import { styles } from './styles';
 export const DetailsScreen = () => {
     const widthAndHeight = 150;
     const { totalMemory, usedMemory } = useSelector(state => state.profile);
+    const { zeroKnowledgeEnabled } = useSelector(state => state.userSecret);
     const { images, video, documents, music, other } = useSelector(state => state.fileOccupiedInfo);
 
 
@@ -36,63 +37,70 @@ export const DetailsScreen = () => {
                         <Text style={styles.textMain}>{totalMemory ? bytesToSize(totalMemory + usedMemory) : '...'}</Text>
                     </View>
                 </View>
-                <View style={styles.progressView}>
-                    <View style={styles.progressContiner}>
-                        <View style={styles.forDot}>
-                            <View style={[styles.dot, { backgroundColor: "#FFBB34" }]} />
-                            <View style={styles.textBox}>
-                                <Text style={styles.porgressText}>Images</Text>
-                                <Text style={styles.content}>{bytesToSize(images)}</Text>
-                            </View>
+                {zeroKnowledgeEnabled && (
+                    <Text style={styles.zeroKnowledgeInfo}>
+                        Zero-knowledge encryption is enabled, so the server does not have file-type metadata meaning usage by file type (images, documents, audio, etc.) cannot be shown.
+                    </Text>
+                )}
+                {!zeroKnowledgeEnabled && (
+                    <View style={styles.progressView}>
+                        <View style={styles.progressContiner}>
+                            <View style={styles.forDot}>
+                                <View style={[styles.dot, { backgroundColor: "#FFBB34" }]} />
+                                <View style={styles.textBox}>
+                                    <Text style={styles.porgressText}>Images</Text>
+                                    <Text style={styles.content}>{bytesToSize(images)}</Text>
+                                </View>
 
-                        </View>
-                        <Progress percent={((images / usedMemory) * 100)} color={'#FFBB34'} />
-                    </View>
-                    <View style={styles.progressContiner}>
-                        <View style={styles.forDot}>
-                            <View style={[styles.dot, { backgroundColor: "#39C0B8" }]} />
-                            <View style={styles.textBox}>
-                                <Text style={styles.porgressText}>Video</Text>
-                                <Text style={styles.content}>{bytesToSize(video)}</Text>
                             </View>
-
+                            <Progress percent={((images / usedMemory) * 100)} color={'#FFBB34'} />
                         </View>
-                        <Progress percent={((video / usedMemory) * 100)} color={'#39C0B8'} />
-                    </View>
-                    <View style={styles.progressContiner}>
-                        <View style={styles.forDot}>
-                            <View style={[styles.dot, { backgroundColor: "#567DF4" }]} />
-                            <View style={styles.textBox}>
-                                <Text style={styles.porgressText}>Documents</Text>
-                                <Text style={styles.content}>{bytesToSize(documents)}</Text>
+                        <View style={styles.progressContiner}>
+                            <View style={styles.forDot}>
+                                <View style={[styles.dot, { backgroundColor: "#39C0B8" }]} />
+                                <View style={styles.textBox}>
+                                    <Text style={styles.porgressText}>Video</Text>
+                                    <Text style={styles.content}>{bytesToSize(video)}</Text>
+                                </View>
+
                             </View>
-
+                            <Progress percent={((video / usedMemory) * 100)} color={'#39C0B8'} />
                         </View>
-                        <Progress percent={((documents / usedMemory) * 100)} color={'#567DF4'} />
-                    </View>
-                    <View style={styles.progressContiner}>
-                        <View style={styles.forDot}>
-                            <View style={[styles.dot, { backgroundColor: "#FF842A" }]} />
-                            <View style={styles.textBox}>
-                                <Text style={styles.porgressText}>Music</Text>
-                                <Text style={styles.content}>{bytesToSize(music)}</Text>
+                        <View style={styles.progressContiner}>
+                            <View style={styles.forDot}>
+                                <View style={[styles.dot, { backgroundColor: "#567DF4" }]} />
+                                <View style={styles.textBox}>
+                                    <Text style={styles.porgressText}>Documents</Text>
+                                    <Text style={styles.content}>{bytesToSize(documents)}</Text>
+                                </View>
+
                             </View>
-
+                            <Progress percent={((documents / usedMemory) * 100)} color={'#567DF4'} />
                         </View>
-                        <Progress percent={((music / usedMemory) * 100)} color={'#FF842A'} />
-                    </View>
-                    <View style={styles.progressContiner}>
-                        <View style={styles.forDot}>
-                            <View style={[styles.dot, { backgroundColor: "#6C56F4" }]} />
-                            <View style={styles.textBox}>
-                                <Text style={styles.porgressText}>Other</Text>
-                                <Text style={styles.content}>{bytesToSize(other)}</Text>
+                        <View style={styles.progressContiner}>
+                            <View style={styles.forDot}>
+                                <View style={[styles.dot, { backgroundColor: "#FF842A" }]} />
+                                <View style={styles.textBox}>
+                                    <Text style={styles.porgressText}>Music</Text>
+                                    <Text style={styles.content}>{bytesToSize(music)}</Text>
+                                </View>
+
                             </View>
-
+                            <Progress percent={((music / usedMemory) * 100)} color={'#FF842A'} />
                         </View>
-                        <Progress percent={((other / usedMemory) * 100)} color={'#6C56F4'} />
+                        <View style={styles.progressContiner}>
+                            <View style={styles.forDot}>
+                                <View style={[styles.dot, { backgroundColor: "#6C56F4" }]} />
+                                <View style={styles.textBox}>
+                                    <Text style={styles.porgressText}>Other</Text>
+                                    <Text style={styles.content}>{bytesToSize(other)}</Text>
+                                </View>
+
+                            </View>
+                            <Progress percent={((other / usedMemory) * 100)} color={'#6C56F4'} />
+                        </View>
                     </View>
-                </View>
+                )}
             </View>
         </View>
     )

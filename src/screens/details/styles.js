@@ -32,6 +32,13 @@ export const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '600',
     },
+    zeroKnowledgeInfo: {
+        marginTop: 16,
+        paddingHorizontal: 24,
+        color: '#6B7280',
+        fontSize: 13,
+        lineHeight: 18,
+    },
     textBox: {
         marginLeft: 10,
     },

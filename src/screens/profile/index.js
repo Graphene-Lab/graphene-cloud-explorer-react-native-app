@@ -13,18 +13,22 @@ import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 const ProfileScreen = ({ route, navigation }) => {
     const { connection } = useSelector(state => state.network);
     const { screensQueue } = useSelector(state => state.refreshReducer);
+    const { zeroKnowledgeEnabled } = useSelector(state => state.userSecret);
     const dispatch = useDispatch();
 
     const getAll = () => {
         dispatch(setScreenBehavior({ routeName: 'ProfileScreen', loader: true, blocker: false }));
-        Promise.all([
-            storageInfo(), 
-            GetOccupiedSpace("", spacesCommands.document), 
-            GetOccupiedSpace("", spacesCommands.image), 
-            GetOccupiedSpace("", spacesCommands.video), 
-            GetOccupiedSpace("", spacesCommands.music), 
-            GetOccupiedSpace("", spacesCommands.other)
-        ]).then(() => {
+        const requests = [storageInfo()];
+        if (!zeroKnowledgeEnabled) {
+            requests.push(
+                GetOccupiedSpace("", spacesCommands.document),
+                GetOccupiedSpace("", spacesCommands.image),
+                GetOccupiedSpace("", spacesCommands.video),
+                GetOccupiedSpace("", spacesCommands.music),
+                GetOccupiedSpace("", spacesCommands.other)
+            );
+        }
+        Promise.all(requests).finally(() => {
             dispatch(setScreenBehavior({ routeName: 'ProfileScreen', loader: false, blocker: false }));
         });
     };
@@ -37,7 +41,7 @@ const ProfileScreen = ({ route, navigation }) => {
             }
         });
         return unsubscribe;
-    }, [screensQueue, navigation]);
+    }, [screensQueue, navigation, connection, route.name, zeroKnowledgeEnabled]);
 
     return (
         <Layout name={route.name}>
