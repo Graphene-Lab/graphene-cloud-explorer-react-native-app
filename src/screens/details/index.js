@@ -68,12 +68,12 @@ export const DetailsScreen = () => {
                         <View style={styles.storageLegend}>
                             <View style={styles.storageLegendItem}>
                                 <View style={[styles.dot, { backgroundColor: '#E5E7EB' }]} />
-                                <Text style={styles.storageLegendLabel}>Available</Text>
+                                <Text style={styles.storageLegendLabel}>Used</Text>
                             </View>
                             {!isUnlimitedStorage && (
                                 <View style={styles.storageLegendItem}>
                                     <View style={[styles.dot, { backgroundColor: '#567DF4' }]} />
-                                    <Text style={styles.storageLegendLabel}>Total</Text>
+                                    <Text style={styles.storageLegendLabel}>Available</Text>
                                 </View>
                             )}
                         </View>
