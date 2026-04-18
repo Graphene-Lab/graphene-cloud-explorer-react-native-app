@@ -14,7 +14,7 @@ import Photos
 
 class ShareViewController: SLComposeServiceViewController {
  // TODO: IMPORTANT: This should be your host app bundle identifier
- let hostAppBundleIdentifier = "com.khayym.cloudstorage"
+ let hostAppBundleIdentifier = "com.graphenelab.cloudexplorer"
  let shareProtocol = "uupcloud" //share url protocol (must be unique to your app, suggest using your apple bundle id, ie: `hostAppBundleIdentifier`)
  let sharedKey = "ShareKey"
  var sharedMedia: [SharedMediaFile] = []

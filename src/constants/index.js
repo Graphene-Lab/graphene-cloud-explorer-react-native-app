@@ -64,11 +64,11 @@ export const faqs = [
         text: 'Our platform has many competitive advantages. We provide a user-friendly interface to explore and manage your files.'
     },
     {
-        header: 'What is Cloud Services?',
+        header: 'What is Graphene Cloud Explorer?',
         text: 'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde id eligendi porro excepturi ipsa debitis cum facilis possimus quos necessitatibus placeat dolore nostrum esse aliquid sunt corrupti voluptates autem maiores voluptatum culpa hic neque, qui molestiae? A saepe blanditiis quasi accusantium porro earum in magnam, tenetur, itaque laudantium deserunt harum!'
     },
     {
-        header: 'How to use Cloud Services?',
+        header: 'How to use Graphene Cloud Explorer?',
         text: 'Your physical wallet probably contains your money, a form of ID, and maybe pictures of your loved ones.'
     },
     {
@@ -90,7 +90,7 @@ export const spacesCommands = {
 
 export const ONBOARDING_DATA = [
     {
-        title: 'Turn on Cloud Services',
+        title: 'Turn on Graphene Cloud Explorer',
         svg: 1,
         description:
             'To turn your Cloud-Services device, plug on end of a Type-C Cable into your Cloud-Services device, and the other end plug into the power adapter into a wall outlet.',
@@ -114,3 +114,4 @@ export const ONBOARDING_DATA = [
         svg: 4,
     },
 ];
+

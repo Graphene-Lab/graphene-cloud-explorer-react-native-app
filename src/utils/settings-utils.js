@@ -272,7 +272,7 @@ export const shareFile = async () => {
         try {
             await Share.open({
                 url: source,
-                title: `Shareing ${editedFile.name} from Cloud Services`
+                title: `Shareing ${editedFile.name} from Graphene Cloud Explorer`
             });
         }
         catch {
@@ -324,9 +324,9 @@ export const onlyPick = async (closeBottomSheet) => {
         const availableStorage = store.getState().profile.totalMemory;
         if (availableStorage != -1 && pickedFile.size > availableStorage) {
             return store.dispatch(openModal({
-                content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
+                content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
                 type: 'info',
-                head: "Cloud Services is full",
+                head: "Graphene Cloud Explorer is full",
                 icon: 'ex',
             }))
         }
@@ -383,9 +383,9 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
         const availableStorage = store.getState().profile.totalMemory;
         if (availableStorage != -1 && sumOfFileSize > availableStorage) {
             return store.dispatch(openModal({
-                content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
+                content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
                 type: 'info',
-                head: "Cloud Services is full",
+                head: "Graphene Cloud Explorer is full",
                 icon: 'ex',
             }))
         }
@@ -599,9 +599,9 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
 
     if (storageSize != -1 && allSize > storageSize) {
         return store.dispatch(openModal({
-            content: 'Cloud Services memory is already full. Delete unnecessary data to upload a new file.',
+            content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
             type: 'info',
-            head: "Cloud Services is full",
+            head: "Graphene Cloud Explorer is full",
             icon: 'ex',
         }))
     }
@@ -719,6 +719,7 @@ const readFileStream = async (args) => {
     }
 
 }
+
 
 
 

@@ -19,7 +19,7 @@ const cons = {
 
     },
     'CloudScreen': {
-        title: 'Cloud Services',
+        title: 'Graphene Cloud Explorer',
         display: 'flex',
         leftItem: <MoreIcon />,
         leftItemPress: (nav) => nav.bottomSheetController(0)
@@ -127,4 +127,5 @@ export const ScreenHeader = ({ name }) => {
         </View >
     )
 }
+
 

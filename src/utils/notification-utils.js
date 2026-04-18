@@ -39,7 +39,7 @@ export const displayUploadNotification = async (title, path) => {
     });
     await notifee.displayNotification({
         title: title,
-        body: `File uploading to ${path !== "" ? path : 'Cloud Services'}`,
+        body: `File uploading to ${path !== "" ? path : 'Graphene Cloud Explorer'}`,
         android: {
             channelId,
             smallIcon: 'ic_small_icon',
@@ -53,7 +53,7 @@ export const displayUploadNotification = async (title, path) => {
 export const clearUploadNotification = async (title, path) => {
     await notifee.displayNotification({
         title: title,
-        body: `File uploaded successfully to ${path !== "" ? path : 'Cloud Services'}`,
+        body: `File uploaded successfully to ${path !== "" ? path : 'Graphene Cloud Explorer'}`,
         android: {
             channelId: 'com.cloudStorage.upload',
             smallIcon: 'ic_small_icon',
@@ -176,3 +176,4 @@ export const cancelNotification = async ({ id, title }) => {
     }
     return completion;
 }
+

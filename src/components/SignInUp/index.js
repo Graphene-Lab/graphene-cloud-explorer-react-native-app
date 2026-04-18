@@ -80,7 +80,7 @@ export default function SignInUp () {
           Welcome to Uup Cloud
         </CustomText>
         <CustomText custom={styles.subtitle}>
-          Sign in/up to continue using Cloud Services
+          Sign in/up to continue using Graphene Cloud Explorer
         </CustomText>
       </View>
 
@@ -95,7 +95,7 @@ export default function SignInUp () {
       </View>
 
       <View style={styles.footer}>
-        <CustomText color="#000">New to Cloud Services?</CustomText>
+        <CustomText color="#000">New to Graphene Cloud Explorer?</CustomText>
         <Text style={styles.guideText}>View Guide</Text>
       </View>
     </View>
@@ -164,3 +164,4 @@ const styles = StyleSheet.create({
     fontWeight: '500'
   }
 });
+

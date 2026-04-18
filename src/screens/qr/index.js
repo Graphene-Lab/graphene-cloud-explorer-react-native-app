@@ -30,7 +30,7 @@ const QRScreen = ({ route }) => {
         dispatch(openModal({
             content: 'This app uses the Camera to scan QR code. Please allow access to Camera from Settings',
             type: 'info',
-            head: '"Cloud Services" would like to access Camera ',
+            head: '"Graphene Cloud Explorer" would like to access Camera ',
             icon: 'ex',
             buttonText: 'Open settings',
             callback: () => openSettings()
@@ -169,3 +169,4 @@ const styles = StyleSheet.create({
 });
 
 export default QRScreen
+

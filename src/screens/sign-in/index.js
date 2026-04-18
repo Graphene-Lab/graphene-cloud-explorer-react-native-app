@@ -61,7 +61,7 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
             Welcome!
           </CustomText>
           <CustomText custom={{ marginTop: 20 }}>
-            To connect your app to the Cloud Services device, scan the QR code that you can find on
+            To connect your app to the Graphene Cloud Explorer device, scan the QR code that you can find on
             the instruction paper in the box. Then enter a 6-digit verification code to log in to
             your account.
           </CustomText>
@@ -78,7 +78,7 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
             </TouchableOpacity> */}
           </View>
           <View style={styles.buttonView}>
-            {/* <CustomText color="#000">New to Cloud Services?</CustomText>
+            {/* <CustomText color="#000">New to Graphene Cloud Explorer?</CustomText>
             <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
               <Text style={styles.viewGuideText}>View Guide</Text>
             </TouchableOpacity> */}
@@ -88,3 +88,4 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
     </Layout>
   );
 };
+

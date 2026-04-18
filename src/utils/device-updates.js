@@ -22,7 +22,7 @@ export const checkAvailableDeviceUpdate = async (qr) => {
                 head: 'Update Available',
                 icon: 'check',
                 pending: false,
-                content: 'There is a new update for Cloud Services, please update the system'
+                content: 'There is a new update for Graphene Cloud Explorer, please update the system'
             }))
         }
         if (res.data == 'APPROVED' || res.data == 'UPDATING') {
@@ -33,7 +33,7 @@ export const checkAvailableDeviceUpdate = async (qr) => {
                 head: 'Update Available',
                 icon: 'check',
                 pending: true,
-                content: 'There is a new update for Cloud Services, please update the system'
+                content: 'There is a new update for Graphene Cloud Explorer, please update the system'
             }))
         }
 
@@ -97,4 +97,5 @@ export const updateListener = async (data) => {
         }, 3000)
     }
 }
+
 

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Cloud Services",
+    "name": "Graphene Explorer",
     "slug": "cloud-storage",
     "icon": "./assets/Cloud-service.png",
     "scheme": "com.cloudapp",
@@ -19,7 +19,7 @@
       "@notifee/react-native"
     ],
     "android": {
-      "package": "com.khayym.cloudstorage",
+      "package": "com.graphenelab.cloudexplorer",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -28,7 +28,7 @@
         {
           "action": "VIEW",
           "data": {
-            "scheme": "com.cloudapp",
+            "scheme": "com.graphenelab.cloudexplorer",
             "host": "oauth2redirect"
           },
           "category": [
@@ -39,7 +39,7 @@
       ]
     },
     "ios": {
-      "bundleIdentifier": "com.khayym.cloudstorage",
+      "bundleIdentifier": "com.graphenelab.cloudexplorer",
       "supportsTablet": false,
       "infoPlist": {
         "UIBackgroundModes": [
