@@ -19,3 +19,8 @@ buck-out/
 
 # Bundle artifacts
 *.jsbundle
+
+# Signing secrets — keep out of version control
+# Use ~/.gradle/gradle.properties for local signing config instead
+gradle-s.properties
+keystore.properties
