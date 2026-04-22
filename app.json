@@ -2,13 +2,13 @@
   "expo": {
     "name": "Graphene Explorer",
     "slug": "cloud-storage",
-    "icon": "./assets/Cloud-service.png",
+    "icon": "./assets/GExplorerLogo.jpg",
     "scheme": "com.cloudapp",
     "version": "1.0.8",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/GExplorerLogo.jpg",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -21,7 +21,7 @@
     "android": {
       "package": "com.graphenelab.cloudexplorer",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/GExplorerLogo.jpg",
         "backgroundColor": "#FFFFFF"
       },
       "intentFilters": [
