@@ -120,5 +120,7 @@ dist/
 # Secrets file for release keys
 android/gradle-s.properties
 run-android.ps1
+splash-s
 android/app/google-services.json
 /tmp
+scripts/generate-android-splash.ps1
