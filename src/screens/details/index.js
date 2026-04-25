@@ -17,7 +17,10 @@ export const DetailsScreen = () => {
     const isUnlimitedStorage = totalMemory == -1 || usedMemory == -1;
     const finiteTotalCapacity = Math.max(parsedUsedMemory + parsedAvailableMemory, 0);
     const categorySeries = [images, video, documents, music, other].map(
-        (value) => (parseInt(value, 10) || 0) + 1
+        (value, index) => ({
+            value: (parseInt(value, 10) || 0) + 1,
+            color: sliceColor[index] || '#567DF4'
+        })
     );
     const visualUsedStorage = isUnlimitedStorage
         ? Math.max(parsedUsedMemory, 1)
@@ -27,9 +30,11 @@ export const DetailsScreen = () => {
             1
         );
     const storageSeries = isUnlimitedStorage
-        ? [visualUsedStorage]
-        : [visualUsedStorage, Math.max(finiteTotalCapacity, 1)];
-    const storageSliceColor = isUnlimitedStorage ? ['#E5E7EB'] : ['#E5E7EB', '#567DF4'];
+        ? [{ value: visualUsedStorage, color: '#E5E7EB' }]
+        : [
+            { value: visualUsedStorage, color: '#E5E7EB' },
+            { value: Math.max(finiteTotalCapacity, 1), color: '#567DF4' }
+        ];
     const totalLabel =
         totalMemory == -1 || usedMemory == -1
             ? 'Unlimited'
@@ -46,7 +51,6 @@ export const DetailsScreen = () => {
                 style={styles.chart}
                 widthAndHeight={widthAndHeight}
                 series={zeroKnowledgeEnabled ? storageSeries : categorySeries}
-                sliceColor={zeroKnowledgeEnabled ? storageSliceColor : sliceColor}
                 doughnut={true}
                 coverRadius={0.62}
                 coverFill={"#fff"}
