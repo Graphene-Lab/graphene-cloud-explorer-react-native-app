@@ -1,245 +1,233 @@
-import { MMKVLoader } from "react-native-mmkv-storage";
-import { renderScreen } from "../reducers/screenRerenderReducer";
-import { store } from "../store";
-const MMKV = new MMKVLoader().initialize(); // Returns an MMKV Instance 
+import { MMKV } from 'react-native-mmkv';
+import { renderScreen } from '../reducers/screenRerenderReducer';
+import { store } from '../store';
+
+const storage = new MMKV({ id: 'graphene-explorer' });
+
+const getArray = (key) => {
+  const raw = storage.getString(key);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+const setArray = (key, value) => {
+  storage.set(key, JSON.stringify(value));
+};
+
+const getMap = (key) => {
+  const raw = storage.getString(key);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
+};
+
+const setMap = (key, value) => {
+  storage.set(key, JSON.stringify(value || {}));
+};
+
+const getBool = (key) => {
+  const value = storage.getBoolean(key);
+  return typeof value === 'boolean' ? value : null;
+};
+
+const setBool = (key, value) => {
+  storage.set(key, !!value);
+};
+
+const triggerHomeRefresh = () => store.dispatch(renderScreen(['HomeScreen']));
 
 export const addToMMKV = async (obj) => {
-    let arr = await MMKV.getArrayAsync("lasts");
-    if (arr !== null && arr.length > 0) {
-        arr?.some(async (sql) => {
-            if (sql.title == obj.title && sql.name === obj.name && sql.type === obj.type && obj.path == sql.path) {
-                return true;
-            } else {
-                if (arr.length > 15) arr.pop();
-                await MMKV.setArrayAsync("lasts", [obj, ...arr]);
-                store.dispatch(renderScreen(['HomeScreen']))
-            }
+  const arr = getArray('lasts') ?? [];
+  const exists = arr.some(
+    (item) =>
+      item?.title === obj?.title &&
+      item?.name === obj?.name &&
+      item?.type === obj?.type &&
+      item?.path === obj?.path
+  );
+  if (exists) return;
 
-        });
-    }
-    else if (arr?.length == 0) {
-        await MMKV.setArrayAsync("lasts", [obj]);
-        store.dispatch(renderScreen(['HomeScreen']))
-    }
-    else {
-        await MMKV.setArrayAsync("lasts", [obj]);
-        store.dispatch(renderScreen(['HomeScreen']))
-    }
-
-}
-
+  const next = [obj, ...arr];
+  if (next.length > 16) next.pop();
+  setArray('lasts', next);
+  triggerHomeRefresh();
+};
 
 const deleteFile = async (obj) => {
-    let arr = await MMKV.getArrayAsync("lasts");
-    if (arr !== null) {
-        const filtered = arr.filter(i => i.path !== obj.path)
-        await MMKV.setArrayAsync("lasts", filtered);
-        store.dispatch(renderScreen(['HomeScreen']))
-    }
-
-}
+  const arr = getArray('lasts');
+  if (!arr) return;
+  const filtered = arr.filter((item) => item.path !== obj.path);
+  setArray('lasts', filtered);
+  triggerHomeRefresh();
+};
 
 const deleteFolder = async (folder) => {
-    let arr = await MMKV.getArrayAsync("lasts");
-    if (arr !== null) {
-        const filtered = arr.filter(item => !item.path.startsWith(folder));
-        await MMKV.setArrayAsync("lasts", filtered);
-        store.dispatch(renderScreen(['HomeScreen']))
-    }
-}
+  const arr = getArray('lasts');
+  if (!arr) return;
+  const filtered = arr.filter((item) => !item.path.startsWith(folder));
+  setArray('lasts', filtered);
+  triggerHomeRefresh();
+};
 
-export const getLastsMMKV = async () => {
-    let arr = await MMKV.getArrayAsync('lasts') ?? [];
-    return arr
-}
+export const getLastsMMKV = async () => getArray('lasts') ?? [];
 
-export const deleteRouterMMKV = (obj) => obj.type == 'folder' ? deleteFolder(obj.path) : deleteFile(obj);
+export const deleteRouterMMKV = (obj) => (obj.type === 'folder' ? deleteFolder(obj.path) : deleteFile(obj));
 
 export const dropMMKV = async () => {
-    await MMKV.setBoolAsync("auth", false);
-    await MMKV.setMapAsync("userSecretData", {});
-    await MMKV.setArrayAsync("lasts", []);
+  setBool('auth', false);
+  setMap('userSecretData', {});
+  setArray('lasts', []);
 };
 
 export const updateMultiplyMoveMMKV = async (location, names, target) => {
-    let arr = await MMKV.getArrayAsync('lasts') ?? [];
-    let transformed = arr.map(element => {
-        if (names.includes(element.name) && element.location === location) {
-            element.path = element.path.replace(element.location, target);
-            element.title = element.title.replace(element.location, target);
-            element.location = target;
-        }
-
-        return element;
-    })
-
-    await MMKV.setArrayAsync("lasts", transformed);
-    store.dispatch(renderScreen(['HomeScreen']));
-}
-
-
-// export const updateMMKV = async (path, updated) => {
-//     let arr = await MMKV.getArrayAsync('lasts') ?? [];
-//     let filter = arr.map(item => item.path === path ? updated : item);
-//     await MMKV.setArrayAsync('lasts', filter);
-//     // if (arr !== null) {
-//     //     const filtered = arr.filter(i => {
-//     //         if (i.path === oldFile.path) {
-//     //             i = newFile
-//     //         }
-//     //         return i
-//     //     })
-//     //     await MMKV.setArrayAsync("lasts", filtered);
-//     //     store.dispatch(renderScreen(['HomeScreen']))
-//     // }
-// }
-
-export const renameMMKVFile = async ({ path, location, name, newArr }) => {
-
-    let arr = await MMKV.getArrayAsync('lasts') ?? [];
-    let indexMMKV = arr.findIndex(object => {
-        return object.path === path;
-    })
-
-    if (indexMMKV !== -1) {
-        let newIndex = newArr.findIndex(obj => {
-            return obj.name === name
-        })
-        arr[indexMMKV] = newArr[newIndex];
-        await MMKV.setArrayAsync('lasts', arr);
-        store.dispatch(renderScreen(['HomeScreen']))
+  const arr = getArray('lasts') ?? [];
+  const transformed = arr.map((element) => {
+    if (names.includes(element.name) && element.location === location) {
+      const nextPath = element.path.replace(element.location, target);
+      const nextTitle = element.title.replace(element.location, target);
+      return { ...element, path: nextPath, title: nextTitle, location: target };
     }
-}
+    return element;
+  });
 
+  setArray('lasts', transformed);
+  triggerHomeRefresh();
+};
 
-export const renameMMKVFolder = async (location, name) => {
-    let arr = await MMKV.getArrayAsync('lasts') ?? [];
-    arr = arr.filter(item => {
-        return item.location !== name + '/'
-    })
-    await MMKV.setArrayAsync('lasts', arr);
-    store.dispatch(renderScreen(['HomeScreen']))
-}
+export const renameMMKVFile = async ({ path, name, newArr }) => {
+  const arr = getArray('lasts') ?? [];
+  const indexMMKV = arr.findIndex((object) => object.path === path);
+
+  if (indexMMKV !== -1) {
+    const newIndex = newArr.findIndex((obj) => obj.name === name);
+    if (newIndex !== -1) {
+      arr[indexMMKV] = newArr[newIndex];
+      setArray('lasts', arr);
+      triggerHomeRefresh();
+    }
+  }
+};
+
+export const renameMMKVFolder = async (_location, name) => {
+  let arr = getArray('lasts') ?? [];
+  arr = arr.filter((item) => item.location !== `${name}/`);
+  setArray('lasts', arr);
+  triggerHomeRefresh();
+};
 
 export const multiRemoveMMKV = async (pathGroup, filesGroups) => {
-    let arr = await MMKV.getArrayAsync('lasts') ?? [];
-    let injected = filesGroups.map(element => {
-        if (pathGroup !== "") {
-            return `${pathGroup}/${element}`
-        }
-
-        else return element
-    })
-    arr = arr.filter(element => !injected.includes(element.path))
-    await MMKV.setArrayAsync('lasts', arr);
-    store.dispatch(renderScreen(['HomeScreen']))
-}
+  let arr = getArray('lasts') ?? [];
+  const injected = filesGroups.map((element) => (pathGroup !== '' ? `${pathGroup}/${element}` : element));
+  arr = arr.filter((element) => !injected.includes(element.path));
+  setArray('lasts', arr);
+  triggerHomeRefresh();
+};
 
 export const setGuideMMKV = async () => {
-    await MMKV.setBoolAsync("guide", true);
-}
+  setBool('guide', true);
+};
 
-export const getGuideMMKV = async () => {
-    const guide = await MMKV.getBoolAsync("guide");
-    return guide;
-}
+export const getGuideMMKV = async () => getBool('guide');
 
 export const getUserSecretDataMMKV = async () => {
-    const auth = await MMKV.getBoolAsync('auth');
-    const guide = await MMKV.getBoolAsync("guide");
-    let object = await MMKV.getMapAsync("userSecretData");
-    return { ...object, auth, guide };
-}
+  const auth = getBool('auth');
+  const guide = getBool('guide');
+  const object = getMap('userSecretData');
+  return { ...object, auth, guide };
+};
 
 export const setUserSecretDataMMKV = async (clientId, publicKeyB64) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    let data = { ...object, clientId, publicKeyB64 };
-    await MMKV.setMapAsync("userSecretData", data);
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, clientId, publicKeyB64 });
+};
 
 export const mergeUserSecretDataMMKV = async (patch) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, ...patch });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, ...patch });
+};
 
 export const setUserServerIdMMKV = async (serverId) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, serverId });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, serverId });
+};
 
 export const userAuthMMKV = async () => {
-    await MMKV.setBoolAsync("auth", true);
-}
+  setBool('auth', true);
+};
 
 export const setUserEncryptionTypeMMKV = async (encryptionType) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, encryptionType });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, encryptionType });
+};
 
 export const setUserDeviceKeyMMKV = async (deviceKey) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, deviceKey })
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, deviceKey });
+};
 
 export const removeUserEncryptionTypeMMKV = async () => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, encryptionType: undefined });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, encryptionType: undefined });
+};
 
 export const setUserPublicAndPrivetKeyMMKV = async (publicKey, privetKey) => {
-    let object = await MMKV.getMapAsync('userSecretData');
-    await MMKV.setMapAsync('userSecretData', { ...object, publicKey, privetKey });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, publicKey, privetKey });
+};
 
 export const getUserPublicKeyMMKV = async () => {
-    try {
-        let userData = await MMKV.getMapAsync('userSecretData')
-        return userData.qr;
-    }
-    catch (err) {
-        return null;
-    }
-}
+  try {
+    const userData = getMap('userSecretData');
+    return userData.qr;
+  } catch {
+    return null;
+  }
+};
 
 export const setUserQrMMKV = async (qr) => {
-    let object = await MMKV.getMapAsync('userSecretData');
-    await MMKV.setMapAsync('userSecretData', { ...object, qr });
-}
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, qr });
+};
 
 export const setDeviceUpdateInfoMMKV = async (order) => {
-    await MMKV.setBoolAsync('deviceUpdateStatus', order);
-}
+  setBool('deviceUpdateStatus', order);
+};
 
-export const getDeviceUpdateFinishInfoMMKV = async () => {
-    const info = await MMKV.getBoolAsync('deviceUpdateStatus');
-    return info
-}
+export const getDeviceUpdateFinishInfoMMKV = async () => getBool('deviceUpdateStatus');
 
 export const uploadQueueMMKV = async (file) => {
-    const data = await MMKV.getArrayAsync('uploadQueue') ?? [];
-    await MMKV.setArrayAsync('uploadQueue', [...data, file]);
-}
+  const data = getArray('uploadQueue') ?? [];
+  setArray('uploadQueue', [...data, file]);
+};
 
 export const removeUploadQueueMMKV = async () => {
-    const data = await MMKV.getArrayAsync('uploadQueue');
-    data.shift();
-    await MMKV.setArrayAsync('uploadQueue', data);
-}
+  const data = getArray('uploadQueue') ?? [];
+  data.shift();
+  setArray('uploadQueue', data);
+};
 
-export const getUploadQueueMMKV = async () => await MMKV.getArrayAsync('uploadQueue') ?? [];
+export const getUploadQueueMMKV = async () => getArray('uploadQueue') ?? [];
 
 export const setProxyMMKV = async (proxy) => {
-    let object = await MMKV.getMapAsync("userSecretData");
-    await MMKV.setMapAsync("userSecretData", { ...object, proxy });
-}
-
+  const object = getMap('userSecretData');
+  setMap('userSecretData', { ...object, proxy });
+};
 
 export const moveSingleMMKV = async () => {
-    // let arr = await MMKV.getArrayAsync('lasts') ?? [];
-
-}
-
-export const setCellularAccessMMKV = async (boolean) => {
-    MMKV.setBoolAsync('cellular', boolean)
+  // no-op
 };
-export const getCellularInfoMMKV = async () => await MMKV.getBoolAsync('cellular') ?? false;
+
+export const setCellularAccessMMKV = async (value) => {
+  setBool('cellular', value);
+};
+
+export const getCellularInfoMMKV = async () => getBool('cellular') ?? false;

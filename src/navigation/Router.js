@@ -9,12 +9,24 @@ import NetInfo from "@react-native-community/netinfo";
 import { setConnectionStatus } from '../reducers/networkConnectionReducer'
 import { openModal } from '../reducers/modalReducer'
 import { useDispatch } from 'react-redux';
-import ReceiveSharingIntent from 'react-native-receive-sharing-intent';
 import { useContextApi } from '../context/ContextApi';
 import { getCellularInfoMMKV } from '../utils/mmkv';
 import { setIntentFile } from '../reducers/filesTransferNewReducer';
 export const navigationRef = createNavigationContainerRef()
 import { SettingsScreen } from '../screens/settings/index.android'; 
+
+let ReceiveSharingIntent = {
+    getReceivedFiles: () => { },
+    clearReceivedFiles: () => { },
+};
+
+try {
+    const sharingIntentModule = require('react-native-receive-sharing-intent');
+    ReceiveSharingIntent = sharingIntentModule?.default || sharingIntentModule || ReceiveSharingIntent;
+} catch (_) {
+    // Optional dependency in newer RN builds; no-op when package is unavailable.
+}
+
 const Router = () => {
 
     const dispatch = useDispatch();

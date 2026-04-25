@@ -16,7 +16,8 @@
       "**/*"
     ],
     "plugins": [
-      "@notifee/react-native"
+      "@notifee/react-native",
+      "expo-camera"
     ],
     "android": {
       "package": "com.graphenelab.cloudexplorer",
