@@ -1,6 +1,9 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+    scrollContent: {
+        paddingBottom: 24,
+    },
     fileNameContainer: {
         borderBottomColor: "#EEF2FE",
         borderBottomWidth: 1,

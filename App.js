@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
 import PolyfillCrypto from 'react-native-webview-crypto';
@@ -5,25 +6,15 @@ import { Provider } from 'react-redux';
 import { BottomSheetNative } from './src/components/bottom-sheet';
 import { ContextApiProvider } from './src/context/ContextApi';
 import Router from './src/navigation/Router';
-import SignInUp from './src/components/SignInUp/index.js';
-import  PaymentScreen from './src/screens/payment/index.js';
 import { store } from './src/store';
 import * as SplashScreen from 'expo-splash-screen';
-import { useCallback, useEffect, useState } from 'react';
-import { useStripe, StripeProvider } from '@stripe/stripe-react-native';
-import { navigationRef } from './src/navigation/NavigationService';
-import { BottomSheetProvider } from './src/services/BottomSheetService';
+import { StripeProvider } from '@stripe/stripe-react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync();
 
-export default App = () => {
+const App = () => {
   const [appIsReady, setAppIsReady] = useState(false);
-  const [bottomSheetRef, setBottomSheetRef] = useState(null);
-
-  const bottomSheetContext = {
-    openBottomSheet: (index) => bottomSheetRef?.current?.snapToIndex(index),
-    closeBottomSheet: () => bottomSheetRef?.current?.close(),
-  };
 
   useEffect(() => {
     async function prepare () {
@@ -56,10 +47,10 @@ export default App = () => {
       urlScheme="com.cloudapp" // Required for 3D Secure and bank redirects
       // merchantIdentifier="merchant.com.yourapp" // Required for Apple Pay
     >
-      <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
-        <PolyfillCrypto />
-        <Provider store={store}>
-          <BottomSheetProvider value={bottomSheetContext}>
+      <SafeAreaProvider>
+        <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <PolyfillCrypto />
+          <Provider store={store}>
             <ContextApiProvider>
               <MenuProvider>
                 {/* <SignInUp /> */}
@@ -67,11 +58,13 @@ export default App = () => {
                 <BottomSheetNative />
               </MenuProvider>
             </ContextApiProvider>
-          </BottomSheetProvider>
-        </Provider>
-      </GestureHandlerRootView>
+          </Provider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
     </StripeProvider>
   );
 };
+
+export default App;
 
 // eas build -p android --profile preview

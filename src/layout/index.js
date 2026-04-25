@@ -1,4 +1,5 @@
-import { SafeAreaView, StatusBar, View } from 'react-native'
+import { StatusBar, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { styles } from './styles'
 import { ScreenHeader } from '../components/screen-header'
 import SearchBar from '../components/searchbar'
@@ -14,7 +15,7 @@ export const Layout = ({ children, name, searchBar }) => {
     return (
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
             <StatusBar barStyle='dark-content' />
-            <SafeAreaView style={{ flex: 1 }}>
+            <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
                 {selectedFiles.length ? <MultipleSelection router={name} /> : (name && <ScreenHeader name={name} />)}
                 <View style={styles.container}>
                     {searchBar && <SearchBar name={name} />}
