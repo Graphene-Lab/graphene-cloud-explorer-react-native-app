@@ -44,7 +44,6 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
 
 
     const handleLogIn = async () => {
-        dispatch(setAuthWait(true))
         if (connection === false) {
             dispatch(setAuthWait(false));
             return dispatch(openModal({
@@ -62,6 +61,7 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
             if (!zkReady) {
                 return;
             }
+            dispatch(setAuthWait(true));
             await generateKeyRSA();
             await onQrCodeAcquires(barcode.trim());
             setError(false)
