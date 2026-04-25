@@ -1,10 +1,11 @@
 import firebase from '@react-native-firebase/app';
-import crashlytics from '@react-native-firebase/crashlytics';
 
 const getCrashlyticsInstance = () => {
   try {
     // Throws if no [DEFAULT] app exists in the current native runtime.
     firebase.app();
+    // eslint-disable-next-line no-undef
+    const crashlytics = require('@react-native-firebase/crashlytics').default;
     return crashlytics();
   } catch {
     return null;
