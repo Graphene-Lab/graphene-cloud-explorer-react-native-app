@@ -6,39 +6,40 @@
     android:viewportHeight="24"
     android:tint="#333333"
     android:alpha="0.6">
-  <group android:scaleX="0.13953489"
+  <group
+      android:scaleX="0.13953489"
       android:scaleY="0.13953489"
       android:translateY="4.3255816">
     <path
         android:pathData="M104.68,40.75C104.68,40.75 133.51,103.84 143.24,103.51C152.97,103.18 138.35,104.99 135.98,104.99C120.44,104.94 105.96,104.76 91.6,104.59L49.48,104.21C48.53,104.24 47.58,104.24 46.62,104.22C44.73,104.22 42.99,104.16 40.59,103.76C37.65,103.39 34.86,102.86 32.37,102.32L104.68,40.75Z">
       <aapt:attr name="android:fillColor">
-        <gradient 
+        <gradient
             android:startX="66.93"
             android:startY="56.7"
             android:endX="127.1"
             android:endY="105.26"
             android:type="linear">
-          <item android:offset="0" android:color="#FF88C489"/>
-          <item android:offset="1" android:color="#FFB8F0B9"/>
+          <item android:offset="0" android:color="#FF88C489" />
+          <item android:offset="1" android:color="#FFB8F0B9" />
         </gradient>
       </aapt:attr>
     </path>
     <path
         android:pathData="M104.43,40.69C104.43,40.69 85.83,63.59 61.29,91.43C47.58,106.75 33.11,105.75 20.08,96.53C9.27,87.23 2.21,73.6 1.71,58.02C1.23,43.16 6.69,29.85 15.9,19.9C24.89,9.93 37.89,3.54 52.31,3.05C66.74,2.57 80.14,8.07 89.97,17.4C96.54,23.61 101.93,31.6 104.43,40.69Z">
       <aapt:attr name="android:fillColor">
-        <gradient 
+        <gradient
             android:startX="19.48"
             android:startY="11.12"
             android:endX="89.64"
             android:endY="80.48"
             android:type="linear">
-          <item android:offset="0" android:color="#FF00D1FF"/>
-          <item android:offset="1" android:color="#FFB4E4B5"/>
+          <item android:offset="0" android:color="#FF00D1FF" />
+          <item android:offset="1" android:color="#FFB4E4B5" />
         </gradient>
       </aapt:attr>
     </path>
     <path
         android:pathData="M170.82,66.47C171.16,77.11 167.33,87.13 160.46,94.31C126.05,127.92 112.81,65.95 104.4,40.72C111.27,33.3 120.42,29.04 130.94,28.68C141.69,28.32 151.62,32.44 158.68,39.14C166.01,46.07 170.47,55.58 170.82,66.47Z"
-        android:fillColor="#00D1FF"/>
+        android:fillColor="#00D1FF" />
   </group>
 </vector>
