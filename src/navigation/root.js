@@ -1,4 +1,4 @@
-import { navigationRef } from "./Router"
+import { navigationRef } from "./NavigationService"
 
 export const navigationPush = (screenName) => {
     if (navigationRef.isReady()) {

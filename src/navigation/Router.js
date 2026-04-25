@@ -4,7 +4,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import MainScreen from "../screens/welcome";
 import TabNavigator from './TabNavigator';
 const Stack = createNativeStackNavigator();
-import { createNavigationContainerRef } from '@react-navigation/native';
 import NetInfo from "@react-native-community/netinfo";
 import { setConnectionStatus } from '../reducers/networkConnectionReducer'
 import { openModal } from '../reducers/modalReducer'
@@ -12,7 +11,7 @@ import { useDispatch } from 'react-redux';
 import { useContextApi } from '../context/ContextApi';
 import { getCellularInfoMMKV } from '../utils/mmkv';
 import { setIntentFile } from '../reducers/filesTransferNewReducer';
-export const navigationRef = createNavigationContainerRef()
+import { navigationRef } from './NavigationService';
 import { SettingsScreen } from '../screens/settings/index.android'; 
 
 let ReceiveSharingIntent = {
@@ -84,7 +83,7 @@ const Router = () => {
 
         return () => {
             ReceiveSharingIntent.clearReceivedFiles();
-            unsubscribe;
+            unsubscribe();
         }
 
 
