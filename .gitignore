@@ -125,3 +125,4 @@ android/app/google-services.json
 /tmp
 scripts/generate-android-splash.ps1
 run-android copy.ps1
+android/keystore.properties
