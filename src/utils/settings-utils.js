@@ -6,9 +6,9 @@ import { chunkSize } from "../constants";
 import { fileExistsCheck, mkFolder, registerDownloadedPath, writeFileToLocal } from "./local-files";
 import { groupsByFolder, locationGenerator, parseFile, storageInfo } from "./essential-functions";
 import Share from 'react-native-share';
-import DocumentPicker from 'react-native-document-picker'
+import * as DocumentPicker from 'expo-document-picker'
 import { setPickedFiles } from "../reducers/filesTransferNewReducer";
-import RNFetchBlob from "rn-fetch-blob";
+import RNFetchBlob from "react-native-blob-util";
 import { Platform } from "react-native";
 import { setEmptySelectedFiles, setFavoritesContent, setFavoritesList, setOrder } from "../reducers/fileReducer";
 import { addToMMKV, deleteRouterMMKV, multiRemoveMMKV, renameMMKVFile, renameMMKVFolder, updateMultiplyMoveMMKV } from "./mmkv";
@@ -316,10 +316,19 @@ export const onlyPick = async (closeBottomSheet) => {
 
     try {
         const { location } = store.getState()?.files
-        const pickedFile = await DocumentPicker.pickSingle({
-            presentationStyle: 'fullScreen',
-            allowMultiSelection: false
-        })
+        const result = await DocumentPicker.getDocumentAsync({
+            multiple: false,
+            copyToCacheDirectory: true,
+        });
+        if (result.canceled || !result.assets?.length) return;
+
+        const [asset] = result.assets;
+        const pickedFile = {
+            name: asset.name,
+            size: asset.size || 0,
+            type: asset.mimeType || 'application/octet-stream',
+            uri: asset.uri,
+        };
 
         const availableStorage = store.getState().profile.totalMemory;
         if (availableStorage != -1 && pickedFile.size > availableStorage) {
@@ -361,10 +370,19 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
 
 
     try {
-        const pickedFiles = await DocumentPicker.pickMultiple({
-            presentationStyle: 'fullScreen',
-            allowMultiSelection: true
-        })
+        const result = await DocumentPicker.getDocumentAsync({
+            multiple: true,
+            copyToCacheDirectory: true,
+        });
+
+        if (result.canceled || !result.assets?.length) return;
+
+        const pickedFiles = result.assets.map((asset) => ({
+            name: asset.name,
+            size: asset.size || 0,
+            type: asset.mimeType || 'application/octet-stream',
+            uri: asset.uri,
+        }));
 
 
         const sumOfFileSize = pickedFiles.reduce((accumulator, object) => {
@@ -719,6 +737,7 @@ const readFileStream = async (args) => {
     }
 
 }
+
 
 
 

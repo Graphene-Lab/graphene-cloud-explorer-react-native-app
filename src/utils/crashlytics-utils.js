@@ -1,4 +1,16 @@
-import crashlytics from '@react-native-firebase/crashlytics';
+import firebase from '@react-native-firebase/app';
+
+const getCrashlyticsInstance = () => {
+  try {
+    // Throws if no [DEFAULT] app exists in the current native runtime.
+    firebase.app();
+    // eslint-disable-next-line no-undef
+    const crashlytics = require('@react-native-firebase/crashlytics').default;
+    return crashlytics();
+  } catch {
+    return null;
+  }
+};
 
 /**
  * Sanitize any thrown value into a plain Error object that Firebase
@@ -53,6 +65,11 @@ export const sanitizeError = (error) => {
  */
 export const reportCrash = (error, attrs = {}) => {
   const normalizedError = sanitizeError(error);
+  const crashlyticsInstance = getCrashlyticsInstance();
+
+  if (!crashlyticsInstance) {
+    return;
+  }
 
   const normalizedAttrs = Object.keys(attrs).reduce((acc, key) => {
     const value = attrs[key];
@@ -60,7 +77,11 @@ export const reportCrash = (error, attrs = {}) => {
     return acc;
   }, {});
 
-  crashlytics().setAttributes(normalizedAttrs);
-  crashlytics().recordError(normalizedError);
-  console.log('[Crashlytics] Reported error:', normalizedError.message, normalizedAttrs);
+  try {
+    crashlyticsInstance.setAttributes(normalizedAttrs);
+    crashlyticsInstance.recordError(normalizedError);
+  } catch {
+    // Intentionally swallow crash-reporting failures to prevent secondary crashes
+    // during app error handling.
+  }
 };

@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import RNFetchBlob from "rn-fetch-blob";
+import RNFetchBlob from "react-native-blob-util";
 import { setFromScreen } from "../../reducers/bottomSheetReducer";
 import { setSelectedFile } from "../../reducers/fileReducer";
 import { openModal } from "../../reducers/modalReducer";
@@ -152,3 +152,4 @@ export const networkCheck = async (file, dispatch) => {
     }))
 
 }
+

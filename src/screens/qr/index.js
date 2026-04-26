@@ -1,7 +1,7 @@
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { Layout } from '../../layout';
 import { PasswordModal } from '../../components/modal/password';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import BarcodeMask from 'react-native-barcode-mask';
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +9,7 @@ import { openSettings } from 'react-native-permissions';
 import { openModal } from '../../reducers/modalReducer';
 
 const QRScreen = ({ route }) => {
-    const [hasPermission, setHasPermission] = useState(null);
+    const [cameraPermission, requestCameraPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const [transitioning, setTransitioning] = useState(false);
     const [barcode, setBarcode] = useState(null);
@@ -18,12 +18,10 @@ const QRScreen = ({ route }) => {
     const dispatch = useDispatch();
 
     const getBarCodeScannerPermissions = async () => {
-        const { status } = await BarCodeScanner.requestPermissionsAsync();
-        if (status !== 'granted') {
+        const permissionResponse = await requestCameraPermission();
+        if (permissionResponse?.status !== 'granted') {
             openPermissionsSettings();
-            return;
         }
-        setHasPermission(status === 'granted');
     };
 
     const openPermissionsSettings = () => {
@@ -62,14 +60,14 @@ const QRScreen = ({ route }) => {
         setBarcode(null)
     }
 
-    if (hasPermission === null) {
+    if (!cameraPermission) {
         return <Layout name={route.name}>
             <Text style={{ alignSelf: 'center' }}>
                 Requesting for camera permission ....
             </Text>
         </Layout>;
     }
-    if (hasPermission === false) {
+    if (cameraPermission.granted === false) {
         return <Layout name={route.name}>
             <Text style={{ alignSelf: 'center' }}>No access to camera, activate camera permission and lunch app again</Text>
         </Layout>;
@@ -94,7 +92,7 @@ const QRScreen = ({ route }) => {
 
     return (
         <Layout name={route.name}>
-            <BarCodeScanner
+            <CameraView
                 onBarCodeScanned={handleBarCodeScanned}
                 style={StyleSheet.absoluteFillObject}
             />

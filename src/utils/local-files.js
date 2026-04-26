@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import RNFetchBlob from 'rn-fetch-blob';
+import RNFetchBlob from 'react-native-blob-util';
 import { existsTypes } from '../constants';
 import { bufferToBase64 } from './proxy-cryptography-utils';
 const { dirs, exists, mkdir, createFile, stat, unlink } = RNFetchBlob.fs;
@@ -289,3 +289,4 @@ export const writeFileToLocal = async (file, name, folder, meta = null) => {
     console.log('[DL] createFile done', { ms: Date.now() - timingStart });
     return target;
 }
+

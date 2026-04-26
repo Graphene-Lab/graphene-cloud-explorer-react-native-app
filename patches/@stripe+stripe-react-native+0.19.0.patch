@@ -1,6 +1,0 @@
-import { NativeEventEmitter, Platform } from 'react-native';
-
-let eventEmitter = null;
-if (Platform.OS === 'ios') {
-  eventEmitter = new NativeEventEmitter(StripeModule);
-}

@@ -1,4 +1,5 @@
 import { Text, View } from "react-native"
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet"
 import { OptionButton } from '../../..//option-button'
 import StarIcon from '../../../../assets/icons/bottomSheet/star.svg'
 import DownIcon from '../../../../assets/icons/bottomSheet/down.svg'
@@ -43,7 +44,10 @@ const Settings = () => {
     }
 
     return (
-        <View>
+        <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+        >
             {!!fullFileName && (
                 <View style={styles.fileNameContainer}>
                     <Text style={styles.fileNameLabel}>{selectedItemLabel}</Text>
@@ -62,7 +66,7 @@ const Settings = () => {
             <OptionButton text='Delete' func={remove} icon={<DeleteIcon />} />
             {/* <OptionButton text='Sync now' func={test} icon={<SyncIcon />} /> */}
             <OptionButton text='Rename' func={renameFile} icon={<RenameIcon />} />
-        </View>
+        </BottomSheetScrollView>
     )
 }
 

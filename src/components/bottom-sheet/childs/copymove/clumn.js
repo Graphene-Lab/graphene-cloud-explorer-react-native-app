@@ -8,14 +8,11 @@ import DotsIcon from '../../../../assets/icons/viewer/dotsvertical.svg';
 import { navigationPush } from '../../../../navigation/root';
 import { locationGenerator } from '../../../../utils/essential-functions';
 import { renderScreen } from '../../../../reducers/screenRerenderReducer';
-import { useBottomSheet } from '../../../../services/BottomSheetService';
-import { navigate } from '../../../../navigation/NavigationService';
 
 
 export const Cloumn = ({ item, locationEditor, search, close }) => {
     const { bottomSheetController } = useContextApi();
     const dispatch = useDispatch();
-    const { closeBottomSheet } = useBottomSheet();
 
     const onPressHanle = (file) => {
         if (file.type === 'folder' && !search) locationEditor(item.title);
@@ -34,11 +31,6 @@ export const Cloumn = ({ item, locationEditor, search, close }) => {
         dispatch(setSelectedFile(file));
         Keyboard.dismiss();
         InteractionManager.runAfterInteractions(() => bottomSheetController(2));
-    };
-
-    const handlePress = () => {
-        closeBottomSheet();
-        navigate('TargetScreen', { item });
     };
 
     return (

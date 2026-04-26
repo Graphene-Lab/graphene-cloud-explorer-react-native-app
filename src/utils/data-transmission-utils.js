@@ -42,7 +42,7 @@ import {
   registerUploadProgress,
   updateUploadProgress,
 } from './files-trasnfer';
-import RNFetchBlob from 'rn-fetch-blob';
+import RNFetchBlob from 'react-native-blob-util';
 import { downloadSetProgress } from '../reducers/filesTransferNewReducer';
 import {
   downloadNotificationRegister,
@@ -1858,3 +1858,4 @@ export function GetOccupiedSpace(path, wilscards) {
     return executeRequest(command.GetOccupiedSpace, path + '\t' + wilscards);
   }
 }
+

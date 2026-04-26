@@ -1,4 +1,5 @@
-import { DeviceEventEmitter, View } from "react-native"
+import { DeviceEventEmitter } from "react-native"
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet"
 import { OptionButton } from "../../../option-button"
 import FolderIcon from '../../../../assets/icons/bottomSheet/folder.svg'
 import PaperIcon from '../../../../assets/icons/bottomSheet/paper.svg'
@@ -9,6 +10,7 @@ import { openModal } from "../../../../reducers/modalReducer"
 import LogOutIcon from '../../../../assets/icons/setting/logout.svg';
 import { enqueue } from "../../../../reducers/refreshQueueReducer"
 import { getCellularInfoMMKV } from "../../../../utils/mmkv"
+import { styles } from "./styles"
 
 export const AddSettings = () => {
     const { closeBottomSheet } = useContextApi();
@@ -52,10 +54,13 @@ export const AddSettings = () => {
     }
 
     return (
-        <View>
+        <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+        >
             <OptionButton text='Upload new file' func={() => networkFilter(1)} icon={<PaperIcon />} />
             <OptionButton text='Create new folder' func={() => networkFilter(2)} icon={<FolderIcon />} />
             <OptionButton text='Log out' func={logOutHandler} icon={<LogOutIcon />} />
-        </View>
+        </BottomSheetScrollView>
     )
 }
