@@ -41,7 +41,7 @@ const QRScreen = ({ route }) => {
         getBarCodeScannerPermissions();
     }, [QrScreen]);
 
-    const handleBarCodeScanned = ({ data }) => {
+    const handleBarcodeScanned = ({ data }) => {
         if (scanLockedRef.current) {
             return;
         }
@@ -93,7 +93,8 @@ const QRScreen = ({ route }) => {
     return (
         <Layout name={route.name}>
             <CameraView
-                onBarCodeScanned={handleBarCodeScanned}
+                onBarcodeScanned={handleBarcodeScanned}
+                barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
                 style={StyleSheet.absoluteFillObject}
             />
             {
