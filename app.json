@@ -1,58 +1,58 @@
-{
-  "expo": {
-    "name": "Graphene Explorer",
-    "slug": "cloud-storage",
-    "icon": "./assets/GExplorerLogo.png",
-    "scheme": "com.cloudapp",
-    "version": "1.1.0",
-    "orientation": "portrait",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/GExplorerLogo.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "plugins": [
-      "@notifee/react-native",
-      "expo-camera"
-    ],
-    "android": {
-      "package": "com.graphenelab.cloudexplorer",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/GExplorerLogo.png",
-        "backgroundColor": "#FFFFFF"
-      },
-      "intentFilters": [
-        {
-          "action": "VIEW",
-          "data": {
-            "scheme": "com.graphenelab.cloudexplorer",
-            "host": "oauth2redirect"
-          },
-          "category": [
-            "DEFAULT",
-            "BROWSABLE"
-          ]
+﻿{
+    "expo": {
+        "name": "Graphene Explorer",
+        "slug": "cloud-storage",
+        "icon": "./assets/newLogo.png",
+        "scheme": "com.cloudapp",
+        "version": "1.1.0",
+        "orientation": "portrait",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/spashscreen-logo.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "assetBundlePatterns": [
+            "**/*"
+        ],
+        "plugins": [
+            "@notifee/react-native",
+            "expo-camera"
+        ],
+        "android": {
+            "package": "com.graphenelab.cloudexplorer",
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/newLogo.png",
+                "backgroundColor": "#FFFFFF"
+            },
+            "intentFilters": [
+                {
+                    "action": "VIEW",
+                    "data": {
+                        "scheme": "com.graphenelab.cloudexplorer",
+                        "host": "oauth2redirect"
+                    },
+                    "category": [
+                        "DEFAULT",
+                        "BROWSABLE"
+                    ]
+                }
+            ]
+        },
+        "ios": {
+            "bundleIdentifier": "com.graphenelab.cloudexplorer",
+            "supportsTablet": false,
+            "infoPlist": {
+                "UIBackgroundModes": [
+                    "fetch"
+                ]
+            }
+        },
+        "extra": {
+            "experienceUrl": "https://expo.dev/@your-username/your-app",
+            "eas": {
+                "projectId": "3cfaed27-4cee-4548-8440-cc2e446fb352"
+            }
         }
-      ]
-    },
-    "ios": {
-      "bundleIdentifier": "com.graphenelab.cloudexplorer",
-      "supportsTablet": false,
-      "infoPlist": {
-        "UIBackgroundModes": [
-          "fetch"
-        ]
-      }
-    },
-    "extra": {
-      "experienceUrl": "https://expo.dev/@your-username/your-app",
-      "eas": {
-        "projectId": "3cfaed27-4cee-4548-8440-cc2e446fb352"
-      }
     }
-  }
 }
