@@ -2,6 +2,7 @@ import { View, TextInput, Text, ScrollView, Keyboard, Pressable } from 'react-na
 import SearchIcon from '../../assets/icons/search.svg'
 import { AntDesign } from "@expo/vector-icons";
 import { memo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { styles } from './styles';
 import Animated, {
     useSharedValue,
@@ -17,6 +18,7 @@ import { useCallback } from 'react';
 import useDebounce from '../../hooks/useDebounce';
 
 const SearchBar = ({ name }) => {
+    const { t } = useTranslation();
     const [focused, setFocused] = useState(false);
     const [text, setText] = useState(null);
     const [context, setContext] = useState([]);
@@ -107,7 +109,7 @@ const SearchBar = ({ name }) => {
                     style={styles.input}
                     onBlur={() => closeView()}
                     onChangeText={(text) => searchHandle(text)}
-                    placeholder="Search Folder"
+                    placeholder={t('common.search_folder')}
                     placeholderTextColor='#B0C0D0'
                     value={text}
                     autoCapitalize={false}
@@ -117,7 +119,7 @@ const SearchBar = ({ name }) => {
             {
                 text?.length ? <View style={{ flex: 1, }}>
                     {!wait ? <ScrollView keyboardShouldPersistTaps='always' showsVerticalScrollIndicator={false}>
-                        {context.length > 1 ? context?.map((file, key) => <Cloumn key={key} item={file} search close={closeView} />) : <Text style={{ textAlign: 'center' }}>No search results were found</Text>}
+                        {context.length > 1 ? context?.map((file, key) => <Cloumn key={key} item={file} search close={closeView} />) : <Text style={{ textAlign: 'center' }}>{t('common.no_search_results')}</Text>}
                     </ScrollView> : <ActivityIndicator color="#415EB6" style={styles.indicators} />
                     }
                 </View> : null

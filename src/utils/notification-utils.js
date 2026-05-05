@@ -1,4 +1,5 @@
 import notifee, { AndroidImportance, AndroidStyle } from '@notifee/react-native';
+import i18n from '../i18n';
 import { PermissionsAndroid, Platform } from 'react-native';
 
 
@@ -39,7 +40,7 @@ export const displayUploadNotification = async (title, path) => {
     });
     await notifee.displayNotification({
         title: title,
-        body: `File uploading to ${path !== "" ? path : 'Graphene Cloud Explorer'}`,
+        body: i18n.t('notifications.uploading_body', { path: path !== "" ? path : 'Graphene Cloud Explorer' }),
         android: {
             channelId,
             smallIcon: 'ic_small_icon',
@@ -53,7 +54,7 @@ export const displayUploadNotification = async (title, path) => {
 export const clearUploadNotification = async (title, path) => {
     await notifee.displayNotification({
         title: title,
-        body: `File uploaded successfully to ${path !== "" ? path : 'Graphene Cloud Explorer'}`,
+        body: i18n.t('notifications.uploaded_body', { path: path !== "" ? path : 'Graphene Cloud Explorer' }),
         android: {
             channelId: 'com.cloudStorage.upload',
             smallIcon: 'ic_small_icon',
@@ -74,8 +75,8 @@ export const clearUploadNotification = async (title, path) => {
 
 export const errorMessageNotification = async () => {
     await notifee.displayNotification({
-        title: 'Upload cancelled',
-        body: 'Something went wrong, please try again',
+        title: i18n.t('notifications.upload_cancelled'),
+        body: i18n.t('notifications.upload_failed_body'),
         android: {
             channelId: 'com.cloudStorage.upload',
             smallIcon: 'ic_small_icon',
@@ -111,7 +112,7 @@ export const downloadNotificationRegister = async ({ id, title, size, max }) => 
     await enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
-        body: `File downloading | ${size}`,
+        body: i18n.t('notifications.downloading_body', { size }),
         android: {
             channelId,
             smallIcon: 'ic_small_icon',
@@ -134,7 +135,7 @@ export const notificationUpdate = async ({ id, current, title }) => {
     await enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
-        body: `File downloading: ${percent}%`,
+        body: i18n.t('notifications.downloading_progress_body', { percent }),
         android: {
             channelId: 'com.cloudStorage.download',
             smallIcon: 'ic_small_icon',
@@ -155,7 +156,7 @@ export const cancelNotification = async ({ id, title }) => {
     const completion = enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
-        body: "File downloaded successfully | 100%",
+        body: i18n.t('notifications.downloaded_success_body'),
         android: {
             channelId: 'com.cloudStorage.download',
             smallIcon: 'ic_small_icon',

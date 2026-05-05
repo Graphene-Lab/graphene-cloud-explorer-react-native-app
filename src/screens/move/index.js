@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { BackHandler } from "react-native";
 import { View, Text } from 'react-native'
+import { useTranslation } from 'react-i18next'
 
 
 const MoveScreen = ({ navigation }) => {
+    const { t } = useTranslation();
     function handleBackButtonClick() {
         navigation.pop();
         return true;
@@ -17,7 +19,7 @@ const MoveScreen = ({ navigation }) => {
 
     return (
         <View>
-            <Text>Move</Text>
+            <Text>{t('common.move')}</Text>
         </View>
     )
 }

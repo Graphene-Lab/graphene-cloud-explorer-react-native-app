@@ -1,4 +1,5 @@
 import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../../layout';
 import { PasswordModal } from '../../components/modal/password';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -9,6 +10,7 @@ import { openSettings } from 'react-native-permissions';
 import { openModal } from '../../reducers/modalReducer';
 
 const QRScreen = ({ route }) => {
+    const { t } = useTranslation();
     const [cameraPermission, requestCameraPermission] = useCameraPermissions();
     const [scanned, setScanned] = useState(false);
     const [transitioning, setTransitioning] = useState(false);
@@ -26,11 +28,11 @@ const QRScreen = ({ route }) => {
 
     const openPermissionsSettings = () => {
         dispatch(openModal({
-            content: 'This app uses the Camera to scan QR code. Please allow access to Camera from Settings',
+            content: t('qr.camera_usage_desc'),
             type: 'info',
-            head: '"Graphene Cloud Explorer" would like to access Camera ',
+            head: t('qr.camera_access_head'),
             icon: 'ex',
-            buttonText: 'Open settings',
+            buttonText: t('qr.open_settings'),
             callback: () => openSettings()
         }))
     }
@@ -63,13 +65,13 @@ const QRScreen = ({ route }) => {
     if (!cameraPermission) {
         return <Layout name={route.name}>
             <Text style={{ alignSelf: 'center' }}>
-                Requesting for camera permission ....
+                {t('qr.requesting_permission')}
             </Text>
         </Layout>;
     }
     if (cameraPermission.granted === false) {
         return <Layout name={route.name}>
-            <Text style={{ alignSelf: 'center' }}>No access to camera, activate camera permission and lunch app again</Text>
+            <Text style={{ alignSelf: 'center' }}>{t('qr.no_access')}</Text>
         </Layout>;
     }
 
@@ -100,10 +102,10 @@ const QRScreen = ({ route }) => {
             {
                 barcode ?
                     <View style={styles.statusSuccess}>
-                        <Text style={styles.statusSuccessText}>Scanned</Text>
+                        <Text style={styles.statusSuccessText}>{t('qr.scanned')}</Text>
                     </View>
                     : <View style={styles.statusIdle}>
-                        <Text style={styles.statusIdleText}>Not Scanned</Text>
+                        <Text style={styles.statusIdleText}>{t('qr.not_scanned')}</Text>
                         <ActivityIndicator size={10} style={{ marginLeft: 5 }} color='#fff' />
                     </View>
 

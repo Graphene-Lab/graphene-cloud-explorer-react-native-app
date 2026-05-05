@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Dimensions, StyleSheet, Text, View } from "react-native"
+import { useTranslation } from "react-i18next"
 import { ActivityIndicator } from "react-native-paper"
 import { getDir } from "../../../../utils/data-transmission-utils"
 import { parseDateTime } from "../../../../utils/essential-functions"
@@ -12,6 +13,7 @@ import { useContextApi } from "../../../../context/ContextApi";
 import { FlatList } from "react-native-gesture-handler"
 
 export const IntentUpload = () => {
+    const { t } = useTranslation();
     const [content, setContent] = useState([])
     const [location, setLocation] = useState("");
     const [wait, setWait] = useState(true);
@@ -60,7 +62,7 @@ export const IntentUpload = () => {
     return (
         <View style={styles.container}>
             {wait && <ActivityIndicator color="#415EB6" style={styles.indicators} />}
-            <Text style={styles.text}>Where do you want to save upload the file?</Text>
+            <Text style={styles.text}>{t('upload.save_where')}</Text>
             <Header location={location} goBack={goBack} />
 
             <FlatList
@@ -72,7 +74,7 @@ export const IntentUpload = () => {
                 renderItem={({ item }) => <ColumnForUpload item={item} locationEditor={locationEditor} location={location} />}
             />
             <View style={styles.button}>
-                <Button text='Choose' callback={() => startIntentUpload(location, closeBottomSheet)} />
+                <Button text={t('upload.choose')} callback={() => startIntentUpload(location, closeBottomSheet)} />
             </View>
         </View>
     )

@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { styles } from './styles'
 import { Feather } from "@expo/vector-icons";
 import MoveIcon from '../../assets/icons/bottomSheet/move.svg';
@@ -11,6 +12,7 @@ import { useContextApi } from '../../context/ContextApi';
 import { openModal } from '../../reducers/modalReducer';
 
 export const MultipleSelection = ({ router }) => {
+  const { t } = useTranslation();
   const { selectedFiles } = useSelector(state => state.files);
   // const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -18,7 +20,7 @@ export const MultipleSelection = ({ router }) => {
 
   const removeHandle = () => {
     dispatch(openModal({
-      content: 'Are you sure you want to delete these files?',
+      content: t('popups.remove_multiple'),
       type: 'confirm',
       head: selectedFiles.map((x, i) => i + 1 + ') ' + x.name + " "),
       icon: 'question',
@@ -34,7 +36,7 @@ export const MultipleSelection = ({ router }) => {
         </TouchableOpacity>
       </View>
       <Text style={styles.text}>
-        {selectedFiles.length} Items
+        {t('common.items_count', { count: selectedFiles.length })}
       </Text>
       <View style={styles.right}>
         <TouchableOpacity onActive={0.6} onPress={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 2)} style={styles.icons}>

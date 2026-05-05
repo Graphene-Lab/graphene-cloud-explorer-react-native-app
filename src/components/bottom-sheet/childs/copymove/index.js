@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from "react"
 import { Text, View } from "react-native"
+import { useTranslation } from "react-i18next"
 import { ActivityIndicator } from "react-native-paper"
 import { getDir } from "../../../../utils/data-transmission-utils"
 import { parseFile } from "../../../../utils/essential-functions"
@@ -17,6 +18,7 @@ import { setEmptySelectedFiles } from "../../../../reducers/fileReducer"
 import { NativeViewGestureHandler } from 'react-native-gesture-handler';
 
 const CopyMove = () => {
+    const { t } = useTranslation();
     const [content, setContent] = useState([])
     const [location, setLocation] = useState('');
     const [wait, setWait] = useState(true);
@@ -63,7 +65,7 @@ const CopyMove = () => {
 
             <View style={styles.container}>
                 {wait && <ActivityIndicator color="#415EB6" style={styles.indicators} />}
-                <Text style={styles.text} >{order == 1 ? 'Copy' : 'Move'} file</Text>
+                <Text style={styles.text} >{order == 1 ? t('common.copy_file') : t('common.move_file')}</Text>
                 <Text style={styles.title} numberOfLines={2}>{selectedFiles?.map((file, i) => (i + 1) + ') ' + file.name + ' ')}</Text>
                 <Header location={location} goBack={goBack} />
                 <FlatList
@@ -78,12 +80,12 @@ const CopyMove = () => {
                     renderItem={({ item }) => mode ? <Cloumn item={item} locationEditor={locationEditor} /> : <Row item={item} locationEditor={locationEditor} />}
                 />
                 <View style={styles.button}>
-                    <Button text='Cancel' variant='outlined' callback={cancelHandle} />
+                    <Button text={t('common.cancel')} variant='outlined' callback={cancelHandle} />
                     <View style={styles.gap} />
 
                     {selectedFiles?.length ?
-                        <Button text={order == 1 ? 'Copy' : 'Move'} callback={() => order == 1 ? multiplyCopy(location, setDisabled, closeBottomSheet, setLocation) : multiplyMove(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
-                        : <Button text={order == 1 ? 'Copy' : 'Move'} callback={() => order == 1 ? copySingle(location, setDisabled, closeBottomSheet, setLocation) : moveSingle(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
+                        <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? multiplyCopy(location, setDisabled, closeBottomSheet, setLocation) : multiplyMove(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
+                        : <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? copySingle(location, setDisabled, closeBottomSheet, setLocation) : moveSingle(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
                     }
                 </View>
             </View>

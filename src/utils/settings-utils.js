@@ -1,4 +1,5 @@
 import { closeModal, openModal } from "../reducers/modalReducer";
+import i18n from "../i18n";
 import { setData } from "../reducers/testReducer";
 import { store } from "../store"
 import { addToGroup, copy, createDir, delete_, getFavoritesNames, getFile, move, removeFromGroup, rename } from "./data-transmission-utils"
@@ -101,7 +102,7 @@ export const remove = async () => {
     }
 
     store.dispatch(openModal({
-        content: 'Are you sure you want to remove this file?',
+        content: i18n.t('popups.remove_file'),
         head: selectedFile.name,
         type: 'confirm',
         icon: 'question',
@@ -228,14 +229,14 @@ export const renameFile = async () => {
     if (selectedFile.type === 'folder') {
         store.dispatch(openModal({
             content: selectedFile.name,
-            head: 'Attention',
-            content: 'If you change the folder name, all files added to favorites inside the folder will be removed from favorites and if the file was already in the home screen, then that file will be deleted',
+            head: i18n.t('popups.attention'),
+            content: i18n.t('popups.rename_folder_warning'),
             icon: 'ex',
             type: 'info',
             callback: () => {
                 store.dispatch(openModal({
                     content: selectedFile.name,
-                    head: 'Rename',
+        head: i18n.t('popups.rename'),
                     type: 'input',
                     callback: () => renameFolderCallback(selectedFile)
                 }))
@@ -246,7 +247,7 @@ export const renameFile = async () => {
 
     store.dispatch(openModal({
         content: selectedFile.name,
-        head: 'Rename',
+        head: i18n.t('popups.rename'),
         type: 'input',
         callback: () => renameFileCallback(selectedFile)
     }))
@@ -262,7 +263,7 @@ export const shareFile = async () => {
 
     const { source } = await fileExistsCheck(editedFile);
     if (!source) return store.dispatch(openModal({
-        content: 'File not downloaded. Dou you want to download it?',
+        content: i18n.t('popups.file_not_downloaded'),
         head: editedFile.name,
         type: 'confirm',
         icon: 'check',
@@ -272,7 +273,7 @@ export const shareFile = async () => {
         try {
             await Share.open({
                 url: source,
-                title: `Shareing ${editedFile.name} from Graphene Cloud Explorer`
+                title: i18n.t('popups.sharing_file', { name: editedFile.name })
             });
         }
         catch {
@@ -295,7 +296,7 @@ export const createDirectory = () => {
 
     store.dispatch(openModal({
         content: '',
-        head: 'Create directory',
+        head: i18n.t('popups.create_directory'),
         type: 'input',
         callback: callback
     }))
@@ -307,9 +308,9 @@ export const onlyPick = async (closeBottomSheet) => {
 
     if (!checkStorage) {
         return store.dispatch(openModal({
-            content: 'Make sure your phone has an active internet connection and checking the network.',
+            content: i18n.t('signin.network_failed_desc'),
             type: 'info',
-            head: 'Network connection failed',
+            head: i18n.t('signin.network_failed_head'),
             icon: 'ex',
         }))
     }
@@ -333,9 +334,9 @@ export const onlyPick = async (closeBottomSheet) => {
         const availableStorage = store.getState().profile.totalMemory;
         if (availableStorage != -1 && pickedFile.size > availableStorage) {
             return store.dispatch(openModal({
-                content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
+                content: i18n.t('memory.full_desc'),
                 type: 'info',
-                head: "Graphene Cloud Explorer is full",
+                head: i18n.t('memory.full_head'),
                 icon: 'ex',
             }))
         }
@@ -361,9 +362,9 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
 
     if (!checkStorage) {
         return store.dispatch(openModal({
-            content: 'Make sure your phone has an active internet connection and checking the network.',
+            content: i18n.t('signin.network_failed_desc'),
             type: 'info',
-            head: 'Network connection failed',
+            head: i18n.t('signin.network_failed_head'),
             icon: 'ex',
         }))
     }
@@ -391,9 +392,9 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
 
         if (pickedFiles.length > 15) {
             return store.dispatch(openModal({
-                content: 'The files you select must not be more than 15',
+                content: i18n.t('upload.max_files_desc'),
                 type: 'info',
-                head: 'Failed to picked file',
+                head: i18n.t('upload.max_files_head'),
                 icon: 'ex',
             }))
         }
@@ -401,9 +402,9 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
         const availableStorage = store.getState().profile.totalMemory;
         if (availableStorage != -1 && sumOfFileSize > availableStorage) {
             return store.dispatch(openModal({
-                content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
+                content: i18n.t('memory.full_desc'),
                 type: 'info',
-                head: "Graphene Cloud Explorer is full",
+                head: i18n.t('memory.full_head'),
                 icon: 'ex',
             }))
         }
@@ -595,9 +596,9 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
     if (!storageSize) {
         store.dispatch(closeModal());
         return store.dispatch(openModal({
-            content: 'Make sure your phone has an active internet connection and checking the network.',
+            content: i18n.t('signin.network_failed_desc'),
             type: 'info',
-            head: 'Network connection failed',
+            head: i18n.t('signin.network_failed_head'),
             icon: 'ex',
         }))
     }
@@ -617,17 +618,17 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
 
     if (storageSize != -1 && allSize > storageSize) {
         return store.dispatch(openModal({
-            content: 'Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file.',
+            content: i18n.t('popups.memory_full_desc'),
             type: 'info',
-            head: "Graphene Cloud Explorer is full",
+            head: i18n.t('popups.memory_full_head'),
             icon: 'ex',
         }))
     }
 
     const options = {
-        taskName: 'Files Upload',
-        taskTitle: 'Files upload to cloud',
-        taskDesc: "Don't kill app while upload",
+        taskName: i18n.t('tasks.upload_name'),
+        taskTitle: i18n.t('tasks.upload_title'),
+        taskDesc: i18n.t('tasks.upload_desc'),
         taskIcon: {
             name: 'ic_launcher',
             type: 'mipmap',
@@ -670,9 +671,9 @@ export const startMultiUpload = async (path, closeBottomSheet) => {
 
 
     const options = {
-        taskName: 'Files Upload',
-        taskTitle: 'Files upload to cloud',
-        taskDesc: "Don't kill app while upload",
+        taskName: i18n.t('tasks.upload_name'),
+        taskTitle: i18n.t('tasks.upload_title'),
+        taskDesc: i18n.t('tasks.upload_desc'),
         taskIcon: {
             name: 'ic_launcher',
             type: 'mipmap',

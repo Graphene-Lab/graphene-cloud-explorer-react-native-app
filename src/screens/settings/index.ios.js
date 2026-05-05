@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, Switch, Linking } from 'react-native'
+import { useTranslation } from 'react-i18next';
 import { Layout } from '../../layout'
 import TermsIco from '../../assets/icons/setting/terms.svg'
 import FaqIcon from '../../assets/icons/setting/faq.svg'
@@ -8,6 +9,7 @@ import { styles } from './styles'
 import { getCellularInfoMMKV, setCellularAccessMMKV } from '../../utils/mmkv'
 
 export const SettingsScreen = ({ route, navigation }) => {
+    const { t } = useTranslation();
     const [isEnabled, setIsEnabled] = useState(false);
 
     const redirectToLandingPage = () => {
@@ -40,7 +42,7 @@ export const SettingsScreen = ({ route, navigation }) => {
         <Layout name={route.name} >
             <View style={styles.switchContainer}>
                 <View style={styles.switchView}>
-                    <Text style={styles.switchText}>Use cellular data</Text>
+                    <Text style={styles.switchText}>{t('settings.use_cellular')}</Text>
                     <Switch
                         trackColor={{ false: "rgba(13, 88, 163, 0.2)", true: "#5D82F5" }}
                         thumbColor={isEnabled ? "#FAFAFA" : "#B0C0D0"}
@@ -54,15 +56,15 @@ export const SettingsScreen = ({ route, navigation }) => {
             <View style={styles.listContainer}>
                 <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('TermsAndCondition')}>
                     <TermsIco />
-                    <Text style={styles.touchText}>Terms & Conditions</Text>
+                    <Text style={styles.touchText}>{t('settings.terms_conditions')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('FAQScreen')}>
                     <FaqIcon />
-                    <Text style={styles.touchText}>FAQ</Text>
+                    <Text style={styles.touchText}>{t('settings.faq')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.touchable} onPress={() => redirectToLandingPage()}>
                     <AboutIcon />
-                    <Text style={styles.touchText}>About</Text>
+                    <Text style={styles.touchText}>{t('settings.about')}</Text>
                 </TouchableOpacity>
             </View>
         </Layout>

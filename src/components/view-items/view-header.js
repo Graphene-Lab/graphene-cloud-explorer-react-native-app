@@ -1,4 +1,5 @@
 import { View, Text, Pressable, BackHandler } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { styles } from './styles'
 import GroupIcon from '../../assets/icons/bottomSheet/group.svg'
 import UnitIcon from '../../assets/icons/bottomSheet/unit.svg'
@@ -18,6 +19,7 @@ import { microsoftFamily } from '../pop-up/styles';
 const microsoftDocs = ["doc", "docx", "rtf", "xls", "xlsx", "ppt", "pptx", "mpp", "accdb", "pub"];
 
 export const ViewItemHeader = ({ contentSetter, content }) => {
+    const { t } = useTranslation();
     const { name } = useRoute();
     const navigation = useNavigation();
     const dispatch = useDispatch()
@@ -62,12 +64,12 @@ export const ViewItemHeader = ({ contentSetter, content }) => {
             let [currnet, last] = [locationName.split('/').slice(-1), locationName.split('/').reverse()[1]];
             return `.../${last}/${currnet}`
         }
-        else if (!locationName.length && name === "CloudScreen") return 'Your files'
+        else if (!locationName.length && name === "CloudScreen") return t('header.your_files')
         else if (name === 'CloudScreen' && location?.length > 0) return locationName;
-        else if (name === 'FavoriteScreen') return 'Favorites'
-        else if (name === 'MediaScreen') return 'Media files'
-        else if (name === 'HomeScreen' && !tagsArray.length) return 'Recent files';
-        else if (name === 'HomeScreen' && tagsArray.length >= 1) return 'Search by tags';
+        else if (name === 'FavoriteScreen') return t('header.favorites')
+        else if (name === 'MediaScreen') return t('header.media_files')
+        else if (name === 'HomeScreen' && !tagsArray.length) return t('header.recent_files');
+        else if (name === 'HomeScreen' && tagsArray.length >= 1) return t('header.search_tags');
     }, [tagsArray])
 
     const tagDataFromModal = (td, order) => {

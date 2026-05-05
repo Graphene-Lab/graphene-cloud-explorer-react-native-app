@@ -1,4 +1,5 @@
 import { View, Text, Modal, TouchableOpacity, TouchableWithoutFeedback } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { lazy } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Suspense } from 'react';
@@ -21,7 +22,7 @@ const modalTypes = {
 }
 
 export const ModalBox = () => {
-
+    const { t } = useTranslation();
     const { visible, type, overlayColor } = useSelector(state => state.modalController);
     const dispatch = useDispatch();
     const modalTypeFinder = (type) => {
@@ -40,7 +41,7 @@ export const ModalBox = () => {
     }
 
     return (
-        <Suspense fallback={<Text>Waiting...</Text>}>
+        <Suspense fallback={<Text>{t('common.loading')}</Text>}>
             <Modal
                 animationType="fade"
                 transparent
@@ -59,4 +60,3 @@ export const ModalBox = () => {
         </Suspense>
     )
 }
-

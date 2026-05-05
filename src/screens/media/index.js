@@ -1,4 +1,5 @@
 import { Layout } from '../../layout'
+import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import ViewItems from '../../components/view-items'
 import { getAllImages } from '../../utils/essential-functions'
@@ -12,6 +13,7 @@ import { getCellularInfoMMKV } from '../../utils/mmkv'
 import { openModal } from '../../reducers/modalReducer'
 
 const MediaScreen = ({ route, navigation }) => {
+    const { t } = useTranslation();
 
     const dispatch = useDispatch()
     const [content, setContent] = useState([]);
@@ -55,8 +57,8 @@ const MediaScreen = ({ route, navigation }) => {
         if (type === 'wifi' || isToggled) return bottomSheetController(1);
 
         dispatch(openModal({
-            content: 'Cellular data usage is off. Are you sure you want to use cellular data for this action?',
-            head: "You use cellular connection",
+            content: t('cellular.off_desc'),
+            head: t('cellular.head'),
             type: 'confirm',
             icon: 'ex',
             callback: () => bottomSheetController(1)

@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import QRIcon from '../../assets/icons/qr.svg';
 import { Button } from '../../components/button';
@@ -16,6 +17,7 @@ import { reportCrash } from '../../utils/crashlytics-utils';
 
 
 export const SignInScreen = ({ navigation: { navigate }, route }) => {
+  const { t } = useTranslation();
 
 
   const { connection } = useSelector((state) => state.network);
@@ -25,9 +27,9 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
     if (connection === false) {
       dispatch(
         openModal({
-          content: 'Make sure your phone has an active internet connection and checking the network.',
+          content: t('signin.network_failed_desc'),
           type: 'info',
-          head: 'Network connection failed',
+          head: t('signin.network_failed_head'),
           icon: 'ex',
         })
       );
@@ -58,30 +60,30 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
       <View style={styles.container}>
         <View>
           <CustomText size={30} color="#22215B">
-            Welcome!
+            {t('signin.welcome')}
           </CustomText>
           <CustomText custom={{ marginTop: 20 }}>
-            To connect your app to the Graphene Cloud Explorer device, scan the QR code that you can find on
-            the instruction paper in the box. Then enter a 6-digit verification code to log in to
-            your account.
+            {t('signin.description')}
+
+
           </CustomText>
         </View>
         <QRIcon />
         <View style={styles.buttonsGroup}>
           <View style={styles.buttonView}>
-            <Button text="Open camera" callback={() => navigate('QRScreen')} />
-            <Text style={{ alignSelf: 'center' }}>or</Text>
-            <Button text="Enter QR code manually" callback={() => navigate('SingInViaTextScreen')} />
+            <Button text={t('signin.open_camera')} callback={() => navigate('QRScreen')} />
+            <Text style={{ alignSelf: 'center' }}>{t('signin.or')}</Text>
+            <Button text={t('signin.enter_qr_manually')} callback={() => navigate('SingInViaTextScreen')} />
             
             {/* <TouchableOpacity onPress={singInCredentials}>
-              <Text style={{ alignSelf: 'center' }}>Sing in with Credentials</Text>
+              <Text style={{ alignSelf: 'center' }}>{t('signin.credentials')}</Text>
             </TouchableOpacity> */}
           </View>
           <View style={styles.buttonView}>
-            {/* <CustomText color="#000">New to Graphene Cloud Explorer?</CustomText>
+            <CustomText color="#000">{t('signin.new_to')}</CustomText>
             <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
-              <Text style={styles.viewGuideText}>View Guide</Text>
-            </TouchableOpacity> */}
+              <Text style={styles.viewGuideText}>{t('signin.view_guide')}</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>

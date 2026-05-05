@@ -1,5 +1,6 @@
 /* eslint-disable semi */
 import { store } from '../store';
+import i18n from '../i18n';
 import axios from "axios"
 import { closeModal, openModal } from '../reducers/modalReducer';
 import { DeviceEventEmitter } from 'react-native';
@@ -19,10 +20,10 @@ export const checkAvailableDeviceUpdate = async (qr) => {
             setDeviceUpdateInfoMMKV(false);
             dispatch(openModal({
                 type: 'update',
-                head: 'Update Available',
+                head: i18n.t('updates.available_head'),
                 icon: 'check',
                 pending: false,
-                content: 'There is a new update for Graphene Cloud Explorer, please update the system'
+                content: i18n.t('updates.available_desc')
             }))
         }
         if (res.data == 'APPROVED' || res.data == 'UPDATING') {
@@ -30,10 +31,10 @@ export const checkAvailableDeviceUpdate = async (qr) => {
             updateListener()
             dispatch(openModal({
                 type: 'update',
-                head: 'Update Available',
+                head: i18n.t('updates.available_head'),
                 icon: 'check',
                 pending: true,
-                content: 'There is a new update for Graphene Cloud Explorer, please update the system'
+                content: i18n.t('updates.available_desc')
             }))
         }
 
@@ -41,9 +42,9 @@ export const checkAvailableDeviceUpdate = async (qr) => {
             setDeviceUpdateInfoMMKV(true);
             dispatch(openModal({
                 type: 'info',
-                head: 'Cloud updated successfully',
+                head: i18n.t('updates.success_head'),
                 icon: 'check',
-                content: 'After the device is updated, you will need to log in to your user profile again.',
+                content: i18n.t('updates.success_desc'),
             }))
             DeviceEventEmitter.emit('spoolerCleaner');
             return DeviceEventEmitter.emit('logOut');
@@ -72,9 +73,9 @@ export const updateListener = async (data) => {
         url = null;
         dispatch(openModal({
             type: 'info',
-            head: 'Cloud updated successfully',
+            head: i18n.t('updates.success_head'),
             icon: 'check',
-            content: 'After the device is updated, you will need to log in to your user profile again.',
+            content: i18n.t('updates.success_desc'),
         }))
         DeviceEventEmitter.emit('spoolerCleaner');
         return DeviceEventEmitter.emit('logOut');
@@ -82,11 +83,11 @@ export const updateListener = async (data) => {
         dispatch(closeModal());
         dispatch(openModal({
             type: 'update',
-            head: 'Something went wrong',
+            head: i18n.t('updates.failed_head'),
             icon: 'ex',
             pending: false,
-            content: 'An error occurred during cloud upload, please try again',
-            buttonText: 'Try again'
+            content: i18n.t('updates.failed_desc'),
+            buttonText: i18n.t('updates.try_again')
         }))
         return
     }

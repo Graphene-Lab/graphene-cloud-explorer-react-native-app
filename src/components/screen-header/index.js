@@ -1,4 +1,5 @@
 import { TouchableOpacity, View } from "react-native"
+import { useTranslation } from "react-i18next"
 import ScanIcon from "../../assets/icons/profile/scan.svg"
 import SettingsIcon from "../../assets/icons/profile/setting.svg"
 import BackIcon from "../../assets/icons/profile/back.svg"
@@ -12,98 +13,91 @@ import { openModal } from "../../reducers/modalReducer"
 
 
 
-const cons = {
-    'HomeScreen': {
-        display: 'flex',
-        title: 'Dashboard'
-
-    },
-    'CloudScreen': {
-        title: 'Graphene Cloud Explorer',
-        display: 'flex',
-        leftItem: <MoreIcon />,
-        leftItemPress: (nav) => nav.bottomSheetController(0)
-    },
-    'FavoriteScreen': {
-        title: 'Favorites',
-        display: 'flex',
-    },
-    'MediaScreen': {
-        title: 'Images',
-        display: 'flex',
-    },
-    'ProfileScreen': {
-        title: 'Account',
-        display: 'flex',
-        leftItem: <SettingsIcon />,
-
-        leftItemPress: (nav) => nav.navigate("SettingsScreen")
-    },
-    'Details': {
-        title: 'Details',
-        display: 'flex',
-        leftItem: <BackIcon />,
-    },
-    'QRScreen': {
-        title: 'Scan QR code',
-        display: 'flex',
-        rightItem: <BackIcon />,
-        rightItemPress: (nav) => nav.pop(),
-    },
-    'SignInScreen': {
-        display: 'none'
-    },
-    UpdateScreen: {
-        title: 'Upload Progress',
-        display: 'flex',
-        rightItem: <BackIcon />,
-        rightItemPress: (nav) => nav.pop()
-    },
-    SettingsScreen: {
-        title: 'Settings',
-        display: 'flex',
-        rightItem: <BackIcon />,
-        leftItem: <ScanIcon />,
-        leftItemPress: (nav) => store.dispatch(openModal({
-            head: 'Connect New Cloud-Services Device',
-            content: 'If you want connect new device, your will be disconnected from current device',
-            type: 'confirm',
-            icon: 'qr',
-            buttonText: 'Continue',
-            callback: async () => {
-                nav.navigate("QRScreen");
-            }
-        })),
-        rightItemPress: (nav) => nav.pop(),
-    },
-
-    FAQScreen: {
-        display: 'flex',
-        title: 'FAQ',
-        rightItem: <BackIcon />,
-        rightItemPress: (nav) => nav.pop(),
-    },
-    TermsAndCondition: {
-        display: 'flex',
-        title: 'Terms & Conditions',
-        rightItem: <BackIcon />,
-        rightItemPress: (nav) => nav.pop(),
-    },
-    'PaymentScreen': {
-        title: 'Payment',
-        display: 'flex',
-    },
-    // DetailsScreen: {
-    //     display: 'flex',
-    //     title: 'Details',
-    //     rightItem: <BackIcon />,
-    //     rightItemPress: (nav) => nav.pop(),
-    // }
-}
-
 export const ScreenHeader = ({ name }) => {
+    const { t } = useTranslation();
     const navigation = useNavigation()
     const { bottomSheetController } = useContextApi()
+
+    const cons = {
+        'HomeScreen': {
+            display: 'flex',
+            title: t('screens.dashboard')
+        },
+        'CloudScreen': {
+            title: t('screens.explorer'),
+            display: 'flex',
+            leftItem: <MoreIcon />,
+            leftItemPress: (nav) => nav.bottomSheetController(0)
+        },
+        'FavoriteScreen': {
+            title: t('screens.favorites'),
+            display: 'flex',
+        },
+        'MediaScreen': {
+            title: t('screens.images'),
+            display: 'flex',
+        },
+        'ProfileScreen': {
+            title: t('screens.account'),
+            display: 'flex',
+            leftItem: <SettingsIcon />,
+            leftItemPress: (nav) => nav.navigate("SettingsScreen")
+        },
+        'Details': {
+            title: t('screens.details'),
+            display: 'flex',
+            leftItem: <BackIcon />,
+        },
+        'QRScreen': {
+            title: t('screens.scan_qr'),
+            display: 'flex',
+            rightItem: <BackIcon />,
+            rightItemPress: (nav) => nav.pop(),
+        },
+        'SignInScreen': {
+            display: 'none'
+        },
+        UpdateScreen: {
+            title: t('screens.upload_progress'),
+            display: 'flex',
+            rightItem: <BackIcon />,
+            rightItemPress: (nav) => nav.pop()
+        },
+        SettingsScreen: {
+            title: t('screens.settings'),
+            display: 'flex',
+            rightItem: <BackIcon />,
+            leftItem: <ScanIcon />,
+            leftItemPress: (nav) => store.dispatch(openModal({
+                head: t('popups.connect_new_device_head'),
+                content: t('popups.connect_new_device_desc'),
+                type: 'confirm',
+                icon: 'qr',
+                buttonText: t('popups.continue'),
+                callback: async () => {
+                    nav.navigate("QRScreen");
+                }
+            })),
+            rightItemPress: (nav) => nav.pop(),
+        },
+        FAQScreen: {
+            display: 'flex',
+            title: t('screens.faq'),
+            rightItem: <BackIcon />,
+            rightItemPress: (nav) => nav.pop(),
+        },
+        TermsAndCondition: {
+            display: 'flex',
+            title: t('screens.terms_conditions'),
+            rightItem: <BackIcon />,
+            rightItemPress: (nav) => nav.pop(),
+        },
+        'PaymentScreen': {
+            title: t('screens.payment'),
+            display: 'flex',
+        },
+    }
+
     navigation.bottomSheetController = bottomSheetController;
     return (
         <View style={[{}, styles.container]}>

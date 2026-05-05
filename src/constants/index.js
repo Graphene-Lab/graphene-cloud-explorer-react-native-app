@@ -60,20 +60,20 @@ export const existsTypes = ['image', 'audio', 'video'];
 
 export const faqs = [
     {
-        header: "Who are we?",
-        text: 'Our platform has many competitive advantages. We provide a user-friendly interface to explore and manage your files.'
+        header: "faqs.q1",
+        text: 'faqs.a1'
     },
     {
-        header: 'What is Graphene Cloud Explorer?',
-        text: 'Lorem, ipsum dolor sit amet consectetur adipisicing elit. Unde id eligendi porro excepturi ipsa debitis cum facilis possimus quos necessitatibus placeat dolore nostrum esse aliquid sunt corrupti voluptates autem maiores voluptatum culpa hic neque, qui molestiae? A saepe blanditiis quasi accusantium porro earum in magnam, tenetur, itaque laudantium deserunt harum!'
+        header: 'faqs.q2',
+        text: 'faqs.a2'
     },
     {
-        header: 'How to use Graphene Cloud Explorer?',
-        text: 'Your physical wallet probably contains your money, a form of ID, and maybe pictures of your loved ones.'
+        header: 'faqs.q3',
+        text: 'faqs.a3'
     },
     {
-        header: 'How can I upgrade my storage?',
-        text: 'Your physical wallet probably contains your money, a form of ID, and maybe pictures of your loved ones.'
+        header: 'faqs.q4',
+        text: 'faqs.a4'
     },
 ];
 
@@ -90,27 +90,27 @@ export const spacesCommands = {
 
 export const ONBOARDING_DATA = [
     {
-        title: 'Turn on Graphene Cloud Explorer',
+        title: 'onboarding.title1',
         svg: 1,
         description:
-            'To turn your Cloud-Services device, plug on end of a Type-C Cable into your Cloud-Services device, and the other end plug into the power adapter into a wall outlet.',
+            'onboarding.desc1',
     },
     {
-        title: 'Connect to the Internet',
+        title: 'onboarding.title2',
         svg: 2,
         description:
-            'Plug one end of an Ethernet cable into the Ethernet port on your WiFi router, the another end plug  into the Ethernet port of Cloud-Services',
+            'onboarding.desc2',
     },
     {
-        title: 'Connect app with the device',
+        title: 'onboarding.title3',
         svg: 3,
         description:
-            'Find the instruction document in the package box. To connect app to Cloud-Services box, you need to do the following steps: \n \n 1. Scan QR Code \n \n 2. Then enter 6-digit secure code',
+            'onboarding.desc3',
     },
     {
-        title: 'Manage your files',
+        title: 'onboarding.title4',
         description:
-            'Save your files and media to Cloud-Services and access them from any device, anywhere.',
+            'onboarding.desc4',
         svg: 4,
     },
 ];

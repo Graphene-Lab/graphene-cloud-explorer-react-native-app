@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import FolderIcon from '../../assets/icons/noContent/cloud.svg'
 
 export const EmptyComponentHome = () => {
+    const { t } = useTranslation();
     return (
         <View style={styles.container}>
             <FolderIcon />
-            <Text style={styles.text} > No files to show</Text>
+            <Text style={styles.text} > {t('common.no_files')}</Text>
         </View >
     )
 }

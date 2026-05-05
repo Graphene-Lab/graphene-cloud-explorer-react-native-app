@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../../button'
 import { styles } from './styles'
 import { useDispatch, useSelector } from 'react-redux'
@@ -22,6 +23,7 @@ const CELL_COUNT = 6;
 
 
 export const PasswordModal = ({ barcode, setScanned, cancel }) => {
+    const { t } = useTranslation();
 
     const [value, setValue] = useState('');
     // const [wait, setWait] = useState(false);
@@ -47,9 +49,9 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
         if (connection === false) {
             dispatch(setAuthWait(false));
             return dispatch(openModal({
-                content: 'Make sure your phone has an active internet connection and checking the network.',
+                content: t('signin.network_failed_desc'),
                 type: 'info',
-                head: 'Network connection failed',
+                head: t('signin.network_failed_head'),
                 icon: 'ex',
             }))
         }
@@ -77,9 +79,9 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
             if (isNetworkReachabilityError(error)) {
                 setError(false);
                 return dispatch(openModal({
-                    content: buildReachabilityMessage(proxy),
+                    content: buildReachabilityMessage(proxy, t),
                     type: 'info',
-                    head: 'Server unreachable',
+                    head: t('signin.server_unreachable'),
                     icon: 'ex',
                 }))
             }
@@ -103,7 +105,7 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
             <View style={styles.loadingRoot}>
                 <ActivityIndicator color="#415EB6" size='large' />
                 <Text style={styles.loadingText}>
-                    Please wait. We are initializing your key and connecting to the cloud.
+                    {t('signin.initializing_key')}
                 </Text>
             </View>
         );
@@ -114,14 +116,14 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
             {
                 error ? <View style={styles.errorContainer}>
                     <MarkIcon />
-                    <Text style={styles.errorText}>The password or QR is incorrect, please try again</Text>
+                    <Text style={styles.errorText}>{t('signin.incorrect_credentials')}</Text>
                     <View style={{ width: '100%', height: 50 }}>
-                        <Button text="Try again" callback={errorHandler} wait={wait} />
+                        <Button text={t('signin.try_again')} callback={errorHandler} wait={wait} />
                     </View>
 
                 </View> :
                     <View style={styles.view}>
-                        <Text style={styles.text}>Enter pin</Text>
+                        <Text style={styles.text}>{t('signin.enter_pin')}</Text>
                         <CodeField
                             ref={ref}
                             value={value}
@@ -140,9 +142,9 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
                             )}
                         />
                         <View style={styles.buttonsGroup}>
-                            <Button text="Cancel" variant='outlined' callback={cancel} />
+                            <Button text={t('signin.cancel')} variant='outlined' callback={cancel} />
                             <View style={styles.gap}></View>
-                            <Button text="Ok" disabled={wait || error || value.length != CELL_COUNT} callback={() => handleLogIn()} wait={wait} />
+                            <Button text={t('signin.ok')} disabled={wait || error || value.length != CELL_COUNT} callback={() => handleLogIn()} wait={wait} />
                         </View>
                     </View>
             }
@@ -161,12 +163,12 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
         );
     }
 
-    const buildReachabilityMessage = (targetProxy) => {
+    const buildReachabilityMessage = (targetProxy, t) => {
         if (!targetProxy) {
-            return 'Unable to reach the server. Make sure the proxy server is running and reachable from the phone.';
+            return t('signin.reachability_message');
         }
         if (targetProxy.includes('127.0.0.1') || targetProxy.includes('localhost')) {
-            return `Unable to reach ${targetProxy}. On a physical device, 127.0.0.1 or localhost points to the phone itself, not your PC or Cloud Box.`;
+            return t('signin.reachability_localhost', { targetProxy });
         }
-        return `Unable to reach ${targetProxy}. Make sure the proxy server is running and reachable from the phone.`;
+        return t('signin.reachability_message');
     }

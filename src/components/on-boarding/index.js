@@ -2,6 +2,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useRef, useState } from 'react'
 import { View, FlatList, Animated, SafeAreaView } from 'react-native'
+import { useTranslation } from 'react-i18next';
 import { ONBOARDING_DATA } from '../../constants';
 import { useContextApi } from '../../context/ContextApi';
 import { setGuideMMKV } from '../../utils/mmkv';
@@ -12,6 +13,7 @@ import { onBoardingStyles as styles } from './styles';
 import { getGuideMMKV } from '../../utils/mmkv';
 
 const OnBoarding = () => {
+    const { t } = useTranslation();
 
     const scrollX = useRef(new Animated.Value(0)).current
     const slidersRef = useRef(null);
@@ -68,7 +70,7 @@ const OnBoarding = () => {
             <View>
                 <Indicator currentIndex={activeIndex} />
                 <View style={styles.buttonWrapper}>
-                    <Button text='Next' callback={nextButtonHandler} />
+                    <Button text={t('common.next')} callback={nextButtonHandler} />
                 </View>
             </View>
         </SafeAreaView >

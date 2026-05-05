@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Button } from '../../components/button';
 import { Alert } from 'react-native';
 import { useStripe } from '@stripe/stripe-react-native';
@@ -9,26 +10,25 @@ import { paymentApiClient } from '../../utils/apiClient';
 import { ROUTES } from '../../navigation/types';
 import { reportCrash } from '../../utils/crashlytics-utils';
 
-const PLANS = {
-    STANDARD: {
-        name: 'Standard Plan',
-        price: '$1/month',
-        features: [
-            '100 GB Storage',
-        ]
-    },
-    PREMIUM: {
-        name: 'Premium Plan',
-        price: '$2/month',
-        features: [
-            '300 GB Storage',
-        ]
-    }
-};
-
-
-
 export default function PaymentScreen ({ route, navigation }) {
+    const { t } = useTranslation();
+
+    const PLANS = {
+        STANDARD: {
+            name: t('payment.standard_plan'),
+            price: t('payment.price_month', { price: '$1' }),
+            features: [
+                t('payment.storage_100gb'),
+            ]
+        },
+        PREMIUM: {
+            name: t('payment.premium_plan'),
+            price: t('payment.price_month', { price: '$2' }),
+            features: [
+                t('payment.storage_300gb'),
+            ]
+        }
+    };
     const { initPaymentSheet, presentPaymentSheet } = useStripe();
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function PaymentScreen ({ route, navigation }) {
     const initializePaymentSheet = async (clientSecret) => {
         const { error } = await initPaymentSheet({
             paymentIntentClientSecret: clientSecret,
-            merchantDisplayName: 'Your App Name',
+            merchantDisplayName: 'Graphene Cloud',
         });
         
         if (error) {
@@ -52,7 +52,7 @@ export default function PaymentScreen ({ route, navigation }) {
                 screen: 'PaymentScreen',
                 flow: 'initializePaymentSheet',
             });
-            Alert.alert('Error', 'Unable to initialize payment');
+            Alert.alert(t('payment.error'), t('payment.init_failed'));
         }
     };
 
@@ -81,7 +81,7 @@ export default function PaymentScreen ({ route, navigation }) {
                 flow: 'fetchPaymentIntent',
                 planName,
             });
-            Alert.alert('Error', 'Unable to initiate payment');
+            Alert.alert(t('payment.error'), t('payment.initiate_failed'));
         } finally {
             setIsLoading(false);
         }
@@ -101,18 +101,18 @@ export default function PaymentScreen ({ route, navigation }) {
                     flow: 'openPaymentSheet',
                     planName: selectedPlan,
                 });
-                Alert.alert(`Payment failed: ${error.message}`);
+                Alert.alert(`${t('payment.error')}: ${error.message}`);
                 setClientSecrets(prev => ({
                     ...prev,
                     [selectedPlan]: null
                 }));
             } else {
                 Alert.alert(
-                    'Success',
-                    'Your subscription has been activated!',
+                    t('payment.success'),
+                    t('payment.activated'),
                     [
                         {
-                            text: 'OK',
+                            text: t('payment.ok'),
                             onPress: () => {
                                 setClientSecrets({
                                     STANDARD: null,
@@ -130,14 +130,14 @@ export default function PaymentScreen ({ route, navigation }) {
                 flow: 'openPaymentSheetException',
                 planName: selectedPlan,
             });
-            Alert.alert('Error', 'Unable to present payment sheet');
+            Alert.alert(t('payment.error'), t('payment.present_failed'));
         }
     };
 
     const getButtonText = () => {
-        if (isLoading) return "Please wait...";
-        if (!selectedPlan) return "Select a Plan";
-        return "Subscribe Now";
+        if (isLoading) return t('payment.please_wait');
+        if (!selectedPlan) return t('payment.select_plan');
+        return t('payment.subscribe_now');
     };
 
     const PlanCard = ({ plan, planKey }) => (
@@ -161,7 +161,7 @@ export default function PaymentScreen ({ route, navigation }) {
     return (
         <Layout name={route.name}>
             <View style={styles.container}>
-                <Text style={styles.header}>Choose Your Plan</Text>
+                <Text style={styles.header}>{t('payment.choose_plan')}</Text>
                 <PlanCard plan={PLANS.STANDARD} planKey="STANDARD" />
                 <PlanCard plan={PLANS.PREMIUM} planKey="PREMIUM" />
                 <View style={styles.buttonContainer}>

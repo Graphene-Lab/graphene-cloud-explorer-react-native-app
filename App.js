@@ -10,6 +10,7 @@ import { store } from './src/store';
 import * as SplashScreen from 'expo-splash-screen';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import './src/i18n';
 
 SplashScreen.preventAutoHideAsync();
 

@@ -22,6 +22,7 @@ import { store } from '../store';
 import { decryptXorAB, hash256 } from './encryption-utils';
 import { command, chunkSize, thumbnailSize } from '../constants';
 import axios from 'axios';
+import i18n from '../i18n';
 import { setFavoritesList } from '../reducers/fileReducer';
 import { closeModal, openModal, setWait } from '../reducers/modalReducer';
 import { setOccupiedSpace } from '../reducers/filesInfoReducer';
@@ -451,8 +452,8 @@ async function skipZeroKnowledgeSetup() {
 function showAuthenticationSuccess() {
   store.dispatch(
     openModal({
-      content: 'You successfully authenticated your account',
-      head: 'Successful',
+      content: i18n.t('signin.auth_success_desc'),
+      head: i18n.t('signin.auth_success_head'),
       type: 'info',
       icon: 'qr',
     })
@@ -468,16 +469,15 @@ function promptZeroKnowledgeSetupIfNeeded() {
 
   store.dispatch(
     openModal({
-      head: 'Zero-knowledge encryption',
-      content:
-        'Enter your desktop 12-word passphrase to enable encrypted file names and contents. Tap Skip if desktop zero-knowledge was never enabled.',
+      head: i18n.t('zeroknowledge.head'),
+      content: i18n.t('zeroknowledge.passphrase_desc'),
       type: 'confirm',
       icon: 'question',
-      buttonText: 'Enter phrase',
+      buttonText: i18n.t('zeroknowledge.enter_phrase'),
       callback: () => {
         store.dispatch(
           openModal({
-            head: 'Enter passphrase',
+            head: i18n.t('zeroknowledge.enter_passphrase'),
             content: '',
             type: 'input',
             callback: async () => {
@@ -487,8 +487,8 @@ function promptZeroKnowledgeSetupIfNeeded() {
                 store.dispatch(closeModal());
                 store.dispatch(
                   openModal({
-                    head: 'Zero-knowledge enabled',
-                    content: 'Passphrase accepted. File names and file bytes will now use zero-knowledge mode.',
+                    head: i18n.t('zeroknowledge.enabled_head'),
+                    content: i18n.t('zeroknowledge.enabled_desc'),
                     type: 'info',
                     icon: 'check',
                   })
@@ -497,9 +497,8 @@ function promptZeroKnowledgeSetupIfNeeded() {
                 store.dispatch(setWait(false));
                 store.dispatch(
                   openModal({
-                    head: 'Passphrase error',
-                    content:
-                      'The passphrase could not be processed. Enter the same desktop passphrase or tap Skip in the previous step.',
+                    head: i18n.t('zeroknowledge.error_head'),
+                    content: i18n.t('zeroknowledge.error_desc'),
                     type: 'info',
                     icon: 'ex',
                   })
@@ -526,21 +525,20 @@ export function ensureZeroKnowledgeReadyForAuthentication() {
   return new Promise((resolve) => {
     store.dispatch(
       openModal({
-        head: 'Zero-knowledge encryption',
-        content:
-          'Enter your desktop 12-word passphrase before authentication if this cloud uses zero-knowledge encryption. Tap Skip if this cloud was not created with zero-knowledge encryption.',
+        head: i18n.t('zeroknowledge.head'),
+        content: i18n.t('zeroknowledge.passphrase_desc_auth'),
         type: 'confirm',
         icon: 'question',
-        buttonText: 'Enter phrase',
-        cancelButtonText: 'Skip',
+        buttonText: i18n.t('zeroknowledge.enter_phrase'),
+        cancelButtonText: i18n.t('zeroknowledge.skip'),
         overlayColor: '#F5F7FB',
         callback: () => {
           store.dispatch(
             openModal({
-              head: 'Enter passphrase',
+              head: i18n.t('zeroknowledge.enter_passphrase'),
               content: '',
               type: 'input',
-              cancelButtonText: 'Skip',
+              cancelButtonText: i18n.t('zeroknowledge.skip'),
               overlayColor: '#F5F7FB',
               cancelCallback: async () => {
                 await skipZeroKnowledgeSetup();
@@ -559,9 +557,8 @@ export function ensureZeroKnowledgeReadyForAuthentication() {
                   store.dispatch(setWait(false));
                   store.dispatch(
                     openModal({
-                      head: 'Passphrase error',
-                      content:
-                        'The passphrase could not be processed. Retry sign-in and enter the same desktop passphrase, or use Skip if this cloud does not use zero-knowledge encryption.',
+                      head: i18n.t('zeroknowledge.error_head'),
+                      content: i18n.t('zeroknowledge.error_desc_auth'),
                       type: 'info',
                       icon: 'ex',
                       callback: async () => {
@@ -718,10 +715,10 @@ async function spoolingRequest() {
             : setTimeout(() => {
               store.dispatch(
                 openModal({
-                  head: 'Pay attention',
-                  content: 'Your internet connection is slow. Would you like to retry?',
+                  head: i18n.t('popups.pay_attention'),
+                  content: i18n.t('popups.slow_internet'),
                   type: 'confirm',
-                  buttonText: 'Retry',
+                  buttonText: i18n.t('common.retry'),
                   icon: 'ex',
                   callback: () => {
                     logRequestMarker('retry', commandId, 'slow-internet modal');
@@ -780,10 +777,10 @@ async function spoolingRequest() {
             ? null
             : setTimeout(() => {
               store.dispatch(openModal({
-                head: 'Pay attention',
-                content: 'Your internet connection is slow. Would you like to retry?',
+                head: i18n.t('popups.pay_attention'),
+                content: i18n.t('popups.slow_internet'),
                 type: 'confirm',
-                buttonText: 'Retry',
+                buttonText: i18n.t('common.retry'),
                 icon: 'ex',
                 callback: () => {
                   logRequestMarker('retry', commandId, 'slow-internet modal');
@@ -827,11 +824,10 @@ async function spoolingRequest() {
             if (shouldHandleAsFailure) {
               store.dispatch(
                 openModal({
-                  head: 'Pay attention',
-                  content:
-                    'There was a problem connect to Uup-Cloud. Please try again and make sure the Cloud Box or mobile phone is connected to the Internet.',
-                  type: 'info',
-                  icon: 'ex',
+                head: i18n.t('popups.pay_attention'),
+                content: i18n.t('popups.connection_problem'),
+                type: 'info',
+                icon: 'ex',
                 })
               );
             }
@@ -854,10 +850,10 @@ async function spoolingRequest() {
             ? null
             : setTimeout(() => {
               store.dispatch(openModal({
-                head: 'Pay attention',
-                content: 'Your internet connection is slow. Would you like to retry?',
+                head: i18n.t('popups.pay_attention'),
+                content: i18n.t('popups.slow_internet'),
                 type: 'confirm',
-                buttonText: 'Retry',
+                buttonText: i18n.t('common.retry'),
                 icon: 'ex',
                 callback: () => {
                   logRequestMarker('retry', commandId, 'slow-internet modal');
@@ -969,12 +965,12 @@ async function spoolingRequest() {
                   }
                   store.dispatch(
                     openModal({
-                      head: 'Failed to connect',
-                      content:
-                        commandId === command.Authentication
-                          ? 'Authentication did not complete. The PIN proof or zero-knowledge checksum may not match what the server expects.'
-                          : 'Please try again and make sure the Cloud Box or device is connected to the Internet and Cloud Box working correctly.',
-                      type: 'confirm',
+                    head: i18n.t('popups.failed_to_connect'),
+                    content:
+                      commandId === command.Authentication
+                        ? i18n.t('popups.auth_failed_desc')
+                        : i18n.t('popups.device_connection_failed'),
+                    type: 'confirm',
                       callback: () => {
                         DeviceEventEmitter.emit('spoolerCleaner');
                         store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
@@ -1181,7 +1177,7 @@ export async function downloadArrayBuffer(fileName, bytes, isShare) {
     navigator
       .share({
         files: filesArray,
-        title: 'Share file',
+        title: i18n.t('common.share_file'),
         text: fileName,
       })
       .then(() => console.log('Share was successful.'))
@@ -1290,8 +1286,8 @@ export const onCommandResponse = {
       // console.log(error);
       store.dispatch(
         openModal({
-          content: 'Wrong pin',
-          head: 'Error',
+          content: i18n.t('popups.wrong_pin'),
+          head: i18n.t('common.error'),
           type: 'info',
           icon: 'qr',
           callback: async () => { },

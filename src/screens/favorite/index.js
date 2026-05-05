@@ -1,4 +1,5 @@
 import { FAB } from 'react-native-paper'
+import { useTranslation } from 'react-i18next'
 import { useDispatch, useSelector } from 'react-redux'
 import ViewItems from '../../components/view-items'
 import { Layout } from '../../layout'
@@ -14,6 +15,7 @@ import { openModal } from '../../reducers/modalReducer'
 
 
 const FavoriteScreen = ({ route, navigation }) => {
+    const { t } = useTranslation();
 
     const dispatch = useDispatch()
     const { favoritesContent } = useSelector(state => state.files)
@@ -57,8 +59,8 @@ const FavoriteScreen = ({ route, navigation }) => {
         if (type === 'wifi' || isToggled) return bottomSheetController(1);
 
         dispatch(openModal({
-            content: 'Cellular data usage is off. Are you sure you want to use cellular data for this action?',
-            head: "You use cellular connection",
+            content: t('cellular.off_desc'),
+            head: t('cellular.head'),
             type: 'confirm',
             icon: 'ex',
             callback: () => bottomSheetController(1)

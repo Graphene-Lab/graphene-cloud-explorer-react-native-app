@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { Dimensions, StyleSheet, Text, View } from "react-native"
+import { useTranslation } from "react-i18next"
 import { ActivityIndicator } from "react-native-paper"
 import { getDir } from "../../../../utils/data-transmission-utils"
 import { parseDateTime } from "../../../../utils/essential-functions"
@@ -13,6 +14,7 @@ import { FlatList } from "react-native-gesture-handler"
 import { useSelector } from "react-redux"
 
 export const CloudChild = () => {
+    const { t } = useTranslation();
     const [content, setContent] = useState([])
     const { current } = useSelector(state => state.bottomSheetManager)
     const parentLocation = useSelector(store => store.files.location);
@@ -63,7 +65,7 @@ export const CloudChild = () => {
     return (
         <View style={styles.container}>
             {wait && <ActivityIndicator color="#415EB6" style={styles.indicators} />}
-            <Text style={styles.text}>Where do you want to save upload the file?</Text>
+            <Text style={styles.text}>{t('options.save_upload_where')}</Text>
             <Header location={location} goBack={goBack} />
 
             <FlatList
@@ -75,7 +77,7 @@ export const CloudChild = () => {
                 renderItem={({ item }) => <ColumnForUpload item={item} locationEditor={locationEditor} location={location} />}
             />
             <View style={styles.button}>
-                <Button text='Choose' callback={() => startMultiUpload(location, closeBottomSheet)} />
+                <Button text={t('options.choose')} callback={() => startMultiUpload(location, closeBottomSheet)} />
             </View>
         </View>
     )

@@ -1,4 +1,5 @@
 import { DeviceEventEmitter } from "react-native"
+import { useTranslation } from "react-i18next"
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet"
 import { OptionButton } from "../../../option-button"
 import FolderIcon from '../../../../assets/icons/bottomSheet/folder.svg'
@@ -13,6 +14,7 @@ import { getCellularInfoMMKV } from "../../../../utils/mmkv"
 import { styles } from "./styles"
 
 export const AddSettings = () => {
+    const { t } = useTranslation();
     const { closeBottomSheet } = useContextApi();
     const { connection, type } = useSelector(state => state.network)
     const dispatch = useDispatch();
@@ -21,9 +23,9 @@ export const AddSettings = () => {
 
         if (connection === false) {
             dispatch(openModal({
-                content: 'Make sure your phone has an active internet connection and checking the network.',
+                content: t('signin.network_failed_desc'),
                 type: 'info',
-                head: 'Network connection failed',
+                head: t('signin.network_failed_head'),
                 icon: 'ex',
             }))
 
@@ -39,8 +41,8 @@ export const AddSettings = () => {
         if (type === 'wifi' || isToggled) return onlyPick(closeBottomSheet);
 
         dispatch(openModal({
-            content: 'Cellular data usage is off. Are you sure you want to use cellular data for this action?',
-            head: "You use cellular connection",
+            content: t('cellular.off_desc'),
+            head: t('cellular.head'),
             type: 'confirm',
             icon: 'ex',
             callback: () => onlyPick(closeBottomSheet)
@@ -58,9 +60,9 @@ export const AddSettings = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
         >
-            <OptionButton text='Upload new file' func={() => networkFilter(1)} icon={<PaperIcon />} />
-            <OptionButton text='Create new folder' func={() => networkFilter(2)} icon={<FolderIcon />} />
-            <OptionButton text='Log out' func={logOutHandler} icon={<LogOutIcon />} />
+            <OptionButton text={t('options.upload_file')} func={() => networkFilter(1)} icon={<PaperIcon />} />
+            <OptionButton text={t('options.create_folder')} func={() => networkFilter(2)} icon={<FolderIcon />} />
+            <OptionButton text={t('options.logout')} func={logOutHandler} icon={<LogOutIcon />} />
         </BottomSheetScrollView>
     )
 }

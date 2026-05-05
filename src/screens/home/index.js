@@ -1,4 +1,5 @@
 import { FAB } from 'react-native-paper';
+import { useTranslation } from 'react-i18next';
 import { useContextApi } from '../../context/ContextApi'
 import { Layout } from '../../layout'
 import { styles } from './styles';
@@ -12,6 +13,7 @@ import { openModal } from '../../reducers/modalReducer';
 
 
 const HomeScreen = ({ route }) => {
+    const { t } = useTranslation();
     const { bottomSheetController } = useContextApi();
     const { HomeScreen } = useSelector(state => state.rerender)
     const { connection, type } = useSelector(state => state.network)
@@ -34,8 +36,8 @@ const HomeScreen = ({ route }) => {
         if (type === 'wifi' || isToggled) return bottomSheetController(1);
 
         dispatch(openModal({
-            content: 'Cellular data usage is off. Are you sure you want to use cellular data for this action?',
-            head: "You use cellular connection",
+            content: t('cellular.off_desc'),
+            head: t('cellular.head'),
             type: 'confirm',
             icon: 'ex',
             callback: () => bottomSheetController(1)

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import i18n from '../i18n'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import MainScreen from "../screens/welcome";
@@ -46,8 +47,8 @@ const Router = () => {
 
         dispatch(
             openModal({
-                content: "Cellular data usage is off. Are you sure you want to use cellular data for this action?",
-                head: "You use cellular connection",
+                content: i18n.t('cellular.off_desc'),
+                head: i18n.t('cellular.head'),
                 type: "confirm",
                 icon: "ex",
                 callback: () => {
@@ -65,9 +66,9 @@ const Router = () => {
             type = state.type;
             if (state.isInternetReachable === false) {
                 dispatch(openModal({
-                    content: 'Make sure your phone has an active internet connection and checking the network.',
+                    content: i18n.t('signin.network_failed_desc'),
                     type: 'info',
-                    head: 'Network connection failed',
+                    head: i18n.t('signin.network_failed_head'),
                     icon: 'ex',
                 }))
             }

@@ -9,12 +9,14 @@ import { reportCrash } from '../../utils/crashlytics-utils';
 import { ROUTES } from '../../navigation/types';
 import { Button } from '../button';
 import { CustomText } from '../text';
+import { useTranslation } from 'react-i18next';
 
 WebBrowser.maybeCompleteAuthSession();
 
 
 
 export default function SignInUp () {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const discovery = useAutoDiscovery('https://cloudkeycloak.duckdns.org/realms/cloud');
   const [request, response, promptAsync] = useAuthRequest(
@@ -77,10 +79,10 @@ export default function SignInUp () {
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <CustomText size={30} color="#22215B">
-          Welcome to Uup Cloud
+          {t('welcome.head')}
         </CustomText>
         <CustomText custom={styles.subtitle}>
-          Sign in/up to continue using Graphene Cloud Explorer
+          {t('welcome.desc')}
         </CustomText>
       </View>
 
@@ -90,13 +92,13 @@ export default function SignInUp () {
           disabled={!request}
           style={styles.button}
         >
-          <Text style={styles.buttonText}>Sign In/Up </Text>
+          <Text style={styles.buttonText}>{t('welcome.button')}</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.footer}>
-        <CustomText color="#000">New to Graphene Cloud Explorer?</CustomText>
-        <Text style={styles.guideText}>View Guide</Text>
+        <CustomText color="#000">{t('welcome.new_user')}</CustomText>
+        <Text style={styles.guideText}>{t('welcome.view_guide')}</Text>
       </View>
     </View>
   );
