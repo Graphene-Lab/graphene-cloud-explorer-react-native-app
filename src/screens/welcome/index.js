@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import OnBoarding from '../../components/on-boarding';
@@ -26,8 +27,8 @@ import { setProxy } from '../../reducers/proxyReducer';
 const looksLikeCryptoKey = (value) =>
     !!value && typeof value === 'object' && typeof value.type === 'string' && typeof value.algorithm === 'object';
 const looksLikeJwk = (value) => !!value && typeof value === 'object' && typeof value.kty === 'string';
-
 const WelcomeScreen = () => {
+    const navigation = useNavigation();
     const dispatch = useDispatch()
     const [userAuth, setUserAuth] = useState(false);
     const { wsScreen } = useContextApi();
@@ -37,18 +38,12 @@ const WelcomeScreen = () => {
     const authCheckRunning = useRef(false);
 
     useEffect(() => {
-        const logoutSub = DeviceEventEmitter.addListener('logOut', async () => {
-            dispatch(cleanUserSecretsData());
-            await dropMMKV()
-            setUserAuth(false);
-        });
-
         const loginSub = DeviceEventEmitter.addListener('logIn', () => {
             setUserAuth(true);
+            navigation.replace('TabNavigator');
         });
 
         return () => {
-            logoutSub.remove();
             loginSub.remove();
         };
     }, [dispatch]);
@@ -183,6 +178,10 @@ const WelcomeScreen = () => {
                 .then((content) => content && setContent(content))
                 .catch(() => null);
             authCheckRunning.current = false;
+            
+            // Navigate to TabNavigator and remove WelcomeScreen from stack
+            navigation.replace('TabNavigator');
+            
             return setTimeout(() => {
                 checkAvailableDeviceUpdate(qr);
             }, 1500);
@@ -205,8 +204,8 @@ const WelcomeScreen = () => {
 
 
 
-    return (
 
+    return (
         <Suspense
             fallback={<ActivityIndicator
                 size="large"
@@ -220,7 +219,7 @@ const WelcomeScreen = () => {
             />
             }
         >
-            {(showGuide && guideVisible ? <OnBoarding /> : (userAuth ? <TabNavigator /> : <SignInScreenNavigator />))}
+            {(showGuide && guideVisible ? <OnBoarding /> : <SignInScreenNavigator />)}
         </Suspense>
     )
 }

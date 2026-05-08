@@ -11,7 +11,7 @@ import { ActivityIndicator } from 'react-native-paper'
 
 export const Layout = ({ children, name, searchBar }) => {
     const { selectedFiles } = useSelector(state => state.files);
-    const { loader } = useSelector(state => state.screenController[name]);
+    const { loader } = useSelector(state => state.screenController[name] || { loader: false });
     return (
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
             <StatusBar barStyle='dark-content' />

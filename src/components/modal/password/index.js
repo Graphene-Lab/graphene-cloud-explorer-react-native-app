@@ -4,10 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '../../button'
 import { styles } from './styles'
 import { useDispatch, useSelector } from 'react-redux'
-import { generateKeyRSA, onQrCodeAcquires } from '../../../utils/essential-functions'
+import { finalizeAuthentication } from '../../../utils/essential-functions'
 import { openModal } from '../../../reducers/modalReducer'
-import { setAuthWait, setUserSecretDataToRedux } from '../../../reducers/userSecretDataReducer'
-import { ensureZeroKnowledgeReadyForAuthentication } from '../../../utils/data-transmission-utils'
+import { setAuthWait } from '../../../reducers/userSecretDataReducer'
 import {
     CodeField,
     Cursor,
@@ -57,17 +56,11 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
         }
 
 
-        dispatch(setUserSecretDataToRedux({ devicePin: value }));
         try {
-            const zkReady = await ensureZeroKnowledgeReadyForAuthentication();
-            if (!zkReady) {
-                return;
+            const success = await finalizeAuthentication(value, barcode);
+            if (success) {
+                setError(false)
             }
-            dispatch(setAuthWait(true));
-            await generateKeyRSA();
-            await onQrCodeAcquires(barcode.trim());
-            setError(false)
-            // setWait(false);
         } catch (error) {
             reportCrash(error, {
                 screen: 'PasswordModal',

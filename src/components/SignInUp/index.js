@@ -10,6 +10,9 @@ import { ROUTES } from '../../navigation/types';
 import { Button } from '../button';
 import { CustomText } from '../text';
 import { useTranslation } from 'react-i18next';
+import { paymentApiClient } from '../../utils/apiClient';
+import { finalizeAuthentication } from '../../utils/essential-functions';
+import { ActivityIndicator } from 'react-native-paper';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -18,6 +21,7 @@ WebBrowser.maybeCompleteAuthSession();
 export default function SignInUp () {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
   const discovery = useAutoDiscovery('https://cloudkeycloak.duckdns.org/realms/cloud');
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -32,6 +36,7 @@ export default function SignInUp () {
   );
 
   const exchangeCodeForToken = async (code, codeVerifier) => {
+    setLoading(true);
     try {
       const response = await axios.post(
         'https://cloudkeycloak.duckdns.org/realms/cloud/protocol/openid-connect/token',
@@ -48,14 +53,31 @@ export default function SignInUp () {
           },
         }
       );
-      navigation.navigate(ROUTES.TAB_NAVIGATOR);
-
       console.log('Token Response:', response.data);
-      await SecureStore.setItemAsync('access_token', response.data.access_token);
-      await SecureStore.setItemAsync('refresh_token', response.data.refresh_token);
+      const { access_token, refresh_token } = response.data;
+      await SecureStore.setItemAsync('accessToken', access_token);
+      await SecureStore.setItemAsync('refreshToken', refresh_token);
       await SecureStore.setItemAsync('isAuth', 'true');
+
+      console.log('SignInUp: Fetching credentials from cloud...');
+      // Fetch QR and PIN from the cloud management service
+      const credsResponse = await paymentApiClient.get('me/cloud-space/credentials');
+      const { qrEncrypted, pin } = credsResponse.data;
+      console.log('SignInUp: Credentials received', { pin, qrEncrypted: qrEncrypted?.substring(0, 20) + '...' });
+
+      // Finalize pairing and security setup
+      console.log('SignInUp: Starting finalizeAuthentication...');
+      const success = await finalizeAuthentication(pin, qrEncrypted);
+      console.log('SignInUp: finalizeAuthentication result:', success);
+      
+      if (success) {
+          console.log('SignInUp: finalizeAuthentication result: true (Navigation handled by WelcomeScreen)');
+      } else {
+          setLoading(false);
+      }
       
     } catch (error) {
+      setLoading(false);
       console.error('Token exchange failed:', error);
       reportCrash(error, {
         screen: 'SignInUp',
@@ -71,35 +93,21 @@ export default function SignInUp () {
       const { code } = response.params;
       const codeVerifier = request?.codeVerifier;
       exchangeCodeForToken(code, codeVerifier);
-        
+    } else if (response?.type === 'cancel' || response?.type === 'error') {
+      navigation.goBack();
     }
   }, [response]);
 
+  useEffect(() => {
+    if (request && !loading) {
+      promptAsync();
+    }
+  }, [request]);
+
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <CustomText size={30} color="#22215B">
-          {t('welcome.head')}
-        </CustomText>
-        <CustomText custom={styles.subtitle}>
-          {t('welcome.desc')}
-        </CustomText>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          onPress={() => promptAsync()} 
-          disabled={!request}
-          style={styles.button}
-        >
-          <Text style={styles.buttonText}>{t('welcome.button')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.footer}>
-        <CustomText color="#000">{t('welcome.new_user')}</CustomText>
-        <Text style={styles.guideText}>{t('welcome.view_guide')}</Text>
-      </View>
+    <View style={[styles.container, { justifyContent: 'center' }]}>
+      <ActivityIndicator color="#415EB6" size='large' />
+      <CustomText custom={{ marginTop: 20 }}>{t('signin.connecting_keycloak')}</CustomText>
     </View>
   );
 }

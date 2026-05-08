@@ -4,7 +4,7 @@ export const ENV = {
 };
 
 // You can toggle this to switch environments
-export const CURRENT_ENV = ENV.DEV;
+export const CURRENT_ENV = ENV.PROD;
 
 export const getApiConfig = () => {
   switch (CURRENT_ENV) {

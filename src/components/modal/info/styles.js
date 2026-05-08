@@ -2,30 +2,28 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'space-between',
+        justifyContent: 'center',
     },
     head: {
         color: '#22215B',
         fontSize: 18,
         fontWeight: '500',
         textAlign: 'center',
-
+        marginBottom: 15,
     },
     content: {
         fontSize: 16,
         fontWeight: '300',
         color: '#B0C0D0',
         textAlign: 'center',
-        maxWidth: '80%',
-        alignSelf: 'center',
+        marginBottom: 15,
     },
     buttonGroup: {
-        flexDirection: 'row',
-        height: 50,
+        flexDirection: 'column',
+        width: '100%',
     },
     gap: {
-        width: 15,
+        height: 10,
         backgroundColor: 'transparent',
     },
     input: {

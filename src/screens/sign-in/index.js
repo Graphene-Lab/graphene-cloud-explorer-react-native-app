@@ -1,13 +1,14 @@
 import { Text, View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
-import QRIcon from '../../assets/icons/qr.svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+// import QRIcon from '../../assets/icons/qr.svg';
 import { Button } from '../../components/button';
 import { CustomText } from '../../components/text';
 import { Layout } from '../../layout';
 import { styles } from './styles';
 import { generateKeyRSA, onQrCodeAcquires } from '../../utils/essential-functions';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { permissionCheck } from '../../utils/permissions';
 import { openModal } from '../../reducers/modalReducer';
 import { setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
@@ -23,6 +24,17 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
   const { connection } = useSelector((state) => state.network);
   const dispatch = useDispatch();
 
+  const showPrivacyInfo = () => {
+    dispatch(
+      openModal({
+        head: t('signin.privacy_title'),
+        content: t('signin.privacy_body'),
+        type: 'info',
+        icon: 'checkmark',
+      })
+    );
+  };
+
   const singInCredentials = () => {
     if (connection === false) {
       dispatch(
@@ -36,7 +48,7 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
     } else if (connection === true) {
       dispatch(setUserSecretDataToRedux({ devicePin: devices.andrea2['pin'] }));
       generateKeyRSA()
-        .then(() => onQrCodeAcquires(devices.andrea['enc']))
+        .then(() => onQrCodeAcquires(devices.andrea['qr']))
         .catch((error) => {
           reportCrash(error, {
             screen: 'SignInScreen',
@@ -58,29 +70,33 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
   return (
     <Layout name={route.name}>
       <View style={styles.container}>
-        <View>
-          <CustomText size={30} color="#22215B">
+          <CustomText size={30} color="#22215B" custom={{ textAlign: 'center' }}>
             {t('signin.welcome')}
           </CustomText>
-          <CustomText custom={{ marginTop: 20 }}>
-            {t('signin.description')}
-
-
-          </CustomText>
-        </View>
-        <QRIcon />
+          <View style={{ marginTop: 20, alignItems: 'center' }}>
+            <CustomText custom={{ textAlign: 'center', color: '#B0C0D0' }}>
+              {t('signin.description')}
+            </CustomText>
+            <TouchableOpacity onPress={showPrivacyInfo} style={{ marginTop: 10 }}>
+              <Ionicons name="information-circle-outline" size={24} color="#415EB6" />
+            </TouchableOpacity>
+          </View>
+        <View style={{ height: 40 }} />
         <View style={styles.buttonsGroup}>
           <View style={styles.buttonView}>
-            <Button text={t('signin.open_camera')} callback={() => navigate('QRScreen')} />
-            <Text style={{ alignSelf: 'center' }}>{t('signin.or')}</Text>
-            <Button text={t('signin.enter_qr_manually')} callback={() => navigate('SingInViaTextScreen')} />
-            
-            {/* <TouchableOpacity onPress={singInCredentials}>
-              <Text style={{ alignSelf: 'center' }}>{t('signin.credentials')}</Text>
-            </TouchableOpacity> */}
+            <Button
+              text={t('signin.credentials')}
+              callback={() => navigate('SignInUp')}
+            />
+            <View style={{ height: 15 }} />
+            <Button
+              text={t('screens.scan_qr')}
+              variant="outlined"
+              callback={() => navigate('QRSelectionScreen')}
+            />
           </View>
-          <View style={styles.buttonView}>
-            <CustomText color="#000">{t('signin.new_to')}</CustomText>
+          <View style={styles.viewGuideContainer}>
+            <CustomText color="#000" custom={{ textAlign: 'center' }}>{t('signin.new_to')}</CustomText>
             <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
               <Text style={styles.viewGuideText}>{t('signin.view_guide')}</Text>
             </TouchableOpacity>

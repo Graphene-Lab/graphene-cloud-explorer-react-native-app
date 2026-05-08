@@ -1,8 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { MenuProvider } from 'react-native-popup-menu';
-import PolyfillCrypto from 'react-native-webview-crypto';
 import { Provider } from 'react-redux';
+import QuickCrypto from 'react-native-quick-crypto';
+
+// Polyfill global crypto safely
+try {
+    if (QuickCrypto) {
+        global.crypto = QuickCrypto;
+        console.log('App: Crypto polyfilled. subtle available:', !!(QuickCrypto.subtle || QuickCrypto.webcrypto?.subtle));
+    }
+} catch (e) {
+    console.error('App: Failed to polyfill global.crypto', e);
+}
+
 import { BottomSheetNative } from './src/components/bottom-sheet';
 import { ContextApiProvider } from './src/context/ContextApi';
 import Router from './src/navigation/Router';
@@ -50,11 +61,9 @@ const App = () => {
     >
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
-          <PolyfillCrypto />
           <Provider store={store}>
             <ContextApiProvider>
               <MenuProvider>
-                {/* <SignInUp /> */}
                 <Router />
                 <BottomSheetNative />
               </MenuProvider>

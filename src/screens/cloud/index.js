@@ -25,13 +25,18 @@ const CloudScreen = ({ route, navigation }) => {
 
 
     useEffect(() => {
-        if (forceQueue.includes(route.name) && connection) {
+        const shouldFetch = (forceQueue.includes(route.name) || (cloud && cloud.length === 0)) && connection;
+        
+        if (shouldFetch) {
             navigateToFolder(location, route.name)
                 .then((content) => content && setContent(content))
-                .catch(() => null)
-            dispatch(forceDequeue(route.name));
-            return
+                .catch(() => null);
+            
+            if (forceQueue.includes(route.name)) {
+                dispatch(forceDequeue(route.name));
+            }
         }
+
         const unsubscribe = navigation.addListener('focus', () => {
             if (screensQueue.includes(route.name) && connection) {
                 navigateToFolder(location, route.name)
@@ -41,7 +46,7 @@ const CloudScreen = ({ route, navigation }) => {
             }
         });
         return unsubscribe;
-    }, [navigation, screensQueue, forceQueue])
+    }, [navigation, screensQueue, forceQueue, cloud?.length, connection])
 
 
 

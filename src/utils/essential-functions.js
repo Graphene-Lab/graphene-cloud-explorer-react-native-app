@@ -13,6 +13,7 @@ import {
     GetStorageInfo,
     search,
     setClient,
+    ensureZeroKnowledgeReadyForAuthentication,
 } from './data-transmission-utils';
 import { hash256 } from './encryption-utils';
 import { setCloudMemory } from '../reducers/profileActionsReducer';
@@ -29,6 +30,10 @@ import {
 import { setAuthWait, setUserSecretDataToRedux } from '../reducers/userSecretDataReducer';
 import { URL } from 'react-native-url-polyfill';
 import { setProxy } from '../reducers/proxyReducer';
+import QuickCrypto from 'react-native-quick-crypto';
+const crypto = QuickCrypto;
+
+const getSubtle = () => global.crypto?.subtle || global.crypto?.webcrypto?.subtle || crypto?.subtle || crypto?.webcrypto?.subtle;
 import { log } from 'react-native-reanimated';
 
 export function formatBytes(a, b = 2) {
@@ -40,7 +45,16 @@ export function formatBytes(a, b = 2) {
 }
 
 export async function generateKeyRSA() {
-    const keyPair = await window.crypto.subtle.generateKey(
+    const subtle = getSubtle();
+    
+    if (!subtle) {
+        console.error('generateKeyRSA: Native crypto subtle is not available.');
+        console.log('generateKeyRSA: crypto keys:', Object.keys(global.crypto || {}));
+        console.log('generateKeyRSA: imported crypto keys:', Object.keys(crypto || {}));
+        throw new Error('Native crypto not ready');
+    }
+
+    const keyPair = await subtle.generateKey(
         {
             name: 'RSA-OAEP',
             modulusLength: 2048,
@@ -50,17 +64,18 @@ export async function generateKeyRSA() {
         true,
         ['encrypt', 'decrypt']
     );
+    console.log('generateKeyRSA: Generating key pair...');
     const privateKey = keyPair.privateKey;
     const publicKey = keyPair.publicKey;
-    const publicJwk = await window.crypto.subtle.exportKey('jwk', publicKey);
     const privateJwk = await window.crypto.subtle.exportKey('jwk', privateKey);
+    const publicJwk = await window.crypto.subtle.exportKey('jwk', publicKey);
     await setUserPublicAndPrivetKeyMMKV(publicJwk, privateJwk);
     store.dispatch(setUserSecretDataToRedux({ publicKey, privateKey }));
     return exportCryptoKey(publicKey);
 }
 
 async function exportCryptoKey(key) {
-    const k = await window.crypto.subtle.exportKey('jwk', key);
+    const k = await getSubtle().exportKey('jwk', key);
     let publicKeyB64 = decodeBase64Url(k.n);
     let keyBin = base64ToBuffer(publicKeyB64);
     return hash256(keyBin).then(async (digestHex) => {
@@ -73,8 +88,10 @@ async function exportCryptoKey(key) {
 }
 
 export async function onQrCodeAcquires(qrCode) {
+    console.log('onQrCodeAcquires: Starting with qrCode length:', qrCode?.length);
     const reg = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/; // base64 regex;
     if (reg.test(qrCode) === false) {
+        console.error('onQrCodeAcquires: Invalid base64 format');
         store.dispatch(setAuthWait(false));
         throw new Error('Qr format not valid');
     }
@@ -83,16 +100,17 @@ export async function onQrCodeAcquires(qrCode) {
     await setUserQrMMKV(qrCode);
     let offset = 0;
     let type = new Uint8Array(qr.slice(offset, 1))[0];
+    console.log('onQrCodeAcquires: QR type:', type);
     offset += 1;
     if (type == 1) {
-        let mSize = 2048 / 8; //NOTE: modules with sizes different of 2048 give an error during encryption in JavaScript
+        let mSize = 2048 / 8;
         let modulus = qr.slice(offset, offset + mSize);
         offset += mSize;
         let exponent = qr.slice(offset, offset + 3);
         offset += 3;
         let serverPublicKey = qr.slice(offset, offset + 33);
         offset += 33;
-        let entryPoint = bufferToString(qr.slice(offset)); //proxy ;
+        let entryPoint = bufferToString(qr.slice(offset));
         await entryPointToProxy(entryPoint);
         return hash256(serverPublicKey).then(async (hash) => {
             let serverId = bufferToHex(hash.slice(0, 8));
@@ -110,7 +128,7 @@ export async function onQrCodeAcquires(qrCode) {
         store.dispatch(setUserSecretDataToRedux({ serverId }));
         await setUserServerIdMMKV(serverId);
         offset += 8;
-        let entryPoint = bufferToString(qr.slice(offset)); //proxy ;
+        let entryPoint = bufferToString(qr.slice(offset));
         await entryPointToProxy(entryPoint);
         return executeRequest(command.GetEncryptedQR);
     } else {
@@ -315,4 +333,16 @@ export const groupsByFolder = (arr) => {
     }
 
     return Object.entries(groups);
+};
+
+export const finalizeAuthentication = async (pin, qrCode) => {
+    store.dispatch(setUserSecretDataToRedux({ devicePin: pin }));
+    const zkReady = await ensureZeroKnowledgeReadyForAuthentication();
+    if (!zkReady) {
+        return false;
+    }
+    store.dispatch(setAuthWait(true));
+    await generateKeyRSA();
+    await onQrCodeAcquires(qrCode.trim());
+    return true;
 };

@@ -50,6 +50,7 @@ export const AddSettings = () => {
     }
 
     const logOutHandler = () => {
+        console.log('AddSettings: Emitting logOut event...');
         DeviceEventEmitter.emit('logOut');
         DeviceEventEmitter.emit('spoolerCleaner');
         return dispatch(enqueue(['CloudScreen', 'FavoriteScreen', 'MediaScreen', 'ProfileScreen']));

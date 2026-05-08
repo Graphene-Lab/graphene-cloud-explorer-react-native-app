@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import jwtDecode from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import { reportCrash } from './crashlytics-utils';
 import { API_SERVICES, SERVICE_CONFIG } from './apiClientConfig';
 
@@ -66,7 +66,6 @@ const createApiClient = (service) => {
     });
 
     apiClient.interceptors.request.use(async (config) => {
-        /* Commenting out the original implementation
         let accessToken = await SecureStore.getItemAsync('accessToken');
 
         if (accessToken) {
@@ -80,10 +79,7 @@ const createApiClient = (service) => {
             }
             config.headers.Authorization = `Bearer ${accessToken}`;
         }
-        */
         
-        // Always use hardcoded token
-        config.headers.Authorization = `Bearer ${HARDCODED_TOKEN}`;
         return config;
     }, (error) => {
         return Promise.reject(error);

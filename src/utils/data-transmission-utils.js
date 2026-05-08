@@ -1203,7 +1203,7 @@ export const onCommandResponse = {
   Authentication: async function (params) {
     await userAuthMMKV();
     DeviceEventEmitter.emit('logIn');
-    store.dispatch(forceEnqueue("CloudScreen"))
+    // store.dispatch(forceEnqueue("CloudScreen"))
     store.dispatch(setAuthWait(false));
     showAuthenticationSuccess();
     // return getDir("");

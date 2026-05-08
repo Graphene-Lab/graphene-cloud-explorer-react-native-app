@@ -1,13 +1,13 @@
 {
   "onboarding": {
     "title1": "Allumez Graphene Cloud Explorer",
-    "desc1": "Pour allumer votre périphérique Cloud-Services, branchez une extrémité d'un câble de type C sur votre périphérique Cloud-Services, et l'autre extrémité sur l'adaptateur secteur dans une prise murale.",
+    "desc1": "Pour allumer votre périphérique Cloud Box, branchez une extrémité d'un câble de type C sur votre périphérique Cloud Box, et l'autre extrémité sur l'adaptateur secteur dans une prise murale.",
     "title2": "Connectez-vous à Internet",
-    "desc2": "Branchez une extrémité d'un câble Ethernet sur le port Ethernet de votre routeur WiFi, et l'autre extrémité sur le port Ethernet de Cloud-Services.",
+    "desc2": "Branchez une extrémité d'un câble Ethernet sur le port Ethernet de votre routeur WiFi, et l'autre extrémité sur le port Ethernet de Cloud Box.",
     "title3": "Connecter l'application au périphérique",
-    "desc3": "Trouvez le document d'instruction dans la boîte. Pour connecter l'application au boîtier Cloud-Services, suivez ces étapes : \n \n 1. Scannez le code QR \n \n 2. Entrez ensuite le code de sécurité à 6 chiffres",
+    "desc3": "Trouvez le document d'instruction dans la boîte. Pour connecter l'application au boîtier Cloud Box, suivez ces étapes : \n \n 1. Scannez le code QR \n \n 2. Entrez ensuite le code de sécurité à 6 chiffres",
     "title4": "Gérez vos fichiers",
-    "desc4": "Enregistrez vos fichiers et médias sur Cloud-Services et accédez-y depuis n'importe quel appareil, n'importe où."
+    "desc4": "Enregistrez vos fichiers et médias sur Cloud Box et accédez-y depuis n'importe quel appareil, n'importe où."
   },
   "faqs": {
     "q1": "Qui sommes-nous ?",
@@ -27,7 +27,9 @@
   },
   "signin": {
     "welcome": "Bienvenue !",
-    "description": "Pour connecter votre application au dispositif Graphene Cloud Explorer, scannez le code QR que vous trouverez sur le papier d'instructions dans la boîte. Entrez ensuite un code de vérification à 6 chiffres pour vous connecter à votre compte.",
+    "description": "Cloud Graphene Explorer vous aide à explorer vos fichiers synchronisés via le client de bureau ou Graphene Photos. Les clés de chiffrement restent sur votre téléphone.",
+    "privacy_title": "Comment vos fichiers restent privés",
+    "privacy_body": "Les fichiers sont chiffrés sur votre appareil avant d'être téléchargés. Vos clés de chiffrement restent sur votre téléphone et ne sont jamais envoyées à nos serveurs. Nous ne stockons que des fichiers chiffrés, nous ne pouvons donc pas voir vos fichiers, contrairement aux services typiques tels que Google Drive ou OneDrive.",
     "open_camera": "Ouvrir la caméra",
     "or": "ou",
     "enter_qr_manually": "Entrez le code QR manuellement",
@@ -35,11 +37,12 @@
     "network_failed_desc": "Assurez-vous que votre téléphone dispose d'une connexion Internet active et vérifiez le réseau.",
     "login": "Se connecter",
     "qr_placeholder": "Code QR",
-    "credentials": "Se connecter avec des identifiants",
-    "new_to": "Nouveau sur Graphene Cloud Explorer ?",
-    "view_guide": "Voir le guide",
+    "credentials": "Se connecter avec Email",
+    "new_to": "Vous avez votre propre cloud box privée ?",
+    "view_guide": "Consultez les guides.",
     "enter_pin": "Entrez le code PIN",
     "initializing_key": "Veuillez patienter. Nous initialisons votre clé et nous connectons au cloud.",
+    "connecting_keycloak": "Connexion au service d'authentification...",
     "incorrect_credentials": "Le mot de passe ou le QR est incorrect, veuillez réessayer",
     "try_again": "Réessayer",
     "cancel": "Annuler",
@@ -50,17 +53,23 @@
     "reachability_message": "Impossible de joindre le serveur. Assurez-vous que le serveur proxy est en cours d'exécution et accessible depuis le téléphone.",
     "reachability_localhost": "Impossible de joindre {{targetProxy}}. Sur un appareil physique, 127.0.0.1 ou localhost pointe vers le téléphone lui-même, pas vers votre PC ou votre Cloud Box."
   },
+  "qr_selection": {
+    "step1": "1. Ouvrez votre client de bureau et accédez au panneau du code QR ou ouvrez l'application mobile Graphene Photos et accédez à la page des paramètres",
+    "step2": "2. Scannez le code QR ci-dessous à l'aide de votre appareil photo ou copiez et collez le code QR manuellement",
+    "step3": "3. Saisissez le code PIN à 6 chiffres",
+    "scan_button": "Scanner le code QR"
+  },
   "zeroknowledge": {
-    "head": "Chiffrement à connaissance nulle",
-    "passphrase_desc": "Entrez votre phrase de passe de 12 mots du bureau pour activer les noms de fichiers et les contenus cryptés. Appuyez sur Ignorer si la connaissance nulle du bureau n'a jamais été activée.",
-    "passphrase_desc_auth": "Entrez votre phrase de passe de 12 mots du bureau avant l'authentification si ce cloud utilise le chiffrement à connaissance nulle. Appuyez sur Ignorer si ce cloud n'a pas été créé avec le chiffrement à connaissance nulle.",
+    "head": "Chiffrement Zero Knowledge",
+    "passphrase_desc": "Entrez votre phrase de passe de 12 mots du bureau pour activer les noms de fichiers et les contenus cryptés. Appuyez sur Ignorer si Zero Knowledge du bureau n'a jamais été activée.",
+    "passphrase_desc_auth": "Entrez votre phrase de passe de 12 mots du bureau avant l'authentification si ce cloud utilise le chiffrement Zero Knowledge. Appuyez sur Ignorer si ce cloud n'a pas été créé avec le chiffrement Zero Knowledge.",
     "enter_phrase": "Entrer la phrase",
     "enter_passphrase": "Entrer la phrase de passe",
-    "enabled_head": "Connaissance nulle activée",
-    "enabled_desc": "Phrase de passe acceptée. Les noms de fichiers et les octets de fichiers utiliseront désormais le mode connaissance nulle.",
+    "enabled_head": "Zero Knowledge activé",
+    "enabled_desc": "Phrase de passe acceptée. Les noms de fichiers et les octets de fichiers utiliseront désormais le mode Zero Knowledge.",
     "error_head": "Erreur de phrase de passe",
     "error_desc": "La phrase de passe n'a pas pu être traitée. Entrez la même phrase de passe du bureau ou appuyez sur Ignorer à l'étape précédente.",
-    "error_desc_auth": "La phrase de passe n'a pas pu être traitée. Réessayez de vous connecter et entrez la même phrase de passe du bureau, ou utilisez Ignorer si ce cloud n'utilise pas le chiffrement à connaissance nulle.",
+    "error_desc_auth": "La phrase de passe n'a pas pu être traitée. Réessayez de vous connecter et entrez la même phrase de passe du bureau, ou utilisez Ignorer si ce cloud n'utilise pas le chiffrement Zero Knowledge.",
     "skip": "Ignorer"
   },
   "cellular": {
@@ -72,7 +81,7 @@
     "total": "Total",
     "used": "Utilisé",
     "unlimited": "Illimité",
-    "zero_knowledge_info": "Le cryptage à connaissance nulle est activé, de sorte que le serveur n'a pas de métadonnées sur le type de fichier, ce qui signifie que l'utilisation par type de fichier (images, documents, audio, etc.) ne peut pas être affichée.",
+    "zero_knowledge_info": "Le cryptage Zero Knowledge est activé, de sorte que le serveur n'a pas de métadonnées sur le type de fichier, ce qui signifie que l'utilisation par type de fichier (images, documents, audio, etc.) ne peut pas être affichée.",
     "images": "Images",
     "video": "Vidéo",
     "documents": "Documents",
@@ -135,7 +144,7 @@
     "memory_full_head": "Graphene Cloud Explorer est plein",
     "max_files_warning": "Les fichiers que vous sélectionnez ne doivent pas être plus de 15",
     "failed_pick_file": "Échec de la sélection du fichier",
-    "connect_new_device_head": "Connecter un nouveau périphérique Cloud-Services",
+    "connect_new_device_head": "Connecter un nouveau périphérique Cloud Box",
     "connect_new_device_desc": "Si vous souhaitez connecter un nouveau périphérique, vous serez déconnecté du périphérique actuel",
     "continue": "Continuer",
     "pay_attention": "Attention",

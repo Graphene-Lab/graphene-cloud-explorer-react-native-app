@@ -96,24 +96,32 @@ export const ScreenHeader = ({ name }) => {
             title: t('screens.payment'),
             display: 'flex',
         },
+        'QR Selection': {
+            title: t('screens.scan_qr'),
+            display: 'flex',
+            rightItem: <BackIcon />,
+            rightItemPress: (nav) => nav.pop(),
+        },
     }
 
     navigation.bottomSheetController = bottomSheetController;
+    if (cons[name]?.display === 'none') return null;
+    
     return (
         <View style={[{}, styles.container]}>
             <View style={styles.iconBox}>
                 {
-                    cons[name].rightItem && <TouchableOpacity onPress={() => cons[name].rightItemPress(navigation)} style={styles.leftRight} >
+                    cons[name]?.rightItem && <TouchableOpacity onPress={() => cons[name].rightItemPress(navigation)} style={styles.leftRight} >
                         {cons[name].rightItem}
                     </TouchableOpacity>
                 }
             </View>
             <View style={styles.textView}>
-                <CustomText color="#000">{cons[name].title}</CustomText>
+                <CustomText color="#000">{cons[name]?.title || name}</CustomText>
             </View>
             <View style={styles.iconBox}>
                 {
-                    cons[name].leftItem && <TouchableOpacity onPress={() => cons[name].leftItemPress(navigation)} style={styles.leftRight}>
+                    cons[name]?.leftItem && <TouchableOpacity onPress={() => cons[name].leftItemPress(navigation)} style={styles.leftRight}>
                         {cons[name].leftItem}
                     </TouchableOpacity>
                 }

@@ -52,6 +52,10 @@ const initialState = {
     PaymentScreen: {
         loader: false,
         blocker: false
+    },
+    'QR Selection': {
+        loader: false,
+        blocker: false
     }
 }
 

@@ -10,8 +10,11 @@ import { setConnectionStatus } from '../reducers/networkConnectionReducer'
 import { openModal } from '../reducers/modalReducer'
 import { useDispatch } from 'react-redux';
 import { useContextApi } from '../context/ContextApi';
-import { getCellularInfoMMKV } from '../utils/mmkv';
+import { DeviceEventEmitter } from 'react-native';
+import { cleanUserSecretsData } from '../reducers/userSecretDataReducer';
+import { dropMMKV, getCellularInfoMMKV } from '../utils/mmkv';
 import { setIntentFile } from '../reducers/filesTransferNewReducer';
+import * as SecureStore from 'expo-secure-store';
 import { navigationRef } from './NavigationService';
 import { SettingsScreen } from '../screens/settings/index.android'; 
 
@@ -60,6 +63,40 @@ const Router = () => {
     }
 
     useEffect(() => {
+        const logoutSub = DeviceEventEmitter.addListener('logOut', async () => {
+            console.log('Router: logOut event received! Starting thorough cleanup...');
+            try {
+                // 1. Clear Redux
+                dispatch(cleanUserSecretsData());
+                
+                // 2. Clear MMKV
+                await dropMMKV();
+                
+                // 3. Clear SecureStore
+                await Promise.all([
+                    SecureStore.deleteItemAsync('accessToken'),
+                    SecureStore.deleteItemAsync('refreshToken'),
+                    SecureStore.deleteItemAsync('isAuth')
+                ]);
+                
+                console.log('Router: Cleanup finished. Resetting navigation to MainScreen...');
+                
+                if (navigationRef.isReady()) {
+                    navigationRef.reset({
+                        index: 0,
+                        routes: [{ name: 'MainScreen' }],
+                    });
+                } else {
+                    console.warn('Router: Navigation ref not ready during logout!');
+                    // Fallback to direct navigate if reset is not available
+                    navigationRef.navigate('MainScreen');
+                }
+            } catch (error) {
+                console.error('Router: Error during logout cleanup:', error);
+                // Try to navigate anyway
+                navigationRef.navigate('MainScreen');
+            }
+        });
         let type = ""
         const unsubscribe = NetInfo.addEventListener((state) => {
             dispatch(setConnectionStatus({ connection: state.isInternetReachable, type: state.type }))
@@ -85,6 +122,7 @@ const Router = () => {
         return () => {
             ReceiveSharingIntent.clearReceivedFiles();
             unsubscribe();
+            logoutSub.remove();
         }
 
 

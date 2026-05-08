@@ -1,13 +1,13 @@
 {
   "onboarding": {
     "title1": "Attiva Graphene Cloud Explorer",
-    "desc1": "Per accendere il tuo dispositivo Cloud-Services, inserisci un'estremità di un cavo Type-C nel dispositivo Cloud-Services e l'altra estremità nell'adattatore di alimentazione in una presa a muro.",
+    "desc1": "Per accendere il tuo dispositivo Cloud Box, inserisci un'estremità di un cavo Type-C nel dispositivo Cloud Box e l'altra estremità nell'adattatore di alimentazione in una presa a muro.",
     "title2": "Connettiti a Internet",
-    "desc2": "Inserisci un'estremità di un cavo Ethernet nella porta Ethernet del tuo router WiFi e l'altra estremità nella porta Ethernet di Cloud-Services",
+    "desc2": "Inserisci un'estremità di un cavo Ethernet nella porta Ethernet del tuo router WiFi e l'altra estremità nella porta Ethernet di Cloud Box",
     "title3": "Collega l'app al dispositivo",
-    "desc3": "Trova il documento di istruzioni nella confezione. Per collegare l'app al box Cloud-Services, segui questi passaggi: \n \n 1. Scansiona il codice QR \n \n 2. Inserisci il codice di sicurezza a 6 cifre",
+    "desc3": "Trova il documento di istruzioni nella confezione. Per collegare l'app al box Cloud Box, segui questi passaggi: \n \n 1. Scansiona il codice QR \n \n 2. Inserisci il codice di sicurezza a 6 cifre",
     "title4": "Gestisci i tuoi file",
-    "desc4": "Salva i tuoi file e contenuti multimediali su Cloud-Services e accedi ad essi da qualsiasi dispositivo, ovunque."
+    "desc4": "Salva i tuoi file e contenuti multimediali su Cloud Box e accedi ad essi da qualsiasi dispositivo, ovunque."
   },
   "faqs": {
     "q1": "Chi siamo?",
@@ -27,7 +27,9 @@
   },
   "signin": {
     "welcome": "Benvenuto!",
-    "description": "Per collegare la tua app al dispositivo Graphene Cloud Explorer, scansiona il codice QR che trovi sul foglio di istruzioni nella confezione. Quindi inserisci un codice di verifica a 6 cifre per accedere al tuo account.",
+    "description": "Cloud Graphene Explorer ti aiuta a esplorare i tuoi file sincronizzati tramite il client desktop o Graphene Photos. Le chiavi di crittografia rimangono sul tuo telefono.",
+    "privacy_title": "Come i tuoi file rimangono privati",
+    "privacy_body": "I file vengono crittografati sul tuo dispositivo prima del caricamento. Le tue chiavi di crittografia rimangono sul tuo telefono e non vengono mai inviate ai nostri server. Memorizziamo solo file crittografati, quindi non possiamo visualizzare i tuoi file, a differenza dei servizi tipici come Google Drive o OneDrive.",
     "open_camera": "Apri fotocamera",
     "or": "oppure",
     "enter_qr_manually": "Inserisci codice QR manualmente",
@@ -35,11 +37,12 @@
     "network_failed_desc": "Assicurati che il tuo telefono abbia una connessione Internet attiva e controlla la rete.",
     "login": "Accedi",
     "qr_placeholder": "Codice QR",
-    "credentials": "Accedi con le credenziali",
-    "new_to": "Nuovo su Graphene Cloud Explorer?",
-    "view_guide": "Visualizza guida",
+    "credentials": "Accedi con Email",
+    "new_to": "Hai la tua cloud box privata?",
+    "view_guide": "Vedi le guide.",
     "enter_pin": "Inserisci PIN",
     "initializing_key": "Attendere prego. Stiamo inizializzando la tua chiave e ci stiamo connettendo al cloud.",
+    "connecting_keycloak": "Connessione al servizio di login...",
     "incorrect_credentials": "La password o il QR sono errati, riprova",
     "try_again": "Riprova",
     "cancel": "Annulla",
@@ -50,17 +53,23 @@
     "reachability_message": "Impossibile raggiungere il server. Assicurati che il server proxy sia attivo e raggiungibile dal telefono.",
     "reachability_localhost": "Impossibile raggiungere {{targetProxy}}. Su un dispositivo fisico, 127.0.0.1 o localhost punta al telefono stesso, non al PC o al Cloud Box."
   },
+  "qr_selection": {
+    "step1": "1. Apri il tuo client desktop e vai al pannello del codice QR o apri l'app mobile Graphene Photos e vai alla pagina delle impostazioni",
+    "step2": "2. Scansiona il codice QR qui sotto usando la tua fotocamera o copia e incolla il codice QR manualmente",
+    "step3": "3. Inserisci il PIN a 6 cifre",
+    "scan_button": "Scansiona codice QR"
+  },
   "zeroknowledge": {
-    "head": "Crittografia zero-knowledge",
-    "passphrase_desc": "Inserisci la tua passphrase di 12 parole del desktop per abilitare i nomi dei file e i contenuti crittografati. Tocca Salta se la crittografia zero-knowledge del desktop non è mai stata abilitata.",
-    "passphrase_desc_auth": "Inserisci la tua passphrase di 12 parole del desktop prima dell'autenticazione se questo cloud utilizza la crittografia zero-knowledge. Tocca Salta se questo cloud non è stato creato con la crittografia zero-knowledge.",
+    "head": "Crittografia Zero Knowledge",
+    "passphrase_desc": "Inserisci la tua passphrase di 12 parole del desktop per abilitare i nomi dei file e i contenuti crittografati. Tocca Salta se Zero Knowledge del desktop non è mai stata abilitata.",
+    "passphrase_desc_auth": "Inserisci la tua passphrase di 12 parole del desktop prima dell'autenticazione se questo cloud utilizza la crittografia Zero Knowledge. Tocca Salta se questo cloud non è stato creato con la crittografia Zero Knowledge.",
     "enter_phrase": "Inserisci frase",
     "enter_passphrase": "Inserisci passphrase",
-    "enabled_head": "Zero-knowledge abilitato",
-    "enabled_desc": "Passphrase accettata. I nomi dei file e i byte dei file utilizzeranno ora la modalità zero-knowledge.",
+    "enabled_head": "Zero Knowledge abilitato",
+    "enabled_desc": "Passphrase accettata. I nomi dei file e i byte dei file utilizzeranno ora la modalità Zero Knowledge.",
     "error_head": "Errore passphrase",
     "error_desc": "Impossibile elaborare la passphrase. Inserisci la stessa passphrase del desktop o tocca Salta nel passaggio precedente.",
-    "error_desc_auth": "Impossibile elaborare la passphrase. Riprova l'accesso e inserisci la stessa passphrase del desktop, oppure usa Salta se questo cloud non utilizza la crittografia zero-knowledge.",
+    "error_desc_auth": "Impossibile elaborare la passphrase. Riprova l'accesso e inserisci la stessa passphrase del desktop, oppure usa Salta se questo cloud non utilizza la crittografia Zero Knowledge.",
     "skip": "Salta"
   },
   "cellular": {
@@ -72,7 +81,7 @@
     "total": "Totale",
     "used": "Utilizzato",
     "unlimited": "Illimitato",
-    "zero_knowledge_info": "La crittografia zero-knowledge è abilitata, quindi il server non dispone dei metadati del tipo di file, il che significa che l'utilizzo per tipo di file (immagini, documenti, audio, ecc.) non può essere mostrato.",
+    "zero_knowledge_info": "La crittografia Zero Knowledge è abilitata, quindi il server non dispone dei metadati del tipo di file, il che significa che l'utilizzo per tipo di file (immagini, documenti, audio, ecc.) non può essere mostrato.",
     "images": "Immagini",
     "video": "Video",
     "documents": "Documenti",
@@ -135,7 +144,7 @@
     "memory_full_head": "Graphene Cloud Explorer è pieno",
     "max_files_warning": "I file selezionati non devono essere più di 15",
     "failed_pick_file": "Impossibile selezionare il file",
-    "connect_new_device_head": "Collega nuovo dispositivo Cloud-Services",
+    "connect_new_device_head": "Collega nuovo dispositivo Cloud Box",
     "connect_new_device_desc": "Se desideri collegare un nuovo dispositivo, verrai disconnesso dal dispositivo attuale",
     "continue": "Continua",
     "pay_attention": "Presta attenzione",

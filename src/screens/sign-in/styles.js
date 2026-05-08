@@ -3,15 +3,15 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'space-around',
+        justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'column',
-        marginVertical: 21
+        paddingHorizontal: 25,
     },
     buttonView: {
         width: '100%',
-        height: 150,
-        // alignItems: 'center',
+        alignItems: 'center',
+        marginVertical: 20,
     },
     buttonsGroup: {
         borderColor: 'red',
@@ -25,15 +25,15 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
         borderTopColor: '#EEF2FE',
     },
     viewGuide: {
-        borderColor: 'red',
-        paddingLeft: 4,
+        paddingTop: 10,
     },
 
     viewGuideText: {
-        color: '#B0C0D0'
+        color: '#B0C0D0',
+        fontWeight: '500'
     }
 })

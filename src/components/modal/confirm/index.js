@@ -24,9 +24,9 @@ const ConfirmModal = () => {
             <Text style={styles.head} numberOfLines={2}>{head}</Text>
             <Text style={styles.content}>{content}</Text>
             <View style={styles.buttonGroup}>
-                <Button variant='outlined' text={cancelButtonText ? cancelButtonText : t('common.cancel')} callback={cancelHandler} />
-                <View style={styles.gap}></View>
                 <Button text={buttonText ? buttonText : t('common.ok')} callback={callbackHandler} />
+                <View style={styles.gap}></View>
+                <Button variant='outlined' text={cancelButtonText ? cancelButtonText : t('common.cancel')} callback={cancelHandler} />
             </View>
         </View >
     )

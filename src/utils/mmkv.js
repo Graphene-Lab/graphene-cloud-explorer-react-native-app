@@ -86,6 +86,7 @@ export const dropMMKV = async () => {
   setBool('auth', false);
   setMap('userSecretData', {});
   setArray('lasts', []);
+  setArray('uploadQueue', []);
 };
 
 export const updateMultiplyMoveMMKV = async (location, names, target) => {

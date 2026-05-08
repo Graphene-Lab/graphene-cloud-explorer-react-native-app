@@ -1,7 +1,10 @@
+import QuickCrypto from 'react-native-quick-crypto';
+const crypto = QuickCrypto;
+
+const getSubtle = () => global.crypto?.subtle || global.crypto?.webcrypto?.subtle || crypto?.subtle || crypto?.webcrypto?.subtle;
 
 export function hash256(buffer) {
-    return window.crypto.subtle.digest('SHA-256', buffer);
-
+    return getSubtle().digest('SHA-256', buffer);
 }
 
 export function encryptData(key, data) {
@@ -9,13 +12,13 @@ export function encryptData(key, data) {
         hash256(key).then((sharedKey) => {
             let iv = sharedKey.slice(0, 16);
             let encryptionKey = sharedKey.slice(16, 32);
-            window.crypto.subtle
+            getSubtle()
                 .importKey("raw", encryptionKey, "AES-CBC", false, [
                     "encrypt",
                     "decrypt",
                 ])
                 .then((key_encoded) => {
-                    window.crypto.subtle
+                    getSubtle()
                         .encrypt(
                             {
                                 name: "AES-CBC",

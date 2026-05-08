@@ -8,7 +8,11 @@ const appJsonPath = path.join(rootDir, "app.json");
 const gradlePath = path.join(rootDir, "android", "app", "build.gradle");
 
 function readJson(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  let content = fs.readFileSync(filePath, "utf8");
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  return JSON.parse(content);
 }
 
 function writeJson(filePath, data) {

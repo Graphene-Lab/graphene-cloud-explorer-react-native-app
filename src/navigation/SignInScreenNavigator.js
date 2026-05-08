@@ -3,6 +3,8 @@ import QRScreen from "../screens/qr";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import OnBoarding from "../components/on-boarding";
 import SingInViaText from "../screens/sign-in-text";
+import SignInUp from "../components/SignInUp";
+import QRSelectionScreen from "../screens/qr-selection";
 
 const Stack = createNativeStackNavigator();
 
@@ -31,10 +33,23 @@ const SignInScreenNavigator = () => {
         }}
       />
       <Stack.Screen
+        name="SignInUp"
+        component={SignInUp}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="QRSelectionScreen"
+        component={QRSelectionScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="ViewGuideScreen"
         component={OnBoarding}
         options={{
-
           headerShown: false,
         }}
       />

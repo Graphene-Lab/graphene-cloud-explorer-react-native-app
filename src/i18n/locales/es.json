@@ -1,13 +1,13 @@
 {
   "onboarding": {
     "title1": "Encienda Graphene Cloud Explorer",
-    "desc1": "Para encender su dispositivo Cloud-Services, conecte un extremo de un cable tipo C a su dispositivo Cloud-Services y el otro extremo al adaptador de corriente en una toma de corriente.",
+    "desc1": "Para encender su dispositivo Cloud Box, conecte un extremo de un cable tipo C a su dispositivo Cloud Box y el otro extremo al adaptador de corriente en una toma de corriente.",
     "title2": "Conectar a Internet",
-    "desc2": "Conecte un extremo de un cable Ethernet al puerto Ethernet de su router WiFi y el otro extremo al puerto Ethernet de Cloud-Services.",
+    "desc2": "Conecte un extremo de un cable Ethernet al puerto Ethernet de su router WiFi y el otro extremo al puerto Ethernet de Cloud Box.",
     "title3": "Conectar la aplicación con el dispositivo",
-    "desc3": "Busque el documento de instrucciones en la caja. Para conectar la aplicación a la caja de Cloud-Services, siga estos pasos: \n \n 1. Escanee el código QR \n \n 2. Ingrese el código de seguridad de 6 dígitos",
+    "desc3": "Busque el documento de instrucciones en la caja. Para conectar la aplicación a la caja de Cloud Box, siga estos pasos: \n \n 1. Escanee el código QR \n \n 2. Ingrese el código de seguridad de 6 dígitos",
     "title4": "Gestione sus archivos",
-    "desc4": "Guarde sus archivos y multimedia en Cloud-Services y acceda a ellos desde cualquier dispositivo, en cualquier lugar."
+    "desc4": "Guarde sus archivos y multimedia en Cloud Box y acceda a ellos desde cualquier dispositivo, en cualquier lugar."
   },
   "faqs": {
     "q1": "¿Quiénes somos?",
@@ -27,7 +27,9 @@
   },
   "signin": {
     "welcome": "¡Bienvenido!",
-    "description": "Para conectar su aplicación al dispositivo Graphene Cloud Explorer, escanee el código QR que encontrará en el papel de instrucciones en la caja. Luego ingrese un código de verificación de 6 dígitos para iniciar sesión en su cuenta.",
+    "description": "Cloud Graphene Explorer le ayuda a explorar sus archivos sincronizados a través del cliente de escritorio o Graphene Photos. Las claves de cifrado permanecen en su teléfono.",
+    "privacy_title": "Cómo sus archivos permanecen privados",
+    "privacy_body": "Los archivos se cifran en su dispositivo antes de subirlos. Sus claves de cifrado permanecen en su teléfono y nunca se envían a nuestros servidores. Almacenamos solo archivos cifrados, por lo que no podemos ver sus archivos, a diferencia de los servicios típicos como Google Drive o OneDrive.",
     "open_camera": "Abrir cámara",
     "or": "o",
     "enter_qr_manually": "Ingrese el código QR manualmente",
@@ -35,11 +37,12 @@
     "network_failed_desc": "Asegúrese de que su teléfono tenga una conexión a Internet activa y verifique la red.",
     "login": "Iniciar sesión",
     "qr_placeholder": "Código QR",
-    "credentials": "Iniciar sesión con credenciales",
-    "new_to": "¿Nuevo en Graphene Cloud Explorer?",
-    "view_guide": "Ver guía",
+    "credentials": "Iniciar sesión con Email",
+    "new_to": "¿Tiene su propia caja de nube privada?",
+    "view_guide": "Vea las guías.",
     "enter_pin": "Ingrese el PIN",
     "initializing_key": "Por favor espere. Estamos inicializando su clave y conectándonos a la nube.",
+    "connecting_keycloak": "Conectando al servicio de inicio de sesión...",
     "incorrect_credentials": "La contraseña o el QR son incorrectos, por favor inténtelo de nuevo",
     "try_again": "Intentar de nuevo",
     "cancel": "Cancelar",
@@ -50,17 +53,23 @@
     "reachability_message": "No se puede establecer conexión con el servidor. Asegúrese de que el servidor proxy esté funcionando y sea accesible desde el teléfono.",
     "reachability_localhost": "No se puede establecer conexión con {{targetProxy}}. En un dispositivo físico, 127.0.0.1 o localhost apunta al propio teléfono, no a su PC o Cloud Box."
   },
+  "qr_selection": {
+    "step1": "1. Abra su cliente de escritorio y navegue hasta el panel del código QR o abra la aplicación móvil Graphene Photos y navegue hasta la página de configuración",
+    "step2": "2. Escanee el código QR a continuación con su cámara o copie y pegue el código QR manualmente",
+    "step3": "3. Ingrese el PIN de 6 dígitos",
+    "scan_button": "Escanear código QR"
+  },
   "zeroknowledge": {
-    "head": "Cifrado de conocimiento cero",
-    "passphrase_desc": "Ingrese su frase de contraseña de 12 palabras del escritorio para habilitar nombres de archivos y contenidos cifrados. Toque Omitir si el conocimiento cero del escritorio nunca se habilitó.",
-    "passphrase_desc_auth": "Ingrese su frase de contraseña de 12 palabras del escritorio antes de la autenticación si esta nube utiliza cifrado de conocimiento cero. Toque Omitir si esta nube no se creó con cifrado de conocimiento cero.",
+    "head": "Cifrado Zero Knowledge",
+    "passphrase_desc": "Ingrese su frase de contraseña de 12 palabras del escritorio para habilitar nombres de archivos y contenidos cifrados. Toque Omitir si Zero Knowledge del escritorio nunca se habilitó.",
+    "passphrase_desc_auth": "Ingrese su frase de contraseña de 12 palabras del escritorio antes de la autenticación si esta nube utiliza cifrado Zero Knowledge. Toque Omitir si esta nube no se creó con cifrado Zero Knowledge.",
     "enter_phrase": "Ingresar frase",
     "enter_passphrase": "Ingresar frase de contraseña",
-    "enabled_head": "Conocimiento cero habilitado",
-    "enabled_desc": "Frase de contraseña aceptada. Los nombres de archivos y los bytes de archivos ahora usarán el modo de conocimiento cero.",
+    "enabled_head": "Zero Knowledge habilitado",
+    "enabled_desc": "Frase de contraseña aceptada. Los nombres de archivos y los bytes de archivos ahora usarán el modo Zero Knowledge.",
     "error_head": "Error de frase de contraseña",
     "error_desc": "La frase de contraseña no pudo ser procesada. Ingrese la misma frase de contraseña del escritorio o toque Omitir en el paso anterior.",
-    "error_desc_auth": "La frase de contraseña no pudo ser procesada. Reintente el inicio de sesión e ingrese la misma frase de contraseña del escritorio, o use Omitir si esta nube no utiliza cifrado de conocimiento cero.",
+    "error_desc_auth": "La frase de contraseña no pudo ser procesada. Reintente el inicio de sesión e ingrese la misma frase de contraseña del escritorio, o use Omitir si esta nube no utiliza cifrado Zero Knowledge.",
     "skip": "Omitir"
   },
   "cellular": {
@@ -72,7 +81,7 @@
     "total": "Total",
     "used": "Usado",
     "unlimited": "Ilimitado",
-    "zero_knowledge_info": "El cifrado de conocimiento cero está habilitado, por lo que el servidor no tiene metadatos del tipo de archivo, lo que significa que no se puede mostrar el uso por tipo de archivo (imágenes, documentos, audio, etc.).",
+    "zero_knowledge_info": "El cifrado Zero Knowledge está habilitado, por lo que el servidor no tiene metadatos del tipo de archivo, lo que significa que no se puede mostrar el uso por tipo de archivo (imágenes, documentos, audio, etc.).",
     "images": "Imágenes",
     "video": "Video",
     "documents": "Documentos",
@@ -135,7 +144,7 @@
     "memory_full_head": "Graphene Cloud Explorer está lleno",
     "max_files_warning": "Los archivos que selecciones no deben ser más de 15",
     "failed_pick_file": "Error al seleccionar el archivo",
-    "connect_new_device_head": "Conectar nuevo dispositivo Cloud-Services",
+    "connect_new_device_head": "Conectar nuevo dispositivo Cloud Box",
     "connect_new_device_desc": "Si desea conectar un nuevo dispositivo, se desconectará del dispositivo actual",
     "continue": "Continuar",
     "pay_attention": "Atención",

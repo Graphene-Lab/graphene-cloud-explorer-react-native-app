@@ -5,22 +5,18 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
     primary: {
         borderWidth: 1,
-        flex: 1,
-        // height: 33,
-        // width: '100%',
         backgroundColor: '#415EB6',
         borderColor: '#415EB6',
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        maxHeight: 50,
-
+        height: 45,
+        width: '100%',
     },
     primaryText: {
         color: '#fff',
         fontWeight: '500',
-        fontSize: 18,
-        // textAlign: 'center'
+        fontSize: 16,
     },
     outlined: {
         borderWidth: 1,
@@ -29,14 +25,13 @@ export const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        height: 50,
-        flex: 1,
-        // width: '100%',
+        height: 45,
+        width: '100%',
     },
     outlinedText: {
         color: '#415EB6',
         fontWeight: '500',
-        fontSize: 18,
+        fontSize: 16,
     },
 
     disabled: {
