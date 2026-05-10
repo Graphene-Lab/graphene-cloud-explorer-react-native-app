@@ -126,10 +126,17 @@
     "search_tags": "Cerca per tag"
   },
   "upload": {
-    "files_count": "{{count}} file ({{part}} di {{all}})",
-    "remaining_storage": "Archiviazione residua",
+    "files_count": "{{name}} ({{part}} di {{all}})",
+    "remaining_storage": "Memoria residua",
     "remaining_time": "Tempo rimanente",
-    "storage_of": "{{available}} di {{total}}"
+    "storage_of": "{{available}} di {{total}}",
+    "preparing": "Preparazione al caricamento dei file",
+    "max_files_head": "Impossibile selezionare i file",
+    "max_files_desc": "I file selezionati non devono essere più di 15",
+    "save_where": "Dove vuoi salvare il file caricato?",
+    "choose": "Scegli",
+    "upload_file": "Carica un file",
+    "upload_multiple": "Carica più file"
   },
   "popups": {
     "remove_file": "Sei sicuro di voler rimuovere questo file?",
@@ -231,15 +238,7 @@
     "try_again": "Riprova",
     "update_button": "Aggiorna"
   },
-  "upload": {
-    "preparing": "Preparazione al caricamento dei file",
-    "max_files_head": "Impossibile selezionare i file",
-    "max_files_desc": "I file selezionati non devono essere più di 15",
-    "save_where": "Dove vuoi salvare il file caricato?",
-    "choose": "Scegli",
-    "upload_file": "Carica un file",
-    "upload_multiple": "Carica più file"
-  },
+
   "welcome": {
     "head": "Benvenuto su Uup Cloud",
     "desc": "Accedi o registrati per continuare a utilizzare Graphene Cloud Explorer",

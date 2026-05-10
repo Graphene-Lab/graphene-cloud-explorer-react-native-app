@@ -126,10 +126,17 @@
     "search_tags": "Rechercher par tags"
   },
   "upload": {
-    "files_count": "{{count}} fichiers ({{part}} sur {{all}})",
+    "files_count": "{{name}} ({{part}} sur {{all}})",
     "remaining_storage": "Stockage restant",
     "remaining_time": "Temps restant",
-    "storage_of": "{{available}} sur {{total}}"
+    "storage_of": "{{available}} sur {{total}}",
+    "preparing": "Préparation du téléchargement des fichiers",
+    "max_files_head": "Échec de la sélection des fichiers",
+    "max_files_desc": "Les fichiers que vous sélectionnez ne doivent pas dépasser 15",
+    "save_where": "Où souhaitez-vous enregistrer le fichier téléchargé ?",
+    "choose": "Choisir",
+    "upload_file": "Télécharger un fichier",
+    "upload_multiple": "Télécharger plusieurs fichiers"
   },
   "popups": {
     "remove_file": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
@@ -231,15 +238,7 @@
     "try_again": "Réessayer",
     "update_button": "Mettre à jour"
   },
-  "upload": {
-    "preparing": "Préparation du téléchargement des fichiers",
-    "max_files_head": "Échec de la sélection des fichiers",
-    "max_files_desc": "Les fichiers que vous sélectionnez ne doivent pas dépasser 15",
-    "save_where": "Où souhaitez-vous enregistrer le fichier téléchargé ?",
-    "choose": "Choisir",
-    "upload_file": "Télécharger un fichier",
-    "upload_multiple": "Télécharger plusieurs fichiers"
-  },
+
   "welcome": {
     "head": "Bienvenue sur Uup Cloud",
     "desc": "Connectez-vous ou inscrivez-vous pour continuer à utiliser Graphene Cloud Explorer",

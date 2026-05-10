@@ -126,10 +126,17 @@
     "search_tags": "Search by tags"
   },
   "upload": {
-    "files_count": "{{count}} files ({{part}} of {{all}})",
+    "files_count": "{{name}} ({{part}} of {{all}})",
     "remaining_storage": "Remaining storage",
     "remaining_time": "Remaining time",
-    "storage_of": "{{available}} of {{total}}"
+    "storage_of": "{{available}} of {{total}}",
+    "preparing": "Preparing to upload files",
+    "max_files_head": "Failed to pick files",
+    "max_files_desc": "The files you select must not be more than 15",
+    "save_where": "Where do you want to save upload the file?",
+    "choose": "Choose",
+    "upload_file": "Upload a file",
+    "upload_multiple": "Upload multiple files"
   },
   "popups": {
     "remove_file": "Are you sure you want to remove this file?",
@@ -231,15 +238,7 @@
     "try_again": "Try again",
     "update_button": "Update"
   },
-  "upload": {
-    "preparing": "Preparing to upload files",
-    "max_files_head": "Failed to pick files",
-    "max_files_desc": "The files you select must not be more than 15",
-    "save_where": "Where do you want to save upload the file?",
-    "choose": "Choose",
-    "upload_file": "Upload a file",
-    "upload_multiple": "Upload multiple files"
-  },
+
   "welcome": {
     "head": "Welcome to Uup Cloud",
     "desc": "Sign in/up to continue using Graphene Cloud Explorer",
