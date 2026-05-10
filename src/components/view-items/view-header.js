@@ -134,17 +134,14 @@ export const ViewItemHeader = memo(({ contentSetter, content }) => {
                         visibility={sortOpen}
                         setVisibility={setSortOpen}
                     />
-                    <Pressable hitSlop={10} onPress={() => setSortOpen(!sortOpen)} style={{ marginRight: 9 }}>
+                    <Pressable hitSlop={10} onPress={() => setSortOpen(!sortOpen)} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: 9 }}>
                         <Ionicons name="swap-vertical" size={24} color={sortOpen ? '#22215B' : '#B0C0D0'} />
                     </Pressable>
-                    {name === 'HomeScreen' && <Pressable hitSlop={10} onPress={() => setFilter(!filter)} style={{ marginRight: 9 }}>
+                    {name === 'HomeScreen' && <Pressable hitSlop={10} onPress={() => setFilter(!filter)} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center', marginRight: 9 }}>
                         <FilterIcon color={filter ? '#22215B' : '#B0C0D0'} />
                     </Pressable>}
-                    <Pressable hitSlop={10} style={styles.touchableOpacityOne} onPress={() => !mode && dispatch(setMode(true))}>
-                        <UnitIcon color={mode ? '#22215B' : '#B0C0D0'} />
-                    </Pressable>
-                    <Pressable hitSlop={10} onPress={() => mode && dispatch(setMode(false))} style={styles.touchableOpacityTwo}>
-                        <GroupIcon color={mode ? '#B0C0D0' : '#22215B'} />
+                    <Pressable hitSlop={10} onPress={() => dispatch(setMode(!mode))} style={{ width: 32, height: 32, alignItems: 'center', justifyContent: 'center' }}>
+                        {mode ? <UnitIcon color="#22215B" /> : <GroupIcon color="#22215B" />}
                     </Pressable>
                 </View>
             </View>
