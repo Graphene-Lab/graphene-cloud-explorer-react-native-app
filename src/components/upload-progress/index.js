@@ -24,7 +24,7 @@ export const UploadProgress = () => {
         <TouchableOpacity style={[styles.container, { display: Object.keys(uploadQueue).length !== 0 ? 'flex' : 'none' }]} onPress={() => navigate('UpdateScreen')}>
             <View style={styles.header}>
                 <TransferIcon />
-                <Text style={styles.headerText}> {t('upload.files_count', { count: Object.values(uploadQueue).length, part: bytesToSize(partSize), all: bytesToSize(allSize) })}</Text>
+                <Text style={styles.headerText}> {t('upload.files_count', { name: Object.values(uploadQueue)[0]?.file, part: bytesToSize(partSize), all: bytesToSize(allSize) })}</Text>
             </View>
             <ProgressBar />
             <View style={styles.bottom}>
