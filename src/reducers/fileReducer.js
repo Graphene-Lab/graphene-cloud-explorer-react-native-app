@@ -5,7 +5,7 @@ const initialState = {
     mode: false,
     favorites: [],
     location: '',
-    order: null,
+    order: { type: 'name', ascending: false },
     filterResults: [],
     filterStatus: false,
     found: null,

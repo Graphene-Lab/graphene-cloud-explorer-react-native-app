@@ -238,7 +238,13 @@
     "try_again": "Try again",
     "update_button": "Update"
   },
-
+  "sort": {
+    "name": "Name",
+    "date": "Date",
+    "size": "Size",
+    "ascending": "Ascending",
+    "descending": "Descending"
+  },
   "welcome": {
     "head": "Welcome to Uup Cloud",
     "desc": "Sign in/up to continue using Graphene Cloud Explorer",

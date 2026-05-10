@@ -5,17 +5,18 @@ import { styles } from './styles';
 import { ViewItemHeader } from './view-header';
 import { EmptyComponent } from '../list-empty';
 import { useDispatch, useSelector } from 'react-redux';
-import { lazy, useState, useCallback, memo } from 'react';
+import { lazy, useState, useCallback, memo, useMemo } from 'react';
 import { setEmptySelectedFiles, setFound } from '../../reducers/fileReducer';
 import { FlashList } from "@shopify/flash-list";
 import { UploadProgress } from '../upload-progress';
 const ResultsView = lazy(() => import('../tag/result-view'));
+import { sortFiles } from '../../utils/essential-functions';
 
 
 const ViewItems = ({ content, setContent, name, reload }) => {
   //mode true -> column, mode false -> row 
-  const contentSetter = (con) => setContent(con);
-  const { mode, filterStatus } = useSelector(state => state.files);
+  const contentSetter = useCallback((con) => setContent(con), [setContent]);
+  const { mode, filterStatus, order } = useSelector(state => state.files);
   const [refreshing, setRefreshing] = useState(false);
   const dispatch = useDispatch();
   const { selectedFiles, found } = useSelector(state => state.files);
@@ -26,12 +27,14 @@ const ViewItems = ({ content, setContent, name, reload }) => {
     found && dispatch(setFound(null))
   }, []);
 
+  const sortedContent = useMemo(() => sortFiles(content, order), [content, order]);
+
   return (
     <View style={styles.container}>
       <ViewItemHeader contentSetter={contentSetter} content={content?.length} />
       {name === 'CloudScreen' && <UploadProgress />}
       {(filterStatus && name === 'HomeScreen') ? <ResultsView /> : <FlashList
-        data={content}
+        data={sortedContent}
         keyExtractor={(item, index) => item.path + index}
         extraData={mode}
         horizontal={false}
@@ -52,6 +55,5 @@ const ViewItems = ({ content, setContent, name, reload }) => {
     </View>
   )
 }
-
 
 export default memo(ViewItems);

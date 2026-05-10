@@ -202,6 +202,27 @@ export const locationGenerator = (full) => {
     return generated.join('/');
 };
 
+export const sortFiles = (files, orderState) => {
+    if (!files || !Array.isArray(files)) return files;
+    const { type, ascending } = orderState || { type: 'name', ascending: false };
+
+    return [...files].sort((a, b) => {
+        if (a.type === 'folder' && b.type !== 'folder') return -1;
+        if (a.type !== 'folder' && b.type === 'folder') return 1;
+
+        let comparison = 0;
+        if (type === 'name') {
+            comparison = (a.name || '').localeCompare(b.name || '');
+        } else if (type === 'date') {
+            comparison = new Date(a.rawDate || 0) - new Date(b.rawDate || 0);
+        } else if (type === 'size') {
+            comparison = (a.Length || 0) - (b.Length || 0);
+        }
+
+        return ascending ? comparison : -comparison;
+    });
+};
+
 export const parseFile = (fileContent, not, loc) => {
     const files = [];
     fileContent?.forEach((e) => {
@@ -224,7 +245,8 @@ export const parseFile = (fileContent, not, loc) => {
             });
     });
 
-    return files.sort((a) => (a.type === 'folder' ? -1 : 1));
+    const orderState = store.getState().files.order || { type: 'name', ascending: false };
+    return sortFiles(files, orderState);
 };
 
 export const navigateToFolder = async (path, routeName) => {
