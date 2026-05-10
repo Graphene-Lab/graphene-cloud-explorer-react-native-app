@@ -32,7 +32,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="com.cloudapp"/>
+        <data android:scheme="com.graphenelab.cloudexplorer"/>
         <data android:scheme="exp+cloud-storage"/>
       </intent-filter>
       <intent-filter data-generated="true">
@@ -54,7 +54,7 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="com.cloudapp" android:host="redirect"/>
+        <data android:scheme="com.graphenelab.cloudexplorer" android:host="redirect"/>
       </intent-filter>
     </activity>
   </application>

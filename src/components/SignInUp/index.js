@@ -27,7 +27,7 @@ export default function SignInUp () {
     {
       clientId: 'cloud-mobile-app',
       redirectUri: makeRedirectUri({
-        scheme: 'com.cloudapp',
+        scheme: 'com.graphenelab.cloudexplorer',
       }) + 'redirect',
       scopes: ['openid', 'profile'],
       usePKCE: true,
@@ -43,7 +43,7 @@ export default function SignInUp () {
         new URLSearchParams({
           client_id: 'cloud-mobile-app',
           code: code,
-          redirect_uri: makeRedirectUri({ scheme: 'com.cloudapp' }) + 'redirect',
+          redirect_uri: makeRedirectUri({ scheme: 'com.graphenelab.cloudexplorer' }) + 'redirect',
           grant_type: 'authorization_code',
           code_verifier: codeVerifier
         }).toString(),
@@ -69,13 +69,13 @@ export default function SignInUp () {
       console.log('SignInUp: Starting finalizeAuthentication...');
       const success = await finalizeAuthentication(pin, qrEncrypted);
       console.log('SignInUp: finalizeAuthentication result:', success);
-      
+
       if (success) {
-          console.log('SignInUp: finalizeAuthentication result: true (Navigation handled by WelcomeScreen)');
+        console.log('SignInUp: finalizeAuthentication result: true (Navigation handled by WelcomeScreen)');
       } else {
-          setLoading(false);
+        setLoading(false);
       }
-      
+
     } catch (error) {
       setLoading(false);
       console.error('Token exchange failed:', error);

@@ -6,12 +6,12 @@ import QuickCrypto from 'react-native-quick-crypto';
 
 // Polyfill global crypto safely
 try {
-    if (QuickCrypto) {
-        global.crypto = QuickCrypto;
-        console.log('App: Crypto polyfilled. subtle available:', !!(QuickCrypto.subtle || QuickCrypto.webcrypto?.subtle));
-    }
+  if (QuickCrypto) {
+    global.crypto = QuickCrypto;
+    console.log('App: Crypto polyfilled. subtle available:', !!(QuickCrypto.subtle || QuickCrypto.webcrypto?.subtle));
+  }
 } catch (e) {
-    console.error('App: Failed to polyfill global.crypto', e);
+  console.error('App: Failed to polyfill global.crypto', e);
 }
 
 import { BottomSheetNative } from './src/components/bottom-sheet';
@@ -56,8 +56,8 @@ const App = () => {
   return (
     <StripeProvider
       publishableKey="pk_test_51QUPpVL5vnlesNTrpFG1yyTMgIEfZOw9CTheApJzrmbPIGLrJdPVny61F8abmkyxmEp0fUfVIUZo9CLV3hkB2J2a00Qv02R6hj" // Replace with your Stripe publishable key
-      urlScheme="com.cloudapp" // Required for 3D Secure and bank redirects
-      // merchantIdentifier="merchant.com.yourapp" // Required for Apple Pay
+      urlScheme="com.graphenelab.cloudexplorer" // Required for 3D Secure and bank redirects
+    // merchantIdentifier="merchant.com.yourapp" // Required for Apple Pay
     >
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
