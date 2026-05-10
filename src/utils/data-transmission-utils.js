@@ -617,7 +617,8 @@ const SLOW_INTERNET_THRESHOLD_MS = 15000;
 const DEBUG_REQUEST_MARKERS = true;
 var concurrentRequest = 0;
 let spooler = [];
-const shouldShowSlowInternetModal = (commandId) => commandId !== command.GetFile;
+const shouldShowSlowInternetModal = (commandId) => 
+  commandId !== command.GetFile && commandId !== command.SetFile;
 
 function logRequestMarker(event, commandId, extra = '') {
   if (!DEBUG_REQUEST_MARKERS) return;
@@ -963,20 +964,25 @@ async function spoolingRequest() {
                   if (commandId === command.Authentication) {
                     store.dispatch(setAuthWait(false));
                   }
-                  store.dispatch(
-                    openModal({
-                    head: i18n.t('popups.failed_to_connect'),
-                    content:
-                      commandId === command.Authentication
-                        ? i18n.t('popups.auth_failed_desc')
-                        : i18n.t('popups.device_connection_failed'),
-                    type: 'confirm',
-                      callback: () => {
-                        DeviceEventEmitter.emit('spoolerCleaner');
-                        store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
-                      },
-                    })
-                  );
+                  // SetFile (upload chunks) should NOT show the blocking modal, it wipes
+                  // the spooler via spoolerCleaner, cancelling all remaining chunks.
+                  // Let the error propagate to file-reading.js which handles it gracefully.
+                  if (commandId !== command.SetFile) {
+                    store.dispatch(
+                      openModal({
+                        head: i18n.t('popups.failed_to_connect'),
+                        content:
+                          commandId === command.Authentication
+                            ? i18n.t('popups.auth_failed_desc')
+                            : i18n.t('popups.device_connection_failed'),
+                        type: 'confirm',
+                        callback: () => {
+                          DeviceEventEmitter.emit('spoolerCleaner');
+                          store.dispatch(enqueue(['CloudScreen', 'MediaScreen', 'FavoriteScreen']));
+                        },
+                      })
+                    );
+                  }
                 }
                 if (shouldHandleAsFailure) {
                   throw error;

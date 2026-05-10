@@ -18,7 +18,6 @@ import { enqueue, forceEnqueue } from "../reducers/refreshQueueReducer";
 import { setScreenBehavior } from "../reducers/screenControllerReducer";
 import { useErrorAlert } from "../hooks/useErrorAlert";
 import { streamReceiver } from "./file-reading";
-import BackgroundService from 'react-native-background-actions';
 
 global.Buffer = global.Buffer || require('buffer').Buffer
 
@@ -606,15 +605,14 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
     let { data, allSize } = await modifier(modifiedFiles, path);
 
 
-    if (Platform.OS === 'ios') {
-        data = data.map(elements => {
-            let uri = elements.uri;
-            uri = decodeURIComponent(uri.replace('file:', ''));
-            return { ...elements, uri }
-        });
-    }
-
-
+    // Strip file:// scheme on all platforms — RNFetchBlob requires bare fs paths
+    data = data.map(elements => {
+        let uri = elements.uri || '';
+        if (uri.startsWith('file://') || uri.startsWith('file:')) {
+            uri = decodeURIComponent(uri.replace('file://', '').replace('file:', ''));
+        }
+        return { ...elements, uri };
+    });
 
     if (storageSize != -1 && allSize > storageSize) {
         return store.dispatch(openModal({
@@ -625,25 +623,15 @@ export const startIntentUpload = async (path, closeBottomSheet) => {
         }))
     }
 
-    const options = {
-        taskName: i18n.t('tasks.upload_name'),
-        taskTitle: i18n.t('tasks.upload_title'),
-        taskDesc: i18n.t('tasks.upload_desc'),
-        taskIcon: {
-            name: 'ic_launcher',
-            type: 'mipmap',
-        },
-        color: '#fefefe',
-        linkingURI: 'yourSchemeHere://chat/jane', // See Deep Linking for more info
-        parameters: {
-            elements: data,
-        },
-    };
-
-
     await delay(500);
     store.dispatch(closeModal());
-    await BackgroundService.start(readFileStream, options);
+    // BackgroundService.start() resolves without invoking the task on Android New
+    // Architecture — call readFileStream directly instead.
+    readFileStream({ elements: data }).catch(err => {
+        console.error('[Upload] intent upload failed:', err);
+        store.dispatch(closeModal());
+        isStartReading = false;
+    });
 }
 
 
@@ -661,46 +649,38 @@ export const startMultiUpload = async (path, closeBottomSheet) => {
     })
 
 
-    if (Platform.OS === 'ios') {
-        modifiedFiles = modifiedFiles.map(elements => {
-            let uri = elements.uri;
-            uri = decodeURIComponent(uri.replace('file:', ''));
-            return { ...elements, uri }
-        });
-    }
+    // Strip the file:// scheme on all platforms — RNFetchBlob.fs.readStream
+    // requires a bare file-system path, not a URI. expo-document-picker returns
+    // file:// URIs on Android too, so this must not be iOS-only.
+    modifiedFiles = modifiedFiles.map(elements => {
+        let uri = elements.uri || '';
+        if (uri.startsWith('file://') || uri.startsWith('file:')) {
+            uri = decodeURIComponent(uri.replace('file://', '').replace('file:', ''));
+        }
+        return { ...elements, uri };
+    });
 
 
-    const options = {
-        taskName: i18n.t('tasks.upload_name'),
-        taskTitle: i18n.t('tasks.upload_title'),
-        taskDesc: i18n.t('tasks.upload_desc'),
-        taskIcon: {
-            name: 'ic_launcher',
-            type: 'mipmap',
-        },
-        color: '#fefefe',
-        linkingURI: 'yourSchemeHere://chat/jane', // See Deep Linking for more info
-        parameters: {
-            elements: modifiedFiles,
-        },
-    };
-
-
+    console.log('[Upload] startMultiUpload: files=', modifiedFiles.map(f => ({ name: f.name, uri: f.uri, size: f.size })));
     storageInfo();
     closeBottomSheet();
     await delay(200);
-    store.dispatch(openModal({ type: 'prepare' }))
-    await delay(500);
-    await BackgroundService.start(readFileStream, options);
-
+    store.dispatch(openModal({ type: 'prepare' }));
+    await delay(200);
+    // BackgroundService.start() resolves without invoking the task on Android New
+    // Architecture — call readFileStream directly instead.
+    readFileStream({ elements: modifiedFiles }).catch(err => {
+        console.error('[Upload] upload failed:', err);
+        store.dispatch(closeModal());
+        isStartReading = false;
+    });
 }
 
 let isStartReading = false;
 let fss = [];
 
-
-
 const readFileStream = async (args) => {
+    console.log('[Upload] readFileStream called, isStartReading=', isStartReading);
     let { elements } = args;
     if (Array.isArray(elements)) {
         fss = [...fss, ...elements];
@@ -708,10 +688,12 @@ const readFileStream = async (args) => {
     else fss.push(elements);
 
     if (isStartReading) {
+        console.warn('[Upload] already reading, early return');
         return;
     }
     isStartReading = true;
     for (const iterator of fss) {
+        console.log('[Upload] opening stream for uri=', iterator.uri);
         await new Promise((res, rej) => {
             return RNFetchBlob.fs.readStream(
                 iterator.uri,
@@ -719,14 +701,21 @@ const readFileStream = async (args) => {
                 chunkSize
             )
                 .then((ifstream) => {
+                    console.log('[Upload] stream opened, starting read');
                     store.dispatch(closeModal());
                     ifstream.open();
 
                     ifstream.onData(data => {
                         streamReceiver(iterator, data);
                     })
-                    ifstream.onError((err) => err);
+                    ifstream.onError((err) => {
+                        console.error('[Upload] Stream error:', err);
+                        store.dispatch(closeModal());
+                        isStartReading = false;
+                        rej(err);
+                    });
                     ifstream.onEnd(() => {
+                        streamReceiver(iterator, 'EOF');
                         fss = fss.filter(elements => elements.uri !== iterator.uri);
                         if (fss.length == 0) {
                             isStartReading = false;
@@ -734,12 +723,12 @@ const readFileStream = async (args) => {
                         return res();
                     })
                 })
+                .catch((err) => {
+                    console.error('[Upload] readStream open failed:', err);
+                    store.dispatch(closeModal());
+                    isStartReading = false;
+                    rej(err);
+                })
         })
     }
-
 }
-
-
-
-
-

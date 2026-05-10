@@ -41,12 +41,53 @@ export const processStart = async () => {
         const currentFile = object[index];
         displayUploadNotification(currentFile.name, currentFile.path);
         let f = wm.get(currentFile);
-        f.push('for additional index')
         var i = 0;
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+        let done = false;
         try {
-            for (const BINARY of f) {
-                await setFileStream(BINARY, currentFile, i + 1, currentFile.path);
-                i++
+            while (!done) {
+                // Wait for the next chunk to be available in the array
+                while (f.length <= i) {
+                    await delay(100);
+                }
+                const BINARY = f[i];
+
+                if (BINARY === 'EOF') {
+                    done = true;
+                    // Process the final verification step
+                    let retryCount = 0;
+                    const maxRetries = 3;
+                    let success = false;
+                    while (!success && retryCount < maxRetries) {
+                        try {
+                            await setFileStream('for additional index', currentFile, i + 1, currentFile.path);
+                            success = true;
+                        } catch (err) {
+                            retryCount++;
+                            console.warn(`[Upload] Finalization failed (attempt ${retryCount}/${maxRetries}):`, err);
+                            if (retryCount >= maxRetries) throw err;
+                            await delay(3000);
+                        }
+                    }
+                    break; // Exit chunk processing loop
+                }
+
+                let retryCount = 0;
+                const maxRetries = 3;
+                let success = false;
+
+                while (!success && retryCount < maxRetries) {
+                    try {
+                        await setFileStream(BINARY, currentFile, i + 1, currentFile.path);
+                        success = true;
+                    } catch (err) {
+                        retryCount++;
+                        console.warn(`[Upload] Chunk ${i + 1} failed (attempt ${retryCount}/${maxRetries}):`, err);
+                        if (retryCount >= maxRetries) throw err;
+                        await delay(3000); // wait 3 seconds before retry
+                    }
+                }
+                i++;
             }
         } catch (error) {
             finishUploadProgress({ name: currentFile.name, size: 0, chunkNumber: i, parts: f.length });
@@ -60,23 +101,11 @@ export const processStart = async () => {
             }
             await BackgroundService.stop();
             isStart = false;
+            object = [];
+            index = 0;
             return;
         }
-        let cloudLocation = store.getState().files.location !== "" ? store.getState().files.location + '/' : store.getState().files.location;
-        let current = store.getState().bottomSheetManager.current;
         clearUploadNotification(currentFile.name, currentFile.path)
-        if (cloudLocation === currentFile.path) {
-            forceRefresh = "CloudScreen"
-            delete enqueueList[0];
-        }
-
-        if (current !== 'Cloud') {
-            forceRefresh = currentScreenList[current];
-        }
-
-        store.dispatch(enqueue(enqueueList));
-        store.dispatch(forceEnqueue(forceRefresh))
-
         delete object[index];
         wm.delete(currentFile);
         index = index + 1;
@@ -84,8 +113,24 @@ export const processStart = async () => {
             processStart();
             return
         }
+
+        // Only refresh UI after all files are finished
+        let cloudLocation = store.getState().files.location !== "" ? store.getState().files.location + '/' : store.getState().files.location;
+        let current = store.getState().bottomSheetManager.current;
+        if (cloudLocation === currentFile.path) {
+            forceRefresh = "CloudScreen"
+            delete enqueueList[0];
+        }
+        if (current !== 'Cloud') {
+            forceRefresh = currentScreenList[current];
+        }
+        store.dispatch(enqueue(enqueueList));
+        store.dispatch(forceEnqueue(forceRefresh))
+
         await BackgroundService.stop();
         isStart = false;
+        object = [];
+        index = 0;
         return;
     }
     isStart = false;
