@@ -1592,7 +1592,7 @@ export const setFileStream = async (b64, file, index, path) => {
 
   if (index > totalChunk) {
     const uploadContext = uploadZeroKnowledge[clearFullName];
-    const uploadedVirtualName = uploadContext ? getVirtualName(uploadContext.virtualFullName) : file.name;
+    const uploadedClearName = uploadContext ? getVirtualName(uploadContext.displayFullName) : file.name;
     const uploadMeta = uploadMetadataByClearPath[clearFullName];
     if (uploadMeta?.unixLastWriteTimestamp) {
       fileMetadataByClearPath[clearFullName] = {
@@ -1609,7 +1609,7 @@ export const setFileStream = async (b64, file, index, path) => {
       parts: totalChunk,
     });
     const res = await getDir(path);
-    let find = res.find((item) => item.Name == uploadedVirtualName || item.Name == file.name);
+    let find = res.find((item) => item.Name == uploadedClearName || item.Name == file.name);
     let currentFile = parseSingle(find, path);
     return addToMMKV(currentFile);
   }

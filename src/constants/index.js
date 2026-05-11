@@ -43,10 +43,16 @@ export const fileTypes = {
     txt: 'txt',
     doc: 'document',
     docx: 'document',
+    rtf: 'document',
+    odt: 'document',
+    epub: 'document',
     ppt: 'presentation',
     pptx: 'presentation',
+    odp: 'presentation',
     xls: 'spreadsheet',
     xlsx: 'spreadsheet',
+    ods: 'spreadsheet',
+    csv: 'spreadsheet',
     zip: 'archive',
     rar: 'archive',
     html: 'code',
@@ -114,4 +120,3 @@ export const ONBOARDING_DATA = [
         svg: 4,
     },
 ];
-

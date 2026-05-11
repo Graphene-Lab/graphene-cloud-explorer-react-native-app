@@ -170,8 +170,12 @@ async function resolveDNS(url) {
 }
 
 export const getFileType = (file) => {
-    file = file?.split('.').reverse()[0].toLowerCase();
-    return fileTypes[file] ? fileTypes[file] : 'other';
+    if (!file || typeof file !== 'string') return 'other';
+    const trimmed = file.trim();
+    const parts = trimmed.split('.');
+    if (parts.length < 2) return 'other';
+    const extension = parts.pop().toLowerCase();
+    return fileTypes[extension] || 'other';
 };
 
 export const parseDateTime = (dateTime) => {
@@ -180,12 +184,12 @@ export const parseDateTime = (dateTime) => {
     return date.toLocaleDateString();
 };
 
-const normalizeRelativePath = (value) => {
+export const normalizeRelativePath = (value) => {
     if (!value) return '';
     return value.replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
 };
 
-const buildFullPath = (name, loc) => {
+export const buildFullPath = (name, loc) => {
     const cleanName = normalizeRelativePath(name);
     const cleanLoc = normalizeRelativePath(loc ?? store.getState().files.location);
     if (!cleanLoc) return cleanName;
