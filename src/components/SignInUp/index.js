@@ -31,6 +31,9 @@ export default function SignInUp () {
       }) + 'redirect',
       scopes: ['openid', 'profile'],
       usePKCE: true,
+      extraParams: {
+        prompt: 'login',
+      },
     },
     discovery
   );
