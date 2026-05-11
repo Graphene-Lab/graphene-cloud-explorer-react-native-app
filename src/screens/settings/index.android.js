@@ -3,23 +3,33 @@ import { View, Text, TouchableOpacity, Switch, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Layout } from '../../layout';
 import TermsIco from '../../assets/icons/setting/terms.svg';
-import FaqIcon from '../../assets/icons/setting/faq.svg';
 import AboutIcon from '../../assets/icons/setting/about.svg';
+import LogoutIcon from '../../assets/icons/setting/logout.svg';
 import { styles } from './styles';
 import { getCellularInfoMMKV, setCellularAccessMMKV } from '../../utils/mmkv';
+import { DeviceEventEmitter } from 'react-native';
+import { useDispatch } from 'react-redux';
+import { enqueue } from '../../reducers/refreshQueueReducer';
 
 export const SettingsScreen = ({ route, navigation }) => {
     const { t } = useTranslation();
+    const dispatch = useDispatch();
     const [isEnabled, setIsEnabled] = useState(false);
 
-    const redirectToLandingPage = () => {
-        let link = "http://quartztechnologies.org";
+    const redirectToLandingPage = (link = "https://graphenelab.it/cloud/") => {
         Linking.canOpenURL(link).then((supported) => {
             if (supported) {
                 Linking.openURL(link);
                 return;
             }
         });
+    };
+
+    const logOutHandler = () => {
+        console.log('SettingsScreen: Emitting logOut event...');
+        DeviceEventEmitter.emit('logOut');
+        DeviceEventEmitter.emit('spoolerCleaner');
+        return dispatch(enqueue(['CloudScreen', 'FavoriteScreen', 'MediaScreen', 'ProfileScreen']));
     };
 
     const toggleSwitch = (value) => {
@@ -52,17 +62,22 @@ export const SettingsScreen = ({ route, navigation }) => {
                 </View>
             </View>
             <View style={styles.listContainer}>
+                
+                <TouchableOpacity style={styles.touchable} onPress={() => redirectToLandingPage()}>
+                    <AboutIcon />
+                    <Text style={styles.touchText}>{t('settings.visit_website')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.touchable} onPress={() => redirectToLandingPage("https://graphenelab.it/cloud/privacy.html")}>
+                    <TermsIco />
+                    <Text style={styles.touchText}>{t('settings.privacy_policy')}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('TermsAndCondition')}>
                     <TermsIco />
                     <Text style={styles.touchText}>{t('settings.terms_conditions')}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.touchable} onPress={() => navigation.navigate('FAQScreen')}>
-                    <FaqIcon />
-                    <Text style={styles.touchText}>{t('settings.faq')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.touchable} onPress={() => redirectToLandingPage()}>
-                    <AboutIcon />
-                    <Text style={styles.touchText}>{t('settings.about')}</Text>
+                <TouchableOpacity style={styles.touchable} onPress={logOutHandler}>
+                    <LogoutIcon />
+                    <Text style={styles.touchText}>{t('options.logout')}</Text>
                 </TouchableOpacity>
             </View>
         </Layout>

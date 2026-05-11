@@ -106,7 +106,7 @@ export const ScreenHeader = ({ name }) => {
 
     navigation.bottomSheetController = bottomSheetController;
     if (cons[name]?.display === 'none') return null;
-    
+
     return (
         <View style={[{}, styles.container]}>
             <View style={styles.iconBox}>

@@ -22,8 +22,8 @@
   "settings": {
     "use_cellular": "Usa dati cellulari",
     "terms_conditions": "Termini e Condizioni",
-    "faq": "FAQ",
-    "about": "Informazioni"
+    "visit_website": "Visita il nostro sito web",
+    "privacy_policy": "Informativa sulla privacy"
   },
   "signin": {
     "welcome": "Benvenuto!",

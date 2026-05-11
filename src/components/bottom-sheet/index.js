@@ -53,7 +53,7 @@ export const BottomSheetNative = () => {
             animationConfigs={animationConfigs}
             enablePanDownToClose={true}
             snapPoints={snapPoints}
-            enableDynamicSizing={false}
+            enableDynamicSizing={true}
             enableContentPanningGesture={false}
             enableHandlePanningGesture={false}
             bottomInset={Math.max(insets.bottom, 12)}
@@ -67,6 +67,3 @@ export const BottomSheetNative = () => {
         </BottomSheet >
     );
 };
-
-
-

@@ -22,8 +22,8 @@
   "settings": {
     "use_cellular": "Использовать сотовую связь",
     "terms_conditions": "Условия и положения",
-    "faq": "FAQ",
-    "about": "О приложении"
+    "visit_website": "Посетите наш сайт",
+    "privacy_policy": "Политика конфиденциальности"
   },
   "signin": {
     "welcome": "Добро пожаловать!",

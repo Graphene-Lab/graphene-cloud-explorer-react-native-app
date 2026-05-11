@@ -8,7 +8,6 @@ import { createDirectory, onlyPick } from "../../../../utils/settings-utils"
 import { useContextApi } from "../../../../context/ContextApi"
 import { useDispatch, useSelector } from "react-redux"
 import { openModal } from "../../../../reducers/modalReducer"
-import LogOutIcon from '../../../../assets/icons/setting/logout.svg';
 import { enqueue } from "../../../../reducers/refreshQueueReducer"
 import { getCellularInfoMMKV } from "../../../../utils/mmkv"
 import { styles } from "./styles"
@@ -63,7 +62,6 @@ export const AddSettings = () => {
         >
             <OptionButton text={t('options.upload_file')} func={() => networkFilter(1)} icon={<PaperIcon />} />
             <OptionButton text={t('options.create_folder')} func={() => networkFilter(2)} icon={<FolderIcon />} />
-            <OptionButton text={t('options.logout')} func={logOutHandler} icon={<LogOutIcon />} />
         </BottomSheetScrollView>
     )
 }
