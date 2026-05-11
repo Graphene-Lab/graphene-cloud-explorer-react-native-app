@@ -144,7 +144,8 @@ export const Column = ({ item, contentSetter }) => {
                         previewUri
                             ? { ...item, local: true, source: previewUri }
                             : { ...item, local: false, allowRemotePreview },
-                        5
+                        5,
+                        22
                     )}
                 </View>
                 <View style={ColumnStyles.textArea}>

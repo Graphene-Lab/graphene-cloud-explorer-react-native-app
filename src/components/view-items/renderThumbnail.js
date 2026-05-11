@@ -1,4 +1,4 @@
-import { Image, View } from 'react-native'
+import { Image, View } from 'react-native';
 import FileIcon from '../../assets/icons/viewer/file.svg';
 import FolderIcon from '../../assets/icons/viewer/folder.svg';
 import {
@@ -9,30 +9,33 @@ import {
     SimpleLineIcons
 } from "@expo/vector-icons";
 
+const COLOR = '#415EB6';
 
-const thumbnails = {
-    folder: <FolderIcon />,
-    other: <SimpleLineIcons name="question" size={20} color="#415EB6" />,
-    document: <FileIcon />,
-    video: <FontAwesome name="video-camera" size={20} color="#415EB6" />,
-    audio: <MaterialIcons name="audiotrack" size={20} color="#415EB6" />,
-    pdf: <MaterialCommunityIcons name="file-pdf-box" size={20} color="#415EB6" />,
-    txt: <Entypo name="text" size={20} color="#415EB6" />,
-    presentation: <MaterialCommunityIcons name="file-powerpoint-box" size={20} color="#415EB6" />,
-    spreadsheet: <FontAwesome
-        name="file-excel-o"
-        size={20}
-        color="#415EB6"
-    />,
-    archive: <FontAwesome name="file-archive-o" size={20} color="#415EB6" />,
-    code: <FontAwesome name="code" size={20} color="#415EB6" />,
-    image: <MaterialIcons name="image" size={20} color="#415EB6" />
+const buildThumbnails = (size) => ({
+    folder: <FolderIcon width={size} height={size} />,
+    other: <SimpleLineIcons name="question" size={size} color={COLOR} />,
+    document: <FileIcon width={size} height={size} />,
+    video: <FontAwesome name="video-camera" size={size} color={COLOR} />,
+    audio: <MaterialIcons name="audiotrack" size={size} color={COLOR} />,
+    pdf: <MaterialCommunityIcons name="file-pdf-box" size={size} color={COLOR} />,
+    txt: <Entypo name="text" size={size} color={COLOR} />,
+    presentation: <MaterialCommunityIcons name="file-powerpoint-box" size={size} color={COLOR} />,
+    spreadsheet: <FontAwesome name="file-excel-o" size={size} color={COLOR} />,
+    archive: <FontAwesome name="file-archive-o" size={size} color={COLOR} />,
+    code: <FontAwesome name="code" size={size} color={COLOR} />,
+    image: <MaterialIcons name="image" size={size} color={COLOR} />,
+});
 
-}
+/**
+ * @param {object} item  - file item from Redux state
+ * @param {number} border - border radius for image previews
+ * @param {number} [iconSize=20] - size for vector icons (not images)
+ */
+export const renderThumbnail = (item, border, iconSize = 20) => {
+    const thumbnails = buildThumbnails(iconSize);
 
-export const renderThumbnail = (item, border) => {
     if (item.type !== 'image') {
-        return thumbnails[item.type];
+        return thumbnails[item.type] ?? thumbnails.other;
     }
 
     const imageFrameStyle = {
@@ -61,7 +64,7 @@ export const renderThumbnail = (item, border) => {
                     style={imageStyle}
                 />
             </View>
-        )
+        );
     }
     return (
         <View style={imageFrameStyle}>
@@ -71,7 +74,5 @@ export const renderThumbnail = (item, border) => {
                 style={imageStyle}
             />
         </View>
-    )
-}
-
-
+    );
+};

@@ -135,7 +135,8 @@ export const Row = ({ item, contentSetter }) => {
                     previewUri
                         ? { ...item, local: true, source: previewUri }
                         : { ...item, local: false, allowRemotePreview },
-                    15
+                    15,
+                    36
                 )}
                 {selectedFiles.includes(item) && <AntDesign name="checkcircleo" size={20} color="#5D82F5" style={rowStyles.overlay} />}
                 {checkIsFav(item.path)}
