@@ -3,7 +3,6 @@ import FileIcon from '../../assets/icons/viewer/file.svg';
 import FolderIcon from '../../assets/icons/viewer/folder.svg';
 import {
     Entypo,
-    AntDesign,
     MaterialIcons,
     MaterialCommunityIcons,
     FontAwesome,
@@ -17,7 +16,7 @@ const thumbnails = {
     document: <FileIcon />,
     video: <FontAwesome name="video-camera" size={20} color="#415EB6" />,
     audio: <MaterialIcons name="audiotrack" size={20} color="#415EB6" />,
-    pdf: <AntDesign name="pdffile1" size={20} color="#415EB6" />,
+    pdf: <MaterialCommunityIcons name="file-pdf-box" size={20} color="#415EB6" />,
     txt: <Entypo name="text" size={20} color="#415EB6" />,
     presentation: <MaterialCommunityIcons name="file-powerpoint-box" size={20} color="#415EB6" />,
     spreadsheet: <FontAwesome
