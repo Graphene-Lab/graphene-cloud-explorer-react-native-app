@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri, useAuthRequest, useAutoDiscovery } from 'expo-auth-session';
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import * as Linking from 'expo-linking';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { useNavigation } from '@react-navigation/native';
@@ -13,15 +14,23 @@ import { useTranslation } from 'react-i18next';
 import { paymentApiClient } from '../../utils/apiClient';
 import { finalizeAuthentication } from '../../utils/essential-functions';
 import { ActivityIndicator } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserLoginError, setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
+import MarkIcon from '../../assets/icons/modal/exmark.svg';
 
 WebBrowser.maybeCompleteAuthSession();
 
 
 
-export default function SignInUp () {
+export default function SignInUp ({ route }) {
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const isRedirect = route?.params?.isRedirect || false;
+  const dispatch = useDispatch();
+  const { loginError, wait } = useSelector(state => state.userSecret);
   const [loading, setLoading] = useState(false);
+  const exchangeAttempted = useRef(false);
+  const [hasPrompted, setHasPrompted] = useState(false);
   const discovery = useAutoDiscovery('https://cloudkeycloak.duckdns.org/realms/cloud');
   const [request, response, promptAsync] = useAuthRequest(
     {
@@ -38,8 +47,17 @@ export default function SignInUp () {
     discovery
   );
 
+  console.log('SignInUp render -> loginError:', loginError, 'wait:', wait, 'loading:', loading, 'isRedirect:', isRedirect, 'response:', response?.type);
+
   const exchangeCodeForToken = async (code, codeVerifier) => {
+    if (exchangeAttempted.current) {
+      console.log('SignInUp: Token exchange already attempted, skipping duplicate call.');
+      return;
+    }
+    exchangeAttempted.current = true;
     setLoading(true);
+    dispatch(setUserLoginError(false));
+    dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
     try {
       const response = await axios.post(
         'https://cloudkeycloak.duckdns.org/realms/cloud/protocol/openid-connect/token',
@@ -94,18 +112,76 @@ export default function SignInUp () {
   useEffect(() => {
     if (response?.type === 'success') {
       const { code } = response.params;
-      const codeVerifier = request?.codeVerifier;
-      exchangeCodeForToken(code, codeVerifier);
+      SecureStore.getItemAsync('oauth_code_verifier').then((savedVerifier) => {
+        const codeVerifier = savedVerifier || request?.codeVerifier;
+        exchangeCodeForToken(code, codeVerifier);
+      });
     } else if (response?.type === 'cancel' || response?.type === 'error') {
       navigation.goBack();
     }
   }, [response]);
 
   useEffect(() => {
-    if (request && !loading) {
-      promptAsync();
-    }
-  }, [request]);
+    const handleManualRedirect = async () => {
+      if (isRedirect && !loading && !exchangeAttempted.current) {
+        const url = await Linking.getInitialURL();
+        if (url && url.includes('code=')) {
+          console.log('SignInUp: Manually parsing code from deep link on cold start');
+          const codeMatch = url.match(/code=([^&]+)/);
+          if (codeMatch && codeMatch[1]) {
+            const code = codeMatch[1];
+            SecureStore.getItemAsync('oauth_code_verifier').then((savedVerifier) => {
+              if (savedVerifier) {
+                console.log('SignInUp: Found saved verifier, manually exchanging code');
+                exchangeCodeForToken(code, savedVerifier);
+              } else {
+                console.error('SignInUp: No saved verifier found on cold start redirect');
+              }
+            });
+          }
+        }
+      }
+    };
+    handleManualRedirect();
+  }, [isRedirect, loading]);
+
+  useEffect(() => {
+    dispatch(setUserLoginError(false));
+    dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
+    const checkAndPrompt = async () => {
+      if (request && !loading && !hasPrompted && !isRedirect) {
+        setHasPrompted(true);
+        if (request.codeVerifier) {
+          await SecureStore.setItemAsync('oauth_code_verifier', request.codeVerifier);
+        }
+        promptAsync();
+      }
+    };
+    checkAndPrompt();
+  }, [request, loading, hasPrompted, isRedirect]);
+
+  if (loginError) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <View style={{ alignItems: 'center', width: '100%' }}>
+          <MarkIcon />
+          <CustomText custom={{ fontSize: 18, textAlign: 'center', marginTop: 20 }}>
+            {t('signin.incorrect_credentials')}
+          </CustomText>
+          <View style={{ width: '100%', marginTop: 50 }}>
+            <Button 
+              text={t('signin.try_again')} 
+              callback={() => {
+                dispatch(setUserLoginError(false));
+                dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
+                navigation.goBack();
+              }} 
+            />
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { justifyContent: 'center' }]}>

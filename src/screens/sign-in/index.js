@@ -1,4 +1,5 @@
 import { Text, View, TouchableOpacity } from 'react-native';
+import * as Linking from 'expo-linking';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -62,7 +63,19 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
   useEffect(() => {
     permissionCheck();
 
-    return () => null
+    const handleDeepLink = (event) => {
+      let url = typeof event === 'string' ? event : event?.url;
+      if (url && (url.includes('code=') || url.includes('error=')) && url.includes('cloudexplorer')) {
+        navigate('SignInUp', { isRedirect: true });
+      }
+    };
+
+    Linking.getInitialURL().then(handleDeepLink);
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    return () => {
+      subscription?.remove();
+    };
   }, []);
 
 
