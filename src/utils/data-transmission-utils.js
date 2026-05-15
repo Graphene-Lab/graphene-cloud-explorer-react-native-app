@@ -35,7 +35,7 @@ import {
   setUserEncryptionTypeMMKV,
   userAuthMMKV,
 } from './mmkv';
-import { setAuthWait, setUserSecretDataToRedux } from '../reducers/userSecretDataReducer';
+import { setAuthWait, setUserLoginError, setUserSecretDataToRedux } from '../reducers/userSecretDataReducer';
 import { MinHeap } from './MinHeap';
 import { DeviceEventEmitter, Platform, NativeModules } from 'react-native';
 import {
@@ -523,61 +523,67 @@ export function ensureZeroKnowledgeReadyForAuthentication() {
   }
 
   return new Promise((resolve) => {
-    store.dispatch(
-      openModal({
-        head: i18n.t('zeroknowledge.head'),
-        content: i18n.t('zeroknowledge.passphrase_desc_auth'),
-        type: 'confirm',
-        icon: 'question',
-        buttonText: i18n.t('zeroknowledge.enter_phrase'),
-        cancelButtonText: i18n.t('zeroknowledge.skip'),
-        overlayColor: '#F5F7FB',
-        callback: () => {
-          store.dispatch(
-            openModal({
-              head: i18n.t('zeroknowledge.enter_passphrase'),
-              content: '',
-              type: 'input',
-              cancelButtonText: i18n.t('zeroknowledge.skip'),
-              overlayColor: '#F5F7FB',
-              cancelCallback: async () => {
-                await skipZeroKnowledgeSetup();
-                resolve(true);
-              },
-              callback: async () => {
-                const phrase = (store.getState().modalController.text || '').trim();
-                try {
-                  store.dispatch(closeModal());
-                  store.dispatch(setAuthWait(true));
-                  await yieldToJs();
-                  await saveZeroKnowledgePhrase(phrase);
-                  resolve(true);
-                } catch (error) {
-                  store.dispatch(setAuthWait(false));
-                  store.dispatch(setWait(false));
-                  store.dispatch(
-                    openModal({
-                      head: i18n.t('zeroknowledge.error_head'),
-                      content: i18n.t('zeroknowledge.error_desc_auth'),
-                      type: 'info',
-                      icon: 'ex',
-                      callback: async () => {
-                        store.dispatch(setAuthWait(false));
-                        resolve(false);
-                      },
-                    })
-                  );
-                }
-              },
-            })
-          );
-        },
-        cancelCallback: async () => {
-          await skipZeroKnowledgeSetup();
-          resolve(true);
-        },
-      })
-    );
+    const showConfirmationModal = () => {
+      store.dispatch(
+        openModal({
+          head: i18n.t('zeroknowledge.head'),
+          content: i18n.t('zeroknowledge.passphrase_desc_auth'),
+          type: 'confirm',
+          icon: 'question',
+          buttonText: i18n.t('zeroknowledge.enter_phrase'),
+          cancelButtonText: i18n.t('zeroknowledge.skip'),
+          overlayColor: '#F5F7FB',
+          callback: () => showInputModal(),
+          cancelCallback: async () => {
+            await skipZeroKnowledgeSetup();
+            resolve(true);
+          },
+        })
+      );
+    };
+
+    const showInputModal = () => {
+      store.dispatch(
+        openModal({
+          head: i18n.t('zeroknowledge.enter_passphrase'),
+          content: '',
+          type: 'input',
+          cancelButtonText: i18n.t('zeroknowledge.skip'),
+          overlayColor: '#F5F7FB',
+          showBackButton: true,
+          cancelCallback: () => {
+            showConfirmationModal();
+          },
+          callback: async () => {
+            const phrase = (store.getState().modalController.text || '').trim();
+            try {
+              store.dispatch(closeModal());
+              store.dispatch(setAuthWait(true));
+              await yieldToJs();
+              await saveZeroKnowledgePhrase(phrase);
+              resolve(true);
+            } catch (error) {
+              store.dispatch(setAuthWait(false));
+              store.dispatch(setWait(false));
+              store.dispatch(
+                openModal({
+                  head: i18n.t('zeroknowledge.error_head'),
+                  content: i18n.t('zeroknowledge.error_desc_auth'),
+                  type: 'info',
+                  icon: 'ex',
+                  callback: async () => {
+                    store.dispatch(setAuthWait(false));
+                    showInputModal();
+                  },
+                })
+              );
+            }
+          },
+        })
+      );
+    };
+
+    showConfirmationModal();
   });
 }
 
@@ -940,6 +946,11 @@ async function spoolingRequest() {
                 const result = await handleResponse(response, { commandId, commandName: getCommandName(commandId) });
                 clearTimeout(reqTimeout);
                 clearTimeout(lowInternet);
+                if (result === undefined && commandId === command.Authentication) {
+                  console.log('[Auth] handleResponse returned undefined — treating as auth failure');
+                  store.dispatch(setAuthWait(false));
+                  store.dispatch(setUserLoginError(true));
+                }
                 return result;
               } catch (error) {
                 if (retryRequested) {
@@ -999,6 +1010,10 @@ async function spoolingRequest() {
                   proxy: store.getState().proxyManager.proxy,
                 });
               }
+              if (commandId === command.Authentication) {
+                store.dispatch(setAuthWait(false));
+                store.dispatch(setUserLoginError(true));
+              }
               throw error;
             });
         }
@@ -1013,6 +1028,10 @@ async function spoolingRequest() {
         flow: 'spoolingRequest',
         proxy: store.getState().proxyManager.proxy,
       });
+      if (commandId === command.Authentication) {
+        store.dispatch(setAuthWait(false));
+        store.dispatch(setUserLoginError(true));
+      }
     } finally {
       logRequestMarker('finally', commandId, `queue=${spooler.length},concurrent=${concurrentRequest - 1}`);
       requestDone();
@@ -1283,22 +1302,10 @@ export const onCommandResponse = {
 
   Error: async function (params) {
     let error = bufferToString(params[0]);
-    // useErrorAlert('error -> 2', error);
     if (error && error === 'error: wrong pin') {
       store.dispatch(setAuthWait(false));
+      store.dispatch(setUserLoginError(true));
       await removeUserEncryptionTypeMMKV();
-      // store.dispatch(setUserSecretDataToRedux(null));
-      // store.dispatch(setUserSecretDataToRedux())
-      // console.log(error);
-      store.dispatch(
-        openModal({
-          content: i18n.t('popups.wrong_pin'),
-          head: i18n.t('common.error'),
-          type: 'info',
-          icon: 'qr',
-          callback: async () => { },
-        })
-      );
       return false;
     }
   },

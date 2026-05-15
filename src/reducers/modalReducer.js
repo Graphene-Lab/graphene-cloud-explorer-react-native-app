@@ -14,6 +14,7 @@ const initialState = {
     cancelButtonText: null,
     pending: false,
     overlayColor: null,
+    showBackButton: false,
 }
 
 export const modalReducer = createSlice({
@@ -34,6 +35,7 @@ export const modalReducer = createSlice({
             state.cancelButtonText = null;
             state.pending = false;
             state.overlayColor = null;
+            state.showBackButton = false;
         },
         openModal: (state, action) => {
             state.type = action.payload.type;
@@ -49,6 +51,7 @@ export const modalReducer = createSlice({
             state.wait = false;
             state.pending = action.payload.pending
             state.overlayColor = action.payload.overlayColor || null;
+            state.showBackButton = action.payload.showBackButton || false;
 
         },
         setText: (state, action) => {

@@ -19,7 +19,7 @@ export const styles = StyleSheet.create({
         fontSize: 16,
     },
     outlined: {
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: '#415EB6',
         backgroundColor: '#fff',
         borderRadius: 10,
@@ -36,7 +36,7 @@ export const styles = StyleSheet.create({
 
     disabled: {
         borderWidth: 1,
-        flex: 1,
+        width: '100%',
         // width: '100%',
         // backgroundColor: '#415EB6',
         borderColor: "#fff",

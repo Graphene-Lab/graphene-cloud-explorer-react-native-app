@@ -3,7 +3,7 @@ import { StyleSheet } from "react-native";
 export const styles = StyleSheet.create({
     container: {
         backgroundColor: '#fff',
-        height: 211,
+        height: 250,
         width: '100%',
         borderRadius: 15,
         alignItems: 'center',
@@ -12,17 +12,18 @@ export const styles = StyleSheet.create({
         paddingVertical: 20,
         marginTop: 20,
     },
-    view: { flex: 1, alignItems: 'center', justifyContent: 'space-between' },
+    view: { flex: 1, alignItems: 'center', justifyContent: 'space-between', width: '100%' },
     text: {
         fontSize: 18,
         fontWeight: '500',
         color: '#22215B',
     },
     buttonsGroup: {
-        flexDirection: 'row',
+        flexDirection: 'column',
+        width: '100%',
     },
     gap: {
-        width: 15,
+        height: 10,
         backgroundColor: 'transparent',
     },
     codeFieldRoot: {
@@ -54,7 +55,6 @@ export const styles = StyleSheet.create({
         alignSelf: 'center', marginTop: 10, color: 'red'
     },
     errorContainer: {
-
         alignItems: 'center',
         flex: 1,
         justifyContent: 'space-between',

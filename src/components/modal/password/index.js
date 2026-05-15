@@ -6,7 +6,7 @@ import { styles } from './styles'
 import { useDispatch, useSelector } from 'react-redux'
 import { finalizeAuthentication } from '../../../utils/essential-functions'
 import { openModal } from '../../../reducers/modalReducer'
-import { setAuthWait } from '../../../reducers/userSecretDataReducer'
+import { setAuthWait, setUserLoginError, setUserSecretDataToRedux } from '../../../reducers/userSecretDataReducer'
 import {
     CodeField,
     Cursor,
@@ -36,6 +36,8 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
     const dispatch = useDispatch()
 
     useEffect(() => {
+        dispatch(setUserLoginError(false));
+        dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
         setTimeout(() => {
             ref?.current?.focus();
         }, 200)
@@ -82,15 +84,16 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
         }
     }
 
+
     const onChangeText = (text) => {
         setValue(text);
     }
 
     const errorHandler = () => {
-        setError(false);
+        dispatch(setUserLoginError(false));
+        dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
         setValue("");
         dispatch(setAuthWait(false));
-        // setWait(false);
     }
 
     if (wait) {
@@ -107,7 +110,7 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
     return (
         <View style={styles.container}>
             {
-                error ? <View style={styles.errorContainer}>
+                error || loginError ? <View style={styles.errorContainer}>
                     <MarkIcon />
                     <Text style={styles.errorText}>{t('signin.incorrect_credentials')}</Text>
                     <View style={{ width: '100%', height: 50 }}>
@@ -135,9 +138,9 @@ export const PasswordModal = ({ barcode, setScanned, cancel }) => {
                             )}
                         />
                         <View style={styles.buttonsGroup}>
-                            <Button text={t('signin.cancel')} variant='outlined' callback={cancel} />
-                            <View style={styles.gap}></View>
                             <Button text={t('signin.ok')} disabled={wait || error || value.length != CELL_COUNT} callback={() => handleLogIn()} wait={wait} />
+                            <View style={styles.gap}></View>
+                            <Button text={t('signin.cancel')} variant='outlined' callback={cancel} />
                         </View>
                     </View>
             }

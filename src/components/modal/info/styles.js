@@ -21,6 +21,7 @@ export const styles = StyleSheet.create({
     buttonGroup: {
         flexDirection: 'column',
         width: '100%',
+        marginTop: 16,
     },
     gap: {
         height: 10,
@@ -45,4 +46,22 @@ export const styles = StyleSheet.create({
         zIndex: 100,
         alignSelf: "center",
     },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        width: '100%',
+        marginBottom: 10,
+        marginTop: -10,
+    },
+    backButton: {
+        padding: 8,
+        marginLeft: -8,
+    },
+    errorHint: {
+        color: '#FF4D4F',
+        fontSize: 12,
+        marginTop: 5,
+        textAlign: 'left',
+        width: '100%',
+    }
 })
