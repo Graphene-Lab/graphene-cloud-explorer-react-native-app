@@ -43,7 +43,7 @@
     "enter_pin": "Ingrese el PIN",
     "initializing_key": "Por favor espere. Estamos inicializando su clave y conectándonos a la nube.",
     "connecting_keycloak": "Conectando al servicio de inicio de sesión...",
-    "incorrect_credentials": "La contraseña o el QR son incorrectos, por favor inténtelo de nuevo",
+    "incorrect_credentials": "Las credenciales son incorrectas, por favor inténtelo de nuevo",
     "try_again": "Intentar de nuevo",
     "cancel": "Cancelar",
     "ok": "Ok",

@@ -27,7 +27,7 @@
   },
   "signin": {
     "welcome": "Welcome!",
-    "description": "Cloud Graphene Explorer helps to explore your files you synced via client desktop or Graphene Photos. Encryption keys remain on your phone.",
+    "description": "Cloud Graphene Explorer helps to explore your files you synced via desktop client or Graphene Photos. Encryption keys remain on your phone.",
     "privacy_title": "How your files stay private",
     "privacy_body": "Files are encrypted on your device before upload. Your encryption keys stay on your phone and are never sent to our servers. We store only encrypted files, so we cannot view your files, unlike typical services such as Google Drive or OneDrive.",
     "open_camera": "Open camera",
@@ -43,7 +43,7 @@
     "enter_pin": "Enter pin",
     "initializing_key": "Please wait. We are initializing your key and connecting to the cloud.",
     "connecting_keycloak": "Connecting to login service...",
-    "incorrect_credentials": "The password or QR is incorrect, please try again",
+    "incorrect_credentials": "The credentials are incorrect, please try again",
     "try_again": "Try again",
     "cancel": "Cancel",
     "ok": "Ok",
@@ -70,7 +70,9 @@
     "error_head": "Passphrase error",
     "error_desc": "The passphrase could not be processed. Enter the same desktop passphrase or tap Skip in the previous step.",
     "error_desc_auth": "The passphrase could not be processed. Retry sign-in and enter the same desktop passphrase, or use Skip if this cloud does not use zero-knowledge encryption.",
-    "skip": "Skip"
+    "skip": "Skip",
+    "passphrase_placeholder": "word1 word2 word3 ...",
+    "invalid_mnemonic": "Invalid 12 or 24-word passphrase. Please check for typos."
   },
   "cellular": {
     "off_desc": "Cellular data usage is off. Are you sure you want to use cellular data for this action?",

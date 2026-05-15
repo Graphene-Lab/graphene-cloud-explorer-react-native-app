@@ -43,7 +43,7 @@
     "enter_pin": "Inserisci PIN",
     "initializing_key": "Attendere prego. Stiamo inizializzando la tua chiave e ci stiamo connettendo al cloud.",
     "connecting_keycloak": "Connessione al servizio di login...",
-    "incorrect_credentials": "La password o il QR sono errati, riprova",
+    "incorrect_credentials": "Le credenziali sono errate, riprova",
     "try_again": "Riprova",
     "cancel": "Annulla",
     "ok": "Ok",
