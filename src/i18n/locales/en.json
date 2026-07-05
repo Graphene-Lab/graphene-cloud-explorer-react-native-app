@@ -1,13 +1,15 @@
 {
   "onboarding": {
-    "title1": "Turn on Graphene Cloud Explorer",
-    "desc1": "To turn your Cloud Box device, plug on end of a Type-C Cable into your Cloud Box device, and the other end plug into the power adapter into a wall outlet.",
-    "title2": "Connect to the Internet",
-    "desc2": "Plug one end of an Ethernet cable into the Ethernet port on your WiFi router, the another end plug  into the Ethernet port of Cloud Box",
-    "title3": "Connect app with the device",
-    "desc3": "Find the instruction document in the package box. To connect app to Cloud Box box, you need to do the following steps: \n \n 1. Scan QR Code \n \n 2. Then enter 6-digit secure code",
-    "title4": "Manage your files",
-    "desc4": "Save your files and media to Cloud Box and access them from any device, anywhere."
+    "title1": "Welcome to Graphene Cloud",
+    "desc1": "Securely access your files and media from your phone. Browse, organize, upload, download, and share your content wherever you are.",
+    "title2": "Your files stay private",
+    "desc2": "Files are encrypted on your device before upload, and your encryption keys stay on your phone. Graphene Cloud stores encrypted data without access to your files.",
+    "title3": "Choose how to connect",
+    "desc3": "Sign in with your email account, or scan a QR code from Graphene Photos or the desktop app. Choose the option that matches how your cloud was set up.",
+    "title4": "Use your own private cloud",
+    "desc4": "If the server is yours, connect Graphene Cloud Explorer to your Cloud Box or self-hosted server for private storage that stays under your control.",
+    "skip": "Skip",
+    "get_started": "Get started"
   },
   "faqs": {
     "q1": "Who are we?",

@@ -33,7 +33,7 @@ const WelcomeScreen = () => {
     const [userAuth, setUserAuth] = useState(false);
     const { wsScreen } = useContextApi();
     const [guideVisible, setGuideVisible] = useState(false);
-    const showGuide = false;
+    const showGuide = true;
     const setContent = (content) => dispatch(setData(content))
     const authCheckRunning = useRef(false);
 
@@ -132,7 +132,7 @@ const WelcomeScreen = () => {
             authCheckRunning.current = false;
             return;
         }
-        if (!guide && showGuide) {
+        if (!auth && !guide && showGuide) {
             setGuideVisible(true);
             authCheckRunning.current = false;
             return;
