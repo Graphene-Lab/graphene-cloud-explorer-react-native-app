@@ -26,7 +26,7 @@ const refreshAccessToken = async () => {
 
     try {
         const response = await axios.post(
-            'https://cloudkeycloak.duckdns.org/realms/cloud/protocol/openid-connect/token',
+            'https://id.graphenelab.cloud/realms/cloud/protocol/openid-connect/token',
             new URLSearchParams({
                 client_id: 'cloud-mobile-app',
                 grant_type: 'refresh_token',

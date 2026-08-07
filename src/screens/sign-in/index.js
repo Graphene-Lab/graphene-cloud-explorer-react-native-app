@@ -15,6 +15,7 @@ import { openModal } from '../../reducers/modalReducer';
 import { setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import { devices } from '../../constants/boxes';
 import { reportCrash } from '../../utils/crashlytics-utils';
+import { ExternalLinkFooter } from '../../components/external-link-footer';
 
 
 
@@ -82,7 +83,8 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
 
   return (
     <Layout name={route.name}>
-      <View style={styles.container}>
+      <View style={styles.screen}>
+        <View style={styles.container}>
           <CustomText size={30} color="#22215B" custom={{ textAlign: 'center' }}>
             {t('signin.welcome')}
           </CustomText>
@@ -94,29 +96,33 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
               <Ionicons name="information-circle-outline" size={24} color="#415EB6" />
             </TouchableOpacity>
           </View>
-        <View style={{ height: 40 }} />
-        <View style={styles.buttonsGroup}>
-          <View style={styles.buttonView}>
-            <Button
-              text={t('signin.credentials')}
-              callback={() => navigate('SignInUp')}
-            />
-            <View style={{ height: 15 }} />
-            <Button
-              text={t('screens.scan_qr')}
-              variant="outlined"
-              callback={() => navigate('QRSelectionScreen')}
-            />
-          </View>
-          <View style={styles.viewGuideContainer}>
-            <CustomText color="#000" custom={{ textAlign: 'center' }}>{t('signin.new_to')}</CustomText>
-            <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
-              <Text style={styles.viewGuideText}>{t('signin.view_guide')}</Text>
-            </TouchableOpacity>
+          <View style={{ height: 40 }} />
+          <View style={styles.buttonsGroup}>
+            <View style={styles.buttonView}>
+              <Button
+                text={t('signin.credentials')}
+                callback={() => navigate('SignInUp')}
+              />
+              <View style={{ height: 15 }} />
+              <Button
+                text={t('screens.scan_qr')}
+                variant="outlined"
+                callback={() => navigate('QRSelectionScreen')}
+              />
+            </View>
+            <View style={styles.viewGuideContainer}>
+              <CustomText color="#000" custom={{ textAlign: 'center' }}>{t('signin.new_to')}</CustomText>
+              <TouchableOpacity style={styles.viewGuide} onPress={() => navigate('ViewGuideScreen')}>
+                <Text style={styles.viewGuideText}>{t('signin.view_guide')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
+        <ExternalLinkFooter
+          prompt={t('external_link.welcome_prompt')}
+          linkText={t('external_link.explore_cloud')}
+        />
       </View>
     </Layout>
   );
 };
-

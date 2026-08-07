@@ -1,6 +1,9 @@
 import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
+    screen: {
+        flex: 1,
+    },
     container: {
         flex: 1,
         justifyContent: 'center',
@@ -36,4 +39,4 @@ export const styles = StyleSheet.create({
         color: '#B0C0D0',
         fontWeight: '500'
     }
-})
+});

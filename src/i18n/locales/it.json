@@ -25,7 +25,12 @@
     "use_cellular": "Usa dati cellulari",
     "terms_conditions": "Termini e Condizioni",
     "visit_website": "Visita il nostro sito web",
-    "privacy_policy": "Informativa sulla privacy"
+    "privacy_policy": "Informativa sulla privacy",
+    "send_feedback": "Invia feedback"
+  },
+  "external_link": {
+    "welcome_prompt": "Scopri uno spazio cloud sicuro e privato",
+    "explore_cloud": "Esplora Graphene Cloud"
   },
   "signin": {
     "welcome": "Benvenuto!",

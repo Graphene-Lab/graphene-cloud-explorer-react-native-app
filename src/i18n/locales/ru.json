@@ -25,7 +25,12 @@
     "use_cellular": "Использовать сотовую связь",
     "terms_conditions": "Условия и положения",
     "visit_website": "Посетите наш сайт",
-    "privacy_policy": "Политика конфиденциальности"
+    "privacy_policy": "Политика конфиденциальности",
+    "send_feedback": "Отправить отзыв"
+  },
+  "external_link": {
+    "welcome_prompt": "Откройте для себя безопасное приватное облачное хранилище",
+    "explore_cloud": "Подробнее о Graphene Cloud"
   },
   "signin": {
     "welcome": "Добро пожаловать!",

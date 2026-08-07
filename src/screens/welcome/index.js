@@ -219,7 +219,10 @@ const WelcomeScreen = () => {
             />
             }
         >
-            {(showGuide && guideVisible ? <OnBoarding /> : <SignInScreenNavigator />)}
+            <SignInScreenNavigator />
+            {showGuide && guideVisible ? (
+                <OnBoarding presentation="modal" onComplete={() => setGuideVisible(false)} />
+            ) : null}
         </Suspense>
     )
 }

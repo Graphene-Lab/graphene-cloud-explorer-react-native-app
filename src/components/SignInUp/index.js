@@ -22,7 +22,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 
 
-export default function SignInUp ({ route }) {
+export default function SignInUp({ route }) {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const isRedirect = route?.params?.isRedirect || false;
@@ -31,7 +31,7 @@ export default function SignInUp ({ route }) {
   const [loading, setLoading] = useState(false);
   const exchangeAttempted = useRef(false);
   const [hasPrompted, setHasPrompted] = useState(false);
-  const discovery = useAutoDiscovery('https://cloudkeycloak.duckdns.org/realms/cloud');
+  const discovery = useAutoDiscovery('https://id.graphenelab.cloud/realms/cloud');
   const [request, response, promptAsync] = useAuthRequest(
     {
       clientId: 'cloud-mobile-app',
@@ -60,7 +60,7 @@ export default function SignInUp ({ route }) {
     dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
     try {
       const response = await axios.post(
-        'https://cloudkeycloak.duckdns.org/realms/cloud/protocol/openid-connect/token',
+        'https://id.graphenelab.cloud/realms/cloud/protocol/openid-connect/token',
         new URLSearchParams({
           client_id: 'cloud-mobile-app',
           code: code,
@@ -169,13 +169,13 @@ export default function SignInUp ({ route }) {
             {t('signin.incorrect_credentials')}
           </CustomText>
           <View style={{ width: '100%', marginTop: 50 }}>
-            <Button 
-              text={t('signin.try_again')} 
+            <Button
+              text={t('signin.try_again')}
               callback={() => {
                 dispatch(setUserLoginError(false));
                 dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
                 navigation.goBack();
-              }} 
+              }}
             />
           </View>
         </View>

@@ -5,11 +5,15 @@ import { Layout } from '../../layout';
 import TermsIco from '../../assets/icons/setting/terms.svg';
 import AboutIcon from '../../assets/icons/setting/about.svg';
 import LogoutIcon from '../../assets/icons/setting/logout.svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { styles } from './styles';
 import { getCellularInfoMMKV, setCellularAccessMMKV } from '../../utils/mmkv';
 import { DeviceEventEmitter } from 'react-native';
 import { useDispatch } from 'react-redux';
 import { enqueue } from '../../reducers/refreshQueueReducer';
+
+const FEEDBACK_EMAIL = 'contact@graphenelab.cloud';
+const FEEDBACK_URL = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Graphene Cloud Explorer feedback')}`;
 
 export const SettingsScreen = ({ route, navigation }) => {
     const { t } = useTranslation();
@@ -30,6 +34,10 @@ export const SettingsScreen = ({ route, navigation }) => {
         DeviceEventEmitter.emit('logOut');
         DeviceEventEmitter.emit('spoolerCleaner');
         return dispatch(enqueue(['CloudScreen', 'FavoriteScreen', 'MediaScreen', 'ProfileScreen']));
+    };
+
+    const sendFeedback = () => {
+        Linking.openURL(FEEDBACK_URL).catch(() => undefined);
     };
 
     const toggleSwitch = (value) => {
@@ -77,6 +85,10 @@ export const SettingsScreen = ({ route, navigation }) => {
                 <TouchableOpacity style={styles.touchable} onPress={logOutHandler}>
                     <LogoutIcon />
                     <Text style={styles.touchText}>{t('options.logout')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.touchable} onPress={sendFeedback}>
+                    <Ionicons name="mail-outline" size={24} color="#1B1D28" />
+                    <Text style={styles.touchText}>{t('settings.send_feedback')}</Text>
                 </TouchableOpacity>
             </View>
         </Layout>
