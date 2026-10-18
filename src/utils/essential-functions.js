@@ -17,7 +17,7 @@ import {
 } from './data-transmission-utils';
 import { hash256 } from './encryption-utils';
 import { setCloudMemory } from '../reducers/profileActionsReducer';
-import { command, fileTypes, defaultProxyPort } from '../constants';
+import { command, fileTypes, defaultProxyPort, STORAGE_UNIT_BASE } from '../constants';
 import { setScreenBehavior } from '../reducers/screenControllerReducer';
 import { setFavoritesList, setLocation } from '../reducers/fileReducer';
 import {
@@ -39,8 +39,8 @@ import { log } from 'react-native-reanimated';
 export function formatBytes(a, b = 2) {
     if (!+a) return '0 Bytes';
     const c = 0 > b ? 0 : b,
-        d = Math.floor(Math.log(a) / Math.log(1024));
-    return `${parseFloat((a / Math.pow(1024, d)).toFixed(c))} ${['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
+        d = Math.floor(Math.log(a) / Math.log(STORAGE_UNIT_BASE));
+    return `${parseFloat((a / Math.pow(STORAGE_UNIT_BASE, d)).toFixed(c))} ${['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'][d]
         }`;
 }
 
@@ -323,8 +323,8 @@ export function bytesToSize(bytes) {
     var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     if (bytes == -1) return 'Unlimited';
     if (bytes == 0) return '0 Byte';
-    const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-    const value = bytes / Math.pow(1024, i);
+    const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(STORAGE_UNIT_BASE)));
+    const value = bytes / Math.pow(STORAGE_UNIT_BASE, i);
     const formatted = i === 0
         ? Math.round(value).toString()
         : value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
