@@ -20,7 +20,7 @@ import {
 } from './proxy-cryptography-utils';
 import { store } from '../store';
 import { decryptXorAB, hash256 } from './encryption-utils';
-import { command, chunkSize, thumbnailSize } from '../constants';
+import { command, chunkSize, thumbnailSize, STORAGE_UNIT_BASE } from '../constants';
 import axios from 'axios';
 import i18n from '../i18n';
 import { setFavoritesList } from '../reducers/fileReducer';
@@ -595,8 +595,8 @@ function bytesToSize(bytes) {
   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   if (bytes == -1) return 'Unlimited';
   if (bytes == 0) return '0 Byte';
-  const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-  const value = bytes / Math.pow(1024, i);
+  const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(STORAGE_UNIT_BASE)));
+  const value = bytes / Math.pow(STORAGE_UNIT_BASE, i);
   const formatted = i === 0
     ? Math.round(value).toString()
     : value.toLocaleString(undefined, { minimumFractionDigits: 3, maximumFractionDigits: 3 });
