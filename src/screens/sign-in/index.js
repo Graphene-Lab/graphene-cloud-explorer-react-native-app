@@ -67,7 +67,7 @@ export const SignInScreen = ({ navigation: { navigate }, route }) => {
     const handleDeepLink = (event) => {
       let url = typeof event === 'string' ? event : event?.url;
       if (url && (url.includes('code=') || url.includes('error=')) && url.includes('cloudexplorer')) {
-        navigate('SignInUp', { isRedirect: true });
+        navigate('SignInUp', { isRedirect: true, redirectUrl: url });
       }
     };
 

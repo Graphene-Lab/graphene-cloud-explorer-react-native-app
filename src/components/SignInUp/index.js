@@ -1,256 +1,294 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri, useAuthRequest, useAutoDiscovery } from 'expo-auth-session';
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { makeRedirectUri, useAuthRequest } from 'expo-auth-session';
+import { AppState, ScrollView, StyleSheet, View } from 'react-native';
 import * as Linking from 'expo-linking';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { useNavigation } from '@react-navigation/native';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { reportCrash } from '../../utils/crashlytics-utils';
-import { ROUTES } from '../../navigation/types';
 import { Button } from '../button';
 import { CustomText } from '../text';
 import { useTranslation } from 'react-i18next';
 import { paymentApiClient } from '../../utils/apiClient';
+import { createCloudSpaceInitialization } from '../../utils/cloud-space-initialization';
 import { finalizeAuthentication } from '../../utils/essential-functions';
 import { ActivityIndicator } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
-import { setUserLoginError, setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
+import { setAuthWait, setUserLoginError, setUserSecretDataToRedux } from '../../reducers/userSecretDataReducer';
 import MarkIcon from '../../assets/icons/modal/exmark.svg';
 
 WebBrowser.maybeCompleteAuthSession();
 
+const ISSUER = 'https://id.graphenelab.cloud/realms/cloud';
+const AUTH_TIMEOUT_MS = 15000;
+const PROGRESS_NOTICE_MS = 45000;
+const SUPPORT_EMAIL = 'contact@graphenelab.cloud';
+const redirectUri = makeRedirectUri({ scheme: 'com.graphenelab.cloudexplorer' }) + 'redirect';
 
-
-export default function SignInUp({ route }) {
+export default function SignInUp ({ route }) {
   const { t } = useTranslation();
   const navigation = useNavigation();
-  const isRedirect = route?.params?.isRedirect || false;
+  const focused = useIsFocused();
   const dispatch = useDispatch();
-  const { loginError, wait } = useSelector(state => state.userSecret);
-  const [loading, setLoading] = useState(false);
+  const loginError = useSelector(state => state.userSecret.loginError);
+  const isRedirect = route?.params?.isRedirect || false;
+  const redirectUrl = route?.params?.redirectUrl;
+  const mounted = useRef(false);
   const exchangeAttempted = useRef(false);
-  const [hasPrompted, setHasPrompted] = useState(false);
-  const discovery = useAutoDiscovery('https://id.graphenelab.cloud/realms/cloud');
-  const [request, response, promptAsync] = useAuthRequest(
-    {
-      clientId: 'cloud-mobile-app',
-      redirectUri: makeRedirectUri({
-        scheme: 'com.graphenelab.cloudexplorer',
-      }) + 'redirect',
-      scopes: ['openid', 'profile'],
-      usePKCE: true,
-      extraParams: {
-        prompt: 'login',
-      },
-    },
-    discovery
-  );
+  const hasPrompted = useRef(false);
+  const tokenRequest = useRef(null);
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  const [authError, setAuthError] = useState(false);
+  const [discovery, setDiscovery] = useState(null);
+  const [appState, setAppState] = useState(AppState.currentState || 'active');
+  const [cloudState, setCloudState] = useState({ phase: 'checking', setup: null, since: Date.now() });
+  const [now, setNow] = useState(Date.now());
+  const [request, response, promptAsync] = useAuthRequest({
+    clientId: 'cloud-mobile-app', redirectUri,
+    scopes: ['openid', 'profile'], usePKCE: true,
+    extraParams: { prompt: 'login' },
+  }, discovery);
 
-  console.log('SignInUp render -> loginError:', loginError, 'wait:', wait, 'loading:', loading, 'isRedirect:', isRedirect, 'response:', response?.type);
+  const cloudFlow = useMemo(() => createCloudSpaceInitialization({
+    apiClient: paymentApiClient,
+    onChange: (state) => { if (mounted.current) setCloudState(state); },
+    onReady: ({ pin, qrEncrypted }) => finalizeAuthentication(pin, qrEncrypted),
+    onError: ({ flow, code, status }) => reportCrash(new Error('Cloud sign-in step failed'), {
+      screen: 'SignInUp', flow, code, status,
+    }),
+  }), []);
 
-  const exchangeCodeForToken = async (code, codeVerifier) => {
-    if (exchangeAttempted.current) {
-      console.log('SignInUp: Token exchange already attempted, skipping duplicate call.');
-      return;
-    }
+  const failAuthentication = () => {
+    if (!mounted.current) return;
+    setAuthError(true);
+    reportCrash(new Error('Account sign-in failed'), { screen: 'SignInUp', flow: 'authentication' });
+  };
+
+  const exchangeCodeForToken = async (code, verifier) => {
+    if (exchangeAttempted.current || !mounted.current) return;
     exchangeAttempted.current = true;
-    setLoading(true);
-    dispatch(setUserLoginError(false));
-    dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
+    setAuthError(false);
+    if (!code || !verifier) { failAuthentication(); return; }
+    tokenRequest.current = new AbortController();
     try {
-      const response = await axios.post(
-        'https://id.graphenelab.cloud/realms/cloud/protocol/openid-connect/token',
+      const result = await axios.post(`${ISSUER}/protocol/openid-connect/token`,
         new URLSearchParams({
-          client_id: 'cloud-mobile-app',
-          code: code,
-          redirect_uri: makeRedirectUri({ scheme: 'com.graphenelab.cloudexplorer' }) + 'redirect',
-          grant_type: 'authorization_code',
-          code_verifier: codeVerifier
-        }).toString(),
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-      console.log('Token Response:', response.data);
-      const { access_token, refresh_token } = response.data;
+          client_id: 'cloud-mobile-app', code, redirect_uri: redirectUri,
+          grant_type: 'authorization_code', code_verifier: verifier,
+        }).toString(), {
+          timeout: AUTH_TIMEOUT_MS, signal: tokenRequest.current.signal,
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        });
+      const { access_token, refresh_token } = result.data;
+      if (!access_token || !refresh_token) throw new Error('Missing sign-in tokens');
       await SecureStore.setItemAsync('accessToken', access_token);
       await SecureStore.setItemAsync('refreshToken', refresh_token);
       await SecureStore.setItemAsync('isAuth', 'true');
-
-      console.log('SignInUp: Fetching credentials from cloud...');
-      // Fetch QR and PIN from the cloud management service
-      const credsResponse = await paymentApiClient.get('me/cloud-space/credentials');
-      const { qrEncrypted, pin } = credsResponse.data;
-      console.log('SignInUp: Credentials received', { pin, qrEncrypted: qrEncrypted?.substring(0, 20) + '...' });
-
-      // Finalize pairing and security setup
-      console.log('SignInUp: Starting finalizeAuthentication...');
-      const success = await finalizeAuthentication(pin, qrEncrypted);
-      console.log('SignInUp: finalizeAuthentication result:', success);
-
-      if (success) {
-        console.log('SignInUp: finalizeAuthentication result: true (Navigation handled by WelcomeScreen)');
-      } else {
-        setLoading(false);
-      }
-
+      await SecureStore.deleteItemAsync('oauth_code_verifier');
+      await SecureStore.deleteItemAsync('oauth_state');
+      if (mounted.current) { setAuthError(false); setSignedIn(true); }
     } catch (error) {
-      setLoading(false);
-      console.error('Token exchange failed:', error);
-      reportCrash(error, {
-        screen: 'SignInUp',
-        flow: 'exchangeCodeForToken',
-        hasCode: !!code,
-        hasCodeVerifier: !!codeVerifier,
-      });
+      if (error?.code !== 'ERR_CANCELED') failAuthentication();
     }
   };
 
   useEffect(() => {
+    mounted.current = true;
+    dispatch(setUserLoginError(false));
+    dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
+    const subscription = AppState.addEventListener('change', setAppState);
+    return () => {
+      mounted.current = false;
+      tokenRequest.current?.abort();
+      cloudFlow.stop();
+      subscription.remove();
+    };
+  }, [cloudFlow, dispatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const restoreSession = async () => {
+      try {
+        // An unfinished storage setup can resume without opening the browser again.
+        const [isAuth, accessToken, refreshToken] = await Promise.all([
+          SecureStore.getItemAsync('isAuth'), SecureStore.getItemAsync('accessToken'),
+          SecureStore.getItemAsync('refreshToken'),
+        ]);
+        if (cancelled) return;
+        if (!isRedirect && isAuth === 'true' && (accessToken || refreshToken)) setSignedIn(true);
+        setSessionChecked(true);
+      } catch { if (!cancelled) failAuthentication(); }
+    };
+    void restoreSession();
+    return () => { cancelled = true; };
+  }, [isRedirect]);
+
+  useEffect(() => {
+    if (!sessionChecked || signedIn || isRedirect || authError) return;
+    const controller = new AbortController();
+    axios.get(`${ISSUER}/.well-known/openid-configuration`, {
+      timeout: AUTH_TIMEOUT_MS, signal: controller.signal,
+    }).then(({ data }) => {
+      if (!data.authorization_endpoint) throw new Error('Missing authorization endpoint');
+      setDiscovery({ authorizationEndpoint: data.authorization_endpoint, tokenEndpoint: data.token_endpoint });
+    }).catch((error) => {
+      if (!controller.signal.aborted && error?.code !== 'ERR_CANCELED') failAuthentication();
+    });
+    return () => controller.abort();
+  }, [sessionChecked, signedIn, isRedirect, authError]);
+
+  useEffect(() => {
+    if (!discovery || request || signedIn || authError || isRedirect) return;
+    const timer = setTimeout(failAuthentication, AUTH_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [discovery, request, signedIn, authError, isRedirect]);
+
+  useEffect(() => {
+    if (!request || !sessionChecked || signedIn || isRedirect || authError || hasPrompted.current) return;
+    hasPrompted.current = true;
+    const prompt = async () => {
+      try {
+        await SecureStore.setItemAsync('oauth_code_verifier', request.codeVerifier);
+        await SecureStore.setItemAsync('oauth_state', request.state);
+        if (mounted.current) await promptAsync();
+      } catch { failAuthentication(); }
+    };
+    void prompt();
+  }, [request, sessionChecked, signedIn, isRedirect, authError, promptAsync]);
+
+  useEffect(() => {
     if (response?.type === 'success') {
-      const { code } = response.params;
-      SecureStore.getItemAsync('oauth_code_verifier').then((savedVerifier) => {
-        const codeVerifier = savedVerifier || request?.codeVerifier;
-        exchangeCodeForToken(code, codeVerifier);
-      });
-    } else if (response?.type === 'cancel' || response?.type === 'error') {
+      SecureStore.getItemAsync('oauth_code_verifier')
+        .then(verifier => exchangeCodeForToken(response.params.code, verifier || request?.codeVerifier))
+        .catch(failAuthentication);
+    } else if (response?.type === 'cancel' || response?.type === 'dismiss') {
       navigation.goBack();
+    } else if (response?.type === 'error') {
+      failAuthentication();
     }
   }, [response]);
 
   useEffect(() => {
-    const handleManualRedirect = async () => {
-      if (isRedirect && !loading && !exchangeAttempted.current) {
-        const url = await Linking.getInitialURL();
-        if (url && url.includes('code=')) {
-          console.log('SignInUp: Manually parsing code from deep link on cold start');
-          const codeMatch = url.match(/code=([^&]+)/);
-          if (codeMatch && codeMatch[1]) {
-            const code = codeMatch[1];
-            SecureStore.getItemAsync('oauth_code_verifier').then((savedVerifier) => {
-              if (savedVerifier) {
-                console.log('SignInUp: Found saved verifier, manually exchanging code');
-                exchangeCodeForToken(code, savedVerifier);
-              } else {
-                console.error('SignInUp: No saved verifier found on cold start redirect');
-              }
-            });
-          }
+    if (!isRedirect || exchangeAttempted.current || signedIn) return;
+    let cancelled = false;
+    const handleRedirect = async () => {
+      try {
+        const url = redirectUrl || await Linking.getInitialURL();
+        if (cancelled || exchangeAttempted.current) return;
+        const params = url ? Linking.parse(url).queryParams : null;
+        const [verifier, state] = await Promise.all([
+          SecureStore.getItemAsync('oauth_code_verifier'), SecureStore.getItemAsync('oauth_state'),
+        ]);
+        if (cancelled || exchangeAttempted.current) return;
+        if (typeof params?.code !== 'string' || params.error || (state && params.state !== state)) {
+          failAuthentication(); return;
         }
-      }
+        await exchangeCodeForToken(params.code, verifier);
+      } catch { if (!cancelled) failAuthentication(); }
     };
-    handleManualRedirect();
-  }, [isRedirect, loading]);
+    void handleRedirect();
+    return () => { cancelled = true; };
+  }, [isRedirect, redirectUrl, signedIn]);
 
   useEffect(() => {
+    if (signedIn && focused && appState === 'active') void cloudFlow.start();
+    else cloudFlow.stop();
+    return () => cloudFlow.stop();
+  }, [signedIn, focused, appState, cloudFlow]);
+
+  useEffect(() => {
+    if (cloudState.phase === 'pairing_error') dispatch(setAuthWait(false));
+    setNow(Date.now());
+    if (!focused || appState !== 'active') return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [cloudState.phase, dispatch, focused, appState]);
+
+  const signInAgain = async () => {
+    cloudFlow.stop();
+    try {
+      await Promise.all(['accessToken', 'refreshToken', 'isAuth', 'oauth_code_verifier', 'oauth_state']
+        .map(key => SecureStore.deleteItemAsync(key)));
+      dispatch(setUserLoginError(false));
+      dispatch(setAuthWait(false));
+      navigation.replace('SignInUp');
+    } catch { failAuthentication(); }
+  };
+
+  const checkStorage = () => {
     dispatch(setUserLoginError(false));
     dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
-    const checkAndPrompt = async () => {
-      if (request && !loading && !hasPrompted && !isRedirect) {
-        setHasPrompted(true);
-        if (request.codeVerifier) {
-          await SecureStore.setItemAsync('oauth_code_verifier', request.codeVerifier);
-        }
-        promptAsync();
-      }
-    };
-    checkAndPrompt();
-  }, [request, loading, hasPrompted, isRedirect]);
+    void cloudFlow.check();
+  };
 
-  if (loginError) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center' }]}>
-        <View style={{ alignItems: 'center', width: '100%' }}>
-          <MarkIcon />
-          <CustomText custom={{ fontSize: 18, textAlign: 'center', marginTop: 20 }}>
-            {t('signin.incorrect_credentials')}
-          </CustomText>
-          <View style={{ width: '100%', marginTop: 50 }}>
-            <Button
-              text={t('signin.try_again')}
-              callback={() => {
-                dispatch(setUserLoginError(false));
-                dispatch(setUserSecretDataToRedux({ zeroKnowledgePrompted: false }));
-                navigation.goBack();
-              }}
-            />
-          </View>
-        </View>
-      </View>
-    );
+  const contactSupport = () => {
+    const subject = encodeURIComponent('Graphene Cloud Explorer storage setup');
+    const body = encodeURIComponent(`Cloud storage setup failed. Reference: ${cloudState.setup?.errorCode || 'UNKNOWN'}`);
+    Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`).catch(() => undefined);
+  };
+
+  const phase = cloudState.phase;
+  const slow = now - cloudState.since >= PROGRESS_NOTICE_MS;
+  const expired = signedIn && phase === 'session_expired';
+  const error = loginError || authError || ['request_error', 'retry_limit', 'support', 'pairing_error', 'session_expired'].includes(phase);
+  let message = t('signin.connecting_keycloak');
+  if (loginError) message = t('signin.incorrect_credentials');
+  else if (authError) message = t('signin.login_service_failed');
+  else if (signedIn) {
+    const messages = {
+      checking: 'storage_checking', initializing: slow ? 'storage_taking_longer' : 'storage_initializing',
+      scheduled: 'storage_retry_scheduled', retry_limit: 'storage_retry_limit', support: 'storage_support_required',
+      request_error: 'storage_check_failed', session_expired: 'session_expired', requesting_retry: 'storage_checking',
+      pairing: slow ? 'storage_taking_longer' : 'initializing_key', complete: 'initializing_key',
+      pairing_error: 'pairing_failed',
+    };
+    message = t(`signin.${messages[phase] || 'storage_check_failed'}`);
   }
+  const busy = !error && phase !== 'scheduled' && (!signedIn || !slow || phase === 'requesting_retry');
+  const nextRetry = Date.parse(cloudState.setup?.nextRetryAt);
 
   return (
-    <View style={[styles.container, { justifyContent: 'center' }]}>
-      <ActivityIndicator color="#415EB6" size='large' />
-      <CustomText custom={{ marginTop: 20 }}>{t('signin.connecting_keycloak')}</CustomText>
-    </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.content} accessibilityLiveRegion="polite">
+        {error ? <MarkIcon /> : busy ? <ActivityIndicator color="#415EB6" size="large" /> : null}
+        <CustomText custom={styles.message}>{message}</CustomText>
+        {signedIn && phase === 'scheduled' && (
+          <CustomText custom={styles.detail}>
+            {Number.isFinite(nextRetry) && nextRetry > now
+              ? t('signin.storage_retry_at', { time: new Date(nextRetry).toLocaleTimeString() })
+              : t('signin.storage_retry_waiting')}
+          </CustomText>
+        )}
+        {signedIn && phase === 'support' && <CustomText custom={styles.detail}>{SUPPORT_EMAIL}</CustomText>}
+      </View>
+      <View style={styles.actions}>
+        {authError || expired ? (
+          <Button text={t('signin.sign_in_again')} callback={signInAgain} />
+        ) : signedIn && (loginError || ['request_error', 'pairing_error'].includes(phase)) ? (
+          <Button text={t('signin.try_again')} callback={checkStorage} />
+        ) : signedIn && phase === 'retry_limit' ? (
+          <Button text={t('signin.try_again')} callback={() => { void cloudFlow.retry(); }} />
+        ) : signedIn && phase === 'support' ? (
+          <Button text={t('signin.contact_support')} callback={contactSupport} />
+        ) : null}
+        {signedIn && !expired && phase !== 'pairing' && phase !== 'complete' && (
+          <Button text={t('signin.switch_account')} variant="outlined" callback={signInAgain} />
+        )}
+        <Button text={t('signin.back')} variant="outlined" callback={() => {
+          cloudFlow.stop();
+          navigation.goBack();
+        }} />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 50,
-    paddingHorizontal: 20
-  },
-  headerContainer: {
-    alignItems: 'center',
-    marginTop: 50
-  },
-  subtitle: {
-    marginTop: 20,
-    color: '#87949E',
-    textAlign: 'center',
-    fontSize: 16
-  },
-  buttonContainer: {
-    width: '100%',
-    paddingHorizontal: 20
-  },
-  button: {
-    width: '100%',
-    minHeight: 60,
-    borderRadius: 8,
-    backgroundColor: '#415EB6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#EEF2FE',
-    width: '100%',
-    justifyContent: 'center'
-  },
-  guideText: {
-    color: '#415EB6',
-    marginLeft: 5,
-    fontSize: 14,
-    fontWeight: '500'
-  }
+  container: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', paddingVertical: 50, paddingHorizontal: 20 },
+  content: { alignItems: 'center', width: '100%' },
+  message: { fontSize: 18, textAlign: 'center', marginTop: 20, color: '#22215B' },
+  detail: { textAlign: 'center', marginTop: 16, color: '#637588' },
+  actions: { width: '100%', marginTop: 36, gap: 12 },
 });
-

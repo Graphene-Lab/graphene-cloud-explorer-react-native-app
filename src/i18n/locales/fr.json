@@ -58,7 +58,23 @@
     "auth_success_desc": "Vous vous êtes authentifié avec succès sur votre compte",
     "server_unreachable": "Serveur inaccessible",
     "reachability_message": "Impossible de joindre le serveur. Assurez-vous que le serveur proxy est en cours d'exécution et accessible depuis le téléphone.",
-    "reachability_localhost": "Impossible de joindre {{targetProxy}}. Sur un appareil physique, 127.0.0.1 ou localhost pointe vers le téléphone lui-même, pas vers votre PC ou votre Cloud Box."
+    "reachability_localhost": "Impossible de joindre {{targetProxy}}. Sur un appareil physique, 127.0.0.1 ou localhost pointe vers le téléphone lui-même, pas vers votre PC ou votre Cloud Box.",
+    "login_service_failed": "Impossible de se connecter au service de connexion. Vérifiez votre connexion et reconnectez-vous.",
+    "storage_checking": "Vérification de votre stockage cloud…",
+    "storage_initializing": "Préparation de votre stockage cloud…",
+    "storage_taking_longer": "Cela prend plus de temps que prévu. Vous pouvez revenir en arrière et réessayer plus tard.",
+    "storage_retry_scheduled": "Votre stockage n’a pas pu être préparé. Nous réessaierons automatiquement.",
+    "storage_retry_at": "Prochaine tentative automatique à {{time}}.",
+    "storage_retry_waiting": "En attente de la prochaine tentative automatique…",
+    "storage_retry_limit": "Le stockage n’a pas pu être préparé après plusieurs tentatives. Réessayez plus tard. Si le problème persiste, attendez quelques heures avant de réessayer.",
+    "storage_support_required": "Votre stockage n’a pas pu être configuré. Veuillez contacter l’assistance.",
+    "storage_check_failed": "Impossible de vérifier votre stockage. Vérifiez votre connexion et réessayez.",
+    "session_expired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "pairing_failed": "La connexion n’a pas été finalisée. Vérifiez votre connexion et réessayez.",
+    "sign_in_again": "Se reconnecter",
+    "contact_support": "Contacter l’assistance",
+    "back": "Retour",
+    "switch_account": "Utiliser un autre compte"
   },
   "qr_selection": {
     "step1": "1. Ouvrez votre client de bureau et accédez au panneau du code QR ou ouvrez l'application mobile Graphene Photos et accédez à la page des paramètres",
@@ -245,7 +261,6 @@
     "try_again": "Réessayer",
     "update_button": "Mettre à jour"
   },
-
   "welcome": {
     "head": "Bienvenue sur Uup Cloud",
     "desc": "Connectez-vous ou inscrivez-vous pour continuer à utiliser Graphene Cloud Explorer",

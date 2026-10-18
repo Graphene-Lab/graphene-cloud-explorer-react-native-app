@@ -58,7 +58,23 @@
     "auth_success_desc": "Se ha autenticado correctamente en su cuenta",
     "server_unreachable": "Servidor inalcanzable",
     "reachability_message": "No se puede establecer conexión con el servidor. Asegúrese de que el servidor proxy esté funcionando y sea accesible desde el teléfono.",
-    "reachability_localhost": "No se puede establecer conexión con {{targetProxy}}. En un dispositivo físico, 127.0.0.1 o localhost apunta al propio teléfono, no a su PC o Cloud Box."
+    "reachability_localhost": "No se puede establecer conexión con {{targetProxy}}. En un dispositivo físico, 127.0.0.1 o localhost apunta al propio teléfono, no a su PC o Cloud Box.",
+    "login_service_failed": "No se pudo conectar al servicio de inicio de sesión. Comprueba la conexión e inicia sesión de nuevo.",
+    "storage_checking": "Comprobando tu almacenamiento en la nube…",
+    "storage_initializing": "Preparando tu almacenamiento en la nube…",
+    "storage_taking_longer": "Esto está tardando más de lo habitual. Puedes volver e intentarlo más tarde.",
+    "storage_retry_scheduled": "No se pudo preparar tu almacenamiento. Lo intentaremos de nuevo automáticamente.",
+    "storage_retry_at": "Próximo intento automático a las {{time}}.",
+    "storage_retry_waiting": "Esperando el próximo intento automático…",
+    "storage_retry_limit": "No se pudo preparar el almacenamiento tras varios intentos. Inténtalo más tarde. Si el problema continúa, espera unas horas antes de volver a intentarlo.",
+    "storage_support_required": "No se pudo configurar tu almacenamiento. Ponte en contacto con el soporte.",
+    "storage_check_failed": "No se pudo comprobar tu almacenamiento. Comprueba la conexión e inténtalo de nuevo.",
+    "session_expired": "Tu sesión ha caducado. Inicia sesión de nuevo.",
+    "pairing_failed": "No se completó el inicio de sesión. Comprueba la conexión e inténtalo de nuevo.",
+    "sign_in_again": "Iniciar sesión de nuevo",
+    "contact_support": "Contactar con soporte",
+    "back": "Volver",
+    "switch_account": "Usar otra cuenta"
   },
   "qr_selection": {
     "step1": "1. Abra su cliente de escritorio y navegue hasta el panel del código QR o abra la aplicación móvil Graphene Photos y navegue hasta la página de configuración",
@@ -245,7 +261,6 @@
     "try_again": "Intentar de nuevo",
     "update_button": "Actualizar"
   },
-
   "welcome": {
     "head": "Bienvenido a Uup Cloud",
     "desc": "Inicie sesión o regístrese para continuar usando Graphene Cloud Explorer",

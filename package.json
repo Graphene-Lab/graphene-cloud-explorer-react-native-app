@@ -15,7 +15,8 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "postinstall": "patch-package",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test:auth": "node --test tests/cloud-space-initialization.test.mjs tests/api-client.test.mjs"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.6",
