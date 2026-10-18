@@ -51,9 +51,42 @@ legacy credentials endpoint. Ready accounts can still pair; missing storage show
 
 ## Verification
 
-Run `npm run test:auth` with Node 22 or later. It covers state transitions, automatic versus
-manual retries, server refusal, timeouts, malformed credentials, foreground recovery,
+Install dependencies with `yarn install --frozen-lockfile`, then run both suites with Node 22
+or later from the project root:
+
+```sh
+npm run test:auth
+npm run test:screens
+```
+
+`test:auth` preserves the existing 32 Node tests. It covers state transitions, automatic
+versus manual retries, server refusal, timeouts, malformed credentials, foreground recovery,
 request cancellation, pairing duplication, token refresh, and legacy endpoint compatibility.
+
+`test:screens` runs Jest in Node with the Expo native mocks. No emulator, testing APK, server,
+or customer account is needed. Tests in `tests/screens/sign-in-up.test.js` render the actual
+`SignInUp`, its existing buttons and progress indicator, and the real initialization controller.
+They use a fresh Redux store with the real user-secret reducer and deterministic English
+translations. Management requests, OAuth requests/browser services, SecureStore, navigation,
+linking, crash reporting, and `finalizeAuthentication` are mocked. All request mocks are local;
+unexpected fetch/HTTP/HTTPS requests are blocked and fail the suite even if the screen catches
+their error. The existing API-client suite separately tests real token-refresh behavior.
+
+Screen assertions cover ready/pending/in-progress/scheduled storage, the longer-wait notice,
+retry exhaustion and double presses, support email drafts, network recovery with the existing
+session, an ambiguous retry POST timeout, expired-session cleanup, background/focus/unmount
+cancellation, stale responses, duplicate pairing, Back, legacy-backend fallback, fresh OAuth
+sign-in, and redirect verification. Fake timers and controlled promises keep polling and late
+responses deterministic; no large snapshots or copies of screen/controller logic are used.
+
+The development dependencies are pinned to Jest 29.7.0, `jest-expo` 55.0.16, React Native
+Testing Library 13.3.3, and `react-test-renderer` 19.2.0. Expo 55's preset itself uses that
+renderer version, matching this app's React 19.2.0. Keep this SDK-specific combination together;
+newer major test-library/Expo versions may require a different renderer. See the
+[Expo 55 preset](https://github.com/expo/expo/blob/sdk-55/packages/jest-expo/package.json).
+The Jest cache lives under ignored `node_modules/.cache/jest` to work in restricted Windows
+environments. Jest only discovers `tests/screens/**/*.test.js`, keeping the Node suites separate.
+
 Before publishing, also run focused ESLint checks and an Android APK build. A successful
 bundle or test run does not replace a device sign-in check.
 

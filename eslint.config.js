@@ -32,5 +32,20 @@ module.exports = [
         version: 'detect'
       }
     }
-  }
-]; 
+  },
+  {
+    files: ['jest.config.js', 'tests/screens/**/*.js'],
+    languageOptions: {
+      globals: {
+        jest: 'readonly', expect: 'readonly', test: 'readonly',
+        beforeEach: 'readonly', afterEach: 'readonly',
+        require: 'readonly', module: 'readonly', global: 'readonly',
+        URL: 'readonly', URLSearchParams: 'readonly', AbortSignal: 'readonly',
+      },
+    },
+    rules: {
+      'react/jsx-uses-react': 'error',
+      'react/jsx-uses-vars': 'error',
+    },
+  },
+];
