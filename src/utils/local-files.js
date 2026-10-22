@@ -1,12 +1,13 @@
-import { Platform } from 'react-native';
+import { NativeModules, PermissionsAndroid, Platform } from 'react-native';
 import RNFetchBlob from 'react-native-blob-util';
 import { existsTypes } from '../constants';
 import { bufferToBase64 } from './proxy-cryptography-utils';
 const { dirs, exists, mkdir, createFile, stat, unlink } = RNFetchBlob.fs;
 const documentDir = dirs.DocumentDir;
 import { mime_types_json } from '../constants/mime_types';
+import { forgetDownload, getDownloadScope, getSavedDownload, rememberDownload } from './download-index';
 
-const downloadedPathIndex = {};
+let stagingFolderCounter = 0;
 const WRITE_CHUNK_BYTES = 192 * 1024;
 const yieldToJs = () => new Promise((resolve) => setTimeout(resolve, 0));
 const TIMESTAMP_TOLERANCE_SECONDS = 2;
@@ -36,66 +37,72 @@ const toChunks = (input) => {
 
 const writeChunksStream = async (target, chunks) => {
     const stream = await RNFetchBlob.fs.writeStream(target, 'base64', false);
-    let carry = new Uint8Array(0);
-    let writtenSinceYield = 0;
-    for (const part of chunks) {
-        let chunk = part;
+    try {
+        let carry = new Uint8Array(0);
+        let writtenSinceYield = 0;
+        for (const part of chunks) {
+            let chunk = part;
+            if (carry.length) {
+                chunk = concatUint8(carry, chunk);
+                carry = new Uint8Array(0);
+            }
+            const remainder = chunk.length % 3;
+            if (remainder) {
+                carry = chunk.slice(chunk.length - remainder);
+                chunk = chunk.slice(0, chunk.length - remainder);
+            }
+            if (chunk.length) {
+                const safeChunk = chunk.byteOffset === 0 && chunk.byteLength === chunk.buffer.byteLength
+                    ? chunk
+                    : chunk.slice();
+                await stream.write(bufferToBase64(safeChunk.buffer));
+            }
+            writtenSinceYield += chunk.length;
+            if (writtenSinceYield >= WRITE_CHUNK_BYTES) {
+                writtenSinceYield = 0;
+                await yieldToJs();
+            }
+        }
         if (carry.length) {
-            chunk = concatUint8(carry, chunk);
-            carry = new Uint8Array(0);
+            await stream.write(bufferToBase64(carry.buffer));
         }
-        const remainder = chunk.length % 3;
-        if (remainder) {
-            carry = chunk.slice(chunk.length - remainder);
-            chunk = chunk.slice(0, chunk.length - remainder);
-        }
-        if (chunk.length) {
-            const safeChunk = chunk.byteOffset === 0 && chunk.byteLength === chunk.buffer.byteLength
-                ? chunk
-                : chunk.slice();
-            stream.write(bufferToBase64(safeChunk.buffer));
-        }
-        writtenSinceYield += chunk.length;
-        if (writtenSinceYield >= WRITE_CHUNK_BYTES) {
-            writtenSinceYield = 0;
-            await yieldToJs();
-        }
+    } finally {
+        await stream.close();
     }
-    if (carry.length) {
-        stream.write(bufferToBase64(carry.buffer));
-    }
-    await stream.close();
 };
 
 const writeBytesStream = async (target, bytes) => {
     const stream = await RNFetchBlob.fs.writeStream(target, 'base64', false);
-    let carry = new Uint8Array(0);
-    for (let offset = 0; offset < bytes.length; offset += WRITE_CHUNK_BYTES) {
-        const end = Math.min(offset + WRITE_CHUNK_BYTES, bytes.length);
-        let chunk = bytes.subarray(offset, end);
+    try {
+        let carry = new Uint8Array(0);
+        for (let offset = 0; offset < bytes.length; offset += WRITE_CHUNK_BYTES) {
+            const end = Math.min(offset + WRITE_CHUNK_BYTES, bytes.length);
+            let chunk = bytes.subarray(offset, end);
+            if (carry.length) {
+                chunk = concatUint8(carry, chunk);
+                carry = new Uint8Array(0);
+            }
+            const remainder = chunk.length % 3;
+            if (remainder) {
+                carry = chunk.slice(chunk.length - remainder);
+                chunk = chunk.slice(0, chunk.length - remainder);
+            }
+            if (chunk.length) {
+                const safeChunk = chunk.byteOffset === 0 && chunk.byteLength === chunk.buffer.byteLength
+                    ? chunk
+                    : chunk.slice();
+                await stream.write(bufferToBase64(safeChunk.buffer));
+            }
+            if (offset + WRITE_CHUNK_BYTES < bytes.length) {
+                await yieldToJs();
+            }
+        }
         if (carry.length) {
-            chunk = concatUint8(carry, chunk);
-            carry = new Uint8Array(0);
+            await stream.write(bufferToBase64(carry.buffer));
         }
-        const remainder = chunk.length % 3;
-        if (remainder) {
-            carry = chunk.slice(chunk.length - remainder);
-            chunk = chunk.slice(0, chunk.length - remainder);
-        }
-        if (chunk.length) {
-            const safeChunk = chunk.byteOffset === 0 && chunk.byteLength === chunk.buffer.byteLength
-                ? chunk
-                : chunk.slice();
-            stream.write(bufferToBase64(safeChunk.buffer));
-        }
-        if (offset + WRITE_CHUNK_BYTES < bytes.length) {
-            await yieldToJs();
-        }
+    } finally {
+        await stream.close();
     }
-    if (carry.length) {
-        stream.write(bufferToBase64(carry.buffer));
-    }
-    await stream.close();
 };
 
 const typeConverter = (type) => {
@@ -109,7 +116,7 @@ const resolveMime = (fileName) => {
 };
 
 const buildFoundFile = (path, mime) => ({
-    source: `file://${path}`,
+    source: path.startsWith('content://') ? path : `file://${path}`,
     uri: path,
     mime,
 });
@@ -174,9 +181,9 @@ const isUsableTimestamp = async (path, expectedTimestamp) => {
     }
 };
 
-export const registerDownloadedPath = (remotePath, localPath) => {
+export const registerDownloadedPath = (remotePath, localPath, metadata = {}, scope = getDownloadScope()) => {
     if (!remotePath || !localPath) return;
-    downloadedPathIndex[remotePath] = localPath;
+    rememberDownload(remotePath, { ...metadata, uri: localPath }, scope);
 };
 
 export const fileExistsCheck = async (file) => {
@@ -186,19 +193,24 @@ export const fileExistsCheck = async (file) => {
     const expectedSize = normalizeExpectedSize(file);
     const expectedTimestamp = extractExpectedUnixTimestamp(file);
 
-    const indexedPath = downloadedPathIndex[file?.path];
-    if (indexedPath) {
-        const indexedExists = await exists(indexedPath);
-        if (
-            indexedExists &&
-            await isUsableSize(indexedPath, expectedSize) &&
-            await isUsableTimestamp(indexedPath, expectedTimestamp)
-        ) {
-            return buildFoundFile(indexedPath, mime);
+    const scope = getDownloadScope();
+    const saved = getSavedDownload(file?.path, scope);
+    if (saved?.uri) {
+        try {
+            const stats = saved.uri.startsWith('content://')
+                ? await NativeModules.PublicDownloads.statFile(saved.uri)
+                : await stat(saved.uri);
+            const sizeOk = stats && Number(stats.size) === Number(saved.size)
+                && (!expectedSize || Number(stats.size) === expectedSize);
+            const versionOk = !file.rawDate || saved.rawDate === file.rawDate;
+            if (sizeOk && versionOk) return { ...saved, ...buildFoundFile(saved.uri, mime) };
+        } catch {
+            // A deleted file or revoked URI must allow a fresh download.
         }
+        forgetDownload(file?.path, scope);
     }
 
-    if (file?.source && typeof file.source === 'string') {
+    if (file?.source && typeof file.source === 'string' && file.source.startsWith('file://')) {
         const sourcePath = file.source.replace('file://', '');
         const sourceExists = await exists(sourcePath);
         if (
@@ -245,12 +257,31 @@ export const fileExistsCheck = async (file) => {
 
 export const mkFolder = async (file) => {
     const type = typeConverter(file?.type);
-    const baseDir = Platform.OS === 'android' && dirs.DownloadDir ? dirs.DownloadDir : documentDir;
-    const targetFolder = `${baseDir}/${type}`;
+    // Each Android download gets its own staging folder, including identical names in different cloud folders.
+    const targetFolder = Platform.OS === 'android'
+        ? `${dirs.CacheDir}/download-${Date.now()}-${stagingFolderCounter++}`
+        : `${documentDir}/${type}`;
     const isFolderAlreadyExists = await exists(targetFolder);
     if (!isFolderAlreadyExists) await mkdir(targetFolder);
     return targetFolder;
 }
+
+export const exportFileToDownloads = async (source, name, meta) => {
+    if (Platform.Version < 29) {
+        const permission = PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
+        if (!(await PermissionsAndroid.check(permission))) {
+            const result = await PermissionsAndroid.request(permission);
+            if (result !== PermissionsAndroid.RESULTS.GRANTED) throw new Error('Download storage permission denied');
+        }
+    }
+    const stats = await stat(source);
+    const expectedSize = Number(meta?.Length ?? meta?.size);
+    if (Number.isFinite(expectedSize) && expectedSize >= 0 && Number(stats.size) !== expectedSize) {
+        throw new Error('Downloaded file has an unexpected size');
+    }
+    const saved = await NativeModules.PublicDownloads.exportFile(source, name, resolveMime(name));
+    return { ...saved, rawDate: meta.rawDate, publicDownload: true, source: saved.uri };
+};
 
 export const writeFileToLocal = async (file, name, folder, meta = null) => {
     const target = `${folder}/${name}`;

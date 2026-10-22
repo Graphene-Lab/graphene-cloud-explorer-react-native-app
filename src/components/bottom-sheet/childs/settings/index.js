@@ -1,4 +1,4 @@
-import { Text, View } from "react-native"
+import { Platform, Text, View } from "react-native"
 import { useTranslation } from "react-i18next"
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet"
 import { OptionButton } from '../../..//option-button'
@@ -17,6 +17,8 @@ import { downloadManager } from "../../../view-items/functions"
 import { fileExistsCheck } from "../../../../utils/local-files"
 import { openModal } from "../../../../reducers/modalReducer"
 import { styles } from "./styles"
+import { showSavedDownload } from '../../../../utils/download-feedback';
+import { downloadFile as saveDownload } from '../../../../utils/settings-utils';
 
 
 const Settings = () => {
@@ -31,8 +33,13 @@ const Settings = () => {
     const selectedItemLabel = selectedFile?.type === 'folder' ? t('options.folder') : t('options.file');
 
     const downloadFile = async (file) => {
-        const { uri, source } = await fileExistsCheck(file);
-        if (uri || source) {
+        const saved = await fileExistsCheck(file);
+        if (Platform.OS === 'android' && saved?.publicDownload) {
+            showSavedDownload(file, saved);
+            return;
+        }
+        if (Platform.OS === 'android' && saved?.uri) return saveDownload();
+        if (saved?.uri || saved?.source) {
             dispatch(openModal({
                 content: t('popups.file_downloaded'),
                 head: file.name,

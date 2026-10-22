@@ -4,9 +4,12 @@ import { setData } from "../reducers/testReducer";
 import { store } from "../store"
 import { addToGroup, copy, createDir, delete_, getFavoritesNames, getFile, move, removeFromGroup, rename } from "./data-transmission-utils"
 import { chunkSize } from "../constants";
-import { fileExistsCheck, mkFolder, registerDownloadedPath, writeFileToLocal } from "./local-files";
+import { exportFileToDownloads, fileExistsCheck, mkFolder, registerDownloadedPath, writeFileToLocal } from "./local-files";
 import { groupsByFolder, locationGenerator, parseFile, storageInfo } from "./essential-functions";
-import Share from 'react-native-share';
+import { shareLocalFile } from './file-opening';
+import { getDownloadScope } from './download-index';
+import { showSavedDownload } from './download-feedback';
+import { finishDownloadNotification } from './notification-utils';
 import * as DocumentPicker from 'expo-document-picker'
 import { setPickedFiles } from "../reducers/filesTransferNewReducer";
 import RNFetchBlob from "react-native-blob-util";
@@ -39,20 +42,40 @@ export const downloadFile = async () => {
 
     store.dispatch(downloadSetQueue(editedFile.path));
     store.dispatch(downloadSetProgress({ path: editedFile.path, progress: 0 }));
+    const scope = getDownloadScope();
+    let stagingFolder;
     try {
-        const timingStart = Date.now();
-        console.log('[DL] start', editedFile.path);
-        const file = await getFile(editedFile.path, 1, editedFile.rawDate)
-        console.log('[DL] getFile done', { ms: Date.now() - timingStart });
-        const folder = await mkFolder(file);
-        console.log('[DL] mkFolder done', { ms: Date.now() - timingStart });
-        const savedPath = await writeFileToLocal(file, editedFile.name, folder, editedFile);
-        console.log('[DL] writeFileToLocal done', { ms: Date.now() - timingStart, savedPath });
-        registerDownloadedPath(editedFile.path, savedPath);
-        console.log('[DL] registerDownloadedPath done', { ms: Date.now() - timingStart });
-        await addToMMKV(editedFile);
-        console.log('[DL] addToMMKV done', { ms: Date.now() - timingStart });
+        const existing = await fileExistsCheck(editedFile);
+        let saved = existing;
+        if (!existing?.publicDownload) {
+            let source = Platform.OS === 'android' ? existing?.uri : null;
+            if (!source) {
+                const file = await getFile(editedFile.path, 1, editedFile.rawDate);
+                stagingFolder = await mkFolder(file);
+                source = await writeFileToLocal(file, editedFile.name, stagingFolder, editedFile);
+            }
+            saved = Platform.OS === 'android'
+                ? await exportFileToDownloads(source, editedFile.name, editedFile)
+                : { uri: source, size: Number(editedFile.Length), rawDate: editedFile.rawDate };
+            registerDownloadedPath(editedFile.path, saved.uri, saved, scope);
+        }
+        if (scope === getDownloadScope()) {
+            await addToMMKV(editedFile);
+            if (Platform.OS === 'android') showSavedDownload(editedFile, saved);
+        }
+        await finishDownloadNotification({ id: editedFile.path, title: editedFile.name, displayPath: saved.displayPath });
+        return saved;
+    } catch (error) {
+        console.log('[DL] save failed', error);
+        await finishDownloadNotification({ id: editedFile.path, title: editedFile.name, failed: true });
+        if (scope === getDownloadScope()) {
+            useErrorAlert(i18n.t('common.error'), i18n.t('downloads.save_failed'));
+        }
+        return null;
     } finally {
+        if (Platform.OS === 'android' && stagingFolder) {
+            try { await RNFetchBlob.fs.unlink(stagingFolder); } catch (error) { console.log('[DL] staging cleanup failed', error); }
+        }
         store.dispatch(downloadClearProgress(editedFile.path));
         store.dispatch(downloadRemoveQueue(editedFile.path));
     }
@@ -260,7 +283,7 @@ export const shareFile = async () => {
         location: fromScreen === 'CloudScreen' ? location : selectedFile.location
     }
 
-    const { source } = await fileExistsCheck(editedFile);
+    const { source, mime } = await fileExistsCheck(editedFile) || {};
     if (!source) return store.dispatch(openModal({
         content: i18n.t('popups.file_not_downloaded'),
         head: editedFile.name,
@@ -270,8 +293,9 @@ export const shareFile = async () => {
     }))
     else {
         try {
-            await Share.open({
-                url: source,
+            await shareLocalFile({
+                source,
+                mime,
                 title: i18n.t('popups.sharing_file', { name: editedFile.name })
             });
         }

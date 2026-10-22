@@ -282,5 +282,11 @@
   "memory": {
     "full_head": "Graphene Cloud Explorer is full",
     "full_desc": "Graphene Cloud Explorer memory is already full. Delete unnecessary data to upload a new file."
+  },
+  "downloads": {
+    "saved_to": "Saved to {{path}}",
+    "open": "Open",
+    "save_failed": "Could not save the file. Please try again.",
+    "open_failed": "No application could open this file."
   }
 }

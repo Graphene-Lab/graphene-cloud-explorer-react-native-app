@@ -11,6 +11,7 @@ import com.facebook.react.ReactHost
 import com.facebook.react.common.ReleaseLevel
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint
 import com.graphenelab.cloudexplorer.zk.ZkCipherPackage
+import com.graphenelab.cloudexplorer.downloads.PublicDownloadsPackage
 
 import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
@@ -24,6 +25,7 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here.
           add(ZkCipherPackage())
+          add(PublicDownloadsPackage())
         }
     )
   }

@@ -278,5 +278,11 @@
   "memory": {
     "full_head": "Graphene Cloud Explorer è pieno",
     "full_desc": "La memoria di Graphene Cloud Explorer è già piena. Elimina i dati non necessari per caricare un nuovo file."
+  },
+  "downloads": {
+    "saved_to": "Salvato in {{path}}",
+    "open": "Apri",
+    "save_failed": "Impossibile salvare il file. Riprova.",
+    "open_failed": "Nessuna applicazione può aprire questo file."
   }
 }

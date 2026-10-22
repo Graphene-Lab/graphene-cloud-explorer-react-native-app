@@ -59,7 +59,7 @@ export const renderThumbnail = (item, border, iconSize = 20) => {
         return (
             <View style={imageFrameStyle}>
                 <Image
-                    source={{ uri: `file://${item.source}` }}
+                    source={{ uri: /^(content|file):\/\//.test(item.source) ? item.source : `file://${item.source}` }}
                     resizeMode="cover"
                     style={imageStyle}
                 />

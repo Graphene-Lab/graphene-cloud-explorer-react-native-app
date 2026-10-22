@@ -92,7 +92,7 @@ export const errorMessageNotification = async () => {
 // ---------- new arc ---------
 
 export const downloadNotificationRegister = async ({ id, title, size, max }) => {
-    lists[id] = {
+    const entry = lists[id] = {
         id,
         size,
         max,
@@ -101,29 +101,38 @@ export const downloadNotificationRegister = async ({ id, title, size, max }) => 
         completionQueued: false,
         disabled: false,
     };
-    if (!(await ensureNotificationPermission())) return;
-    await notifee.requestPermission()
-    const channelId = await notifee.createChannel({
-        id: 'com.cloudStorage.download',
-        name: 'Default Channel',
-        playSound: true,
-        importance: AndroidImportance.HIGH,
-    });
-    await enqueueNotification(id, () => notifee.displayNotification({
-        id,
-        title,
-        body: i18n.t('notifications.downloading_body', { size }),
-        android: {
-            channelId,
-            smallIcon: 'ic_small_icon',
-            progress: {
-                max: 0,
-                current: 0,
-                indeterminate: true,
-                importance: AndroidImportance.HIGH,
-            }
+    try {
+        if (!(await ensureNotificationPermission())) {
+            entry.disabled = true;
+            return;
         }
-    }));
+        await notifee.requestPermission();
+        const channelId = await notifee.createChannel({
+            id: 'com.cloudStorage.download',
+            name: 'Default Channel',
+            playSound: true,
+            importance: AndroidImportance.HIGH,
+        });
+        await enqueueNotification(id, () => notifee.displayNotification({
+            id,
+            title,
+            body: i18n.t('notifications.downloading_body', { size }),
+            android: {
+                channelId,
+                smallIcon: 'ic_small_icon',
+                progress: {
+                    max: 0,
+                    current: 0,
+                    indeterminate: true,
+                    importance: AndroidImportance.HIGH,
+                }
+            }
+        }));
+    } catch (error) {
+        // Notifications are optional; a channel/permission error must not abort the file save.
+        entry.disabled = true;
+        console.log('[notification] download registration failed', error);
+    }
 }
 
 export const notificationUpdate = async ({ id, current, title }) => {
@@ -149,14 +158,16 @@ export const notificationUpdate = async ({ id, current, title }) => {
     }));
 }
 
-export const cancelNotification = async ({ id, title }) => {
+export const finishDownloadNotification = async ({ id, title, displayPath, failed = false }) => {
     const entry = lists[id];
     if (!entry) return;
     entry.completionQueued = true;
     const completion = enqueueNotification(id, () => notifee.displayNotification({
         id,
         title,
-        body: i18n.t('notifications.downloaded_success_body'),
+        body: failed ? i18n.t('downloads.save_failed')
+            : displayPath ? i18n.t('downloads.saved_to', { path: displayPath })
+                : i18n.t('notifications.downloaded_success_body'),
         android: {
             channelId: 'com.cloudStorage.download',
             smallIcon: 'ic_small_icon',

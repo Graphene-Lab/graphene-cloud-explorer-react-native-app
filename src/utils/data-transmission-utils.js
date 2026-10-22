@@ -47,7 +47,6 @@ import RNFetchBlob from 'react-native-blob-util';
 import { downloadSetProgress } from '../reducers/filesTransferNewReducer';
 import {
   downloadNotificationRegister,
-  cancelNotification,
   notificationUpdate,
 } from './notification-utils';
 import { enqueue, forceEnqueue } from '../reducers/refreshQueueReducer';
@@ -1376,7 +1375,7 @@ export const onCommandResponse = {
       let selectedFile = store.getState().files.selectedFile;
       let mb = bytesToSize(selectedFile['Length']);
       const firstChunkNotifyTitle = requestMeta?.clearFullName || trackedPath || fullName;
-      downloadNotificationRegister({
+      await downloadNotificationRegister({
         id: trackedPath,
         title: firstChunkNotifyTitle,
         size: mb,
@@ -1398,7 +1397,6 @@ export const onCommandResponse = {
 
     if (chunkPart == totalChunk) {
       updateProgress(100);
-      cancelNotification({ id: trackedPath, title: notifyTitle });
       await yieldToJs();
       const timingStart = DEBUG_DOWNLOAD_TIMING ? Date.now() : 0;
       const context = downloadRequestMeta[fullName] || {};
