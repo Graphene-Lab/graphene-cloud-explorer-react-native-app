@@ -1,8 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export function prepareAndroidCi({ env = process.env, root = process.cwd() } = {}) {
+export function prepareAndroidCi({ env = process.env, root = process.cwd(), run = spawnSync } = {}) {
   const required = [
     'ANDROID_UPLOAD_KEYSTORE_BASE64',
     'APP_UPLOAD_STORE_PASSWORD',
@@ -35,9 +36,22 @@ export function prepareAndroidCi({ env = process.env, root = process.cwd() } = {
 
   const keystorePath = path.join(env.RUNNER_TEMP, 'graphenelab-upload.keystore');
   fs.writeFileSync(keystorePath, keystore, { mode: 0o600 });
+  const verification = run('java', [
+    '--source', '21', fileURLToPath(new URL('./VerifyUploadKey.java', import.meta.url)), keystorePath,
+  ], { env: { ...process.env, ...env }, encoding: 'utf8', timeout: 30000 });
+  if (verification.error) throw new Error('Signing verification requires a working Java 21 or later runtime.');
+  const signingErrors = {
+    2: 'Cannot open the upload keystore. Check ANDROID_UPLOAD_KEYSTORE_BASE64 and APP_UPLOAD_STORE_PASSWORD.',
+    3: 'APP_UPLOAD_KEY_ALIAS does not exist in the upload keystore.',
+    4: 'APP_UPLOAD_KEY_ALIAS must identify a private signing key.',
+    5: 'APP_UPLOAD_KEY_PASSWORD cannot unlock the selected upload key.',
+  };
+  if (verification.status !== 0) {
+    throw new Error(signingErrors[verification.status] || 'Upload key verification failed before compilation.');
+  }
   fs.writeFileSync(path.join(root, 'android/app/google-services.json'), env.GOOGLE_SERVICES_JSON, { mode: 0o600 });
   fs.appendFileSync(env.GITHUB_ENV, `ORG_GRADLE_PROJECT_APP_UPLOAD_STORE_FILE=${keystorePath}\n`);
-  console.log('Upload keystore and Firebase configuration restored.');
+  console.log('Upload key, alias, and passwords verified; Firebase configuration restored.');
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {

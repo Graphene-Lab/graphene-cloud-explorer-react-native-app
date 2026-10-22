@@ -146,4 +146,32 @@ class PublishingLanesTest < Minitest::Test
       assert_empty lanes.uploads
     end
   end
+
+  def test_internal_upload_uses_the_selected_build_versions_without_rebuilding
+    with_credentials do
+      Dir.mktmpdir do |source|
+        FileUtils.mkdir_p(File.join(source, 'android/app'))
+        File.write(File.join(source, 'package.json'), JSON.generate(version: '9.8.7'))
+        File.write(File.join(source, 'app.json'), JSON.generate(expo: { version: '9.8.7', android: { package: PlayRelease::PACKAGE_NAME } }))
+        File.write(File.join(source, 'android/app/build.gradle'), "applicationId '#{PlayRelease::PACKAGE_NAME}'\nversionName \"9.8.7\"\nversionCode 33\n")
+        previous = ENV['PLAY_RELEASE_SOURCE']
+        ENV['PLAY_RELEASE_SOURCE'] = source
+        original_file = File.method(:file?)
+        begin
+          lanes = PublishingLanes.new
+          File.stub(:file?, ->(filename) { filename == PlayRelease::AAB_PATH || original_file.call(filename) }) do
+            lanes.run(:internal)
+          end
+          assert_equal %w[internal production], lanes.track_reads
+          assert_equal 1, lanes.uploads.length
+          request = lanes.uploads.first
+          assert_equal '9.8.7 (33)', request.fetch(:version_name)
+          assert_equal PlayRelease::AAB_PATH, request.fetch(:aab)
+          assert_equal 'internal', request.fetch(:track)
+        ensure
+          ENV['PLAY_RELEASE_SOURCE'] = previous
+        end
+      end
+    end
+  end
 end

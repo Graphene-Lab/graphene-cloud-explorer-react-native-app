@@ -35,11 +35,11 @@ After the workflow files are committed and pushed to `master`:
 
 1. Open **Actions → Android Google Play → Run workflow**.
 2. Select branch `master` and action **build**. Tests run and a signed AAB is saved as a workflow artifact. This action does not authenticate to or upload to Google Play.
-3. Run again with action **internal** to build and upload to internal testing. The Android versionCode must be unused and greater than existing internal/production versions. If the checked-in code is already used, bump it before publishing.
+3. Run action **internal**, entering the successful build's **build_run_id** from its GitHub URL (`actions/runs/<build_run_id>`). This downloads and uploads that signed AAB without compiling again. The source run must have succeeded in this repository's Android Google Play workflow, and its artifact must still be available. The Android versionCode must be unused and greater than existing internal/production versions; an already-published version needs a new versionCode and build.
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.
 5. Run action **promote**, providing the exact tested **version_code**. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
 
-The workflow accepts manual release runs from `master` or `v*` tags in this repository. It serializes releases and never automatically promotes to production.
+The workflow accepts manual release runs from `master` or `v*` tags in this repository. It serializes releases and never automatically promotes to production. Manual internal uploads use package/version information from the selected artifact's original source commit, so newer source edits do not change or relabel that AAB. To publish newer source changes, select a build that contains them.
 
 ## Subsequent releases
 
@@ -59,16 +59,18 @@ GitHub provides a fresh Ubuntu 24.04 runner. The workflow uses Node 22, Java 21,
 
 Fastlane requires Ruby 3.2 or later. Existing CocoaPods dependencies remain in the root Gemfile. Install Ruby dependencies with `bundle install`, and invoke lanes with `bundle exec fastlane android <lane>`.
 
-The upload keystore is restored into the runner's temporary directory. Passwords are passed to Gradle through `ORG_GRADLE_PROJECT_APP_UPLOAD_*` environment variables. CI rejects missing signing material before building, and Gradle enforces `REQUIRE_RELEASE_SIGNING=true` for the Fastlane release build. Existing local development build commands keep their behavior.
+The upload keystore is restored into the runner's temporary directory. Before Android SDK installation or native compilation, a Java preflight opens the keystore, checks that the alias refers to a private key, and unlocks it with the key password. Failures identify the relevant secret names without printing credentials. Passwords are then passed to Gradle through `ORG_GRADLE_PROJECT_APP_UPLOAD_*` environment variables, and Gradle enforces `REQUIRE_RELEASE_SIGNING=true` for the Fastlane release build. Existing local development build commands keep their behavior.
+
+Manual internal uploads require only Ruby, Node, read access to the selected GitHub Actions artifact, and Google authentication. They skip JavaScript dependency installation, Android SDK/NDK setup, signing secrets, and compilation. The artifact download verifies its digest. Tag-triggered releases still build once and upload to internal testing in the same run.
 
 Google authentication runs immediately before publishing. `google-github-actions/auth` exchanges the GitHub OIDC token and creates a short-lived credential configuration for the service account. Fastlane reads that file through `GOOGLE_APPLICATION_CREDENTIALS`; a downloaded service-account private key is not needed. Generated credential files are ignored by Git and excluded from the AAB artifact. The workflow removes the restored keystore and Firebase configuration on completion.
 
 ## Focused checks
 
 ```powershell
-node --test tests/android-publishing.test.mjs
+node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs
 ruby tests/play_release_test.rb
 bundle exec fastlane lanes
 ```
 
-The focused tests use temporary files and dummy signing material. They check credential restoration, package/version/tag consistency, and selection of an exact tested version for promotion without contacting Google Play.
+The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, and exact-version promotion. Artifact API requests and Google Play actions are mocked; no tests contact Google Play.
