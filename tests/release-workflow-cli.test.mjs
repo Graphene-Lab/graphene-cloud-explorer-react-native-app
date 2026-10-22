@@ -27,12 +27,29 @@ test('an explicit version selects that exact internal build', () => {
   assert.ok(calls[0].includes('version_code=32'));
 });
 
+test('release shortcuts dispatch the selected destination without production promotion', () => {
+  for (const destination of ['github', 'play', 'both']) {
+    let calls = 0;
+    const run = (command, args) => {
+      calls++;
+      assert.equal(command, 'gh');
+      assert.ok(args.includes('action=release'));
+      assert.ok(args.includes(`destination=${destination}`));
+      assert.ok(!args.includes('action=promote'));
+      assert.ok(!args.some(arg => arg.startsWith('version_code=')));
+      return { status: 0 };
+    };
+    assert.deepEqual(runReleaseWorkflow([destination], { run }), { destination });
+    assert.equal(calls, 1);
+  }
+});
+
 test('invalid versions and extra arguments fail before starting any workflow', () => {
   const run = () => assert.fail('Invalid input must never dispatch a production workflow.');
   for (const value of ['', '0', '-1', '1.2.8', 'latest', '32; echo unsafe', '2100000001']) {
     assert.throws(() => runReleaseWorkflow(['promote', value], { run }), /positive integer/);
   }
-  for (const args of [[], ['build'], ['promote', '32', '33']]) {
+  for (const args of [[], ['build'], ['promote', '32', '33'], ['both', '32'], ['github', 'v1.2.8']]) {
     assert.throws(() => runReleaseWorkflow(args, { run }), /Usage/);
   }
 });
