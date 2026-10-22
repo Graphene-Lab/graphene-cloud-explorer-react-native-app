@@ -21,7 +21,8 @@ platform :android do
 
   desc 'Upload the built AAB to internal testing'
   lane :internal do
-    version = PlayRelease.version_info
+    source = ENV['PLAY_RELEASE_SOURCE']
+    version = source ? PlayRelease.version_info(root: source, env: {}) : PlayRelease.version_info
     credentials = PlayRelease.credentials_file
     UI.user_error!('Build the release AAB first.') unless File.file?(PlayRelease::AAB_PATH)
     existing_codes = %w[internal production].flat_map do |track|
