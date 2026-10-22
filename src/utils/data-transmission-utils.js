@@ -636,8 +636,22 @@ DeviceEventEmitter.addListener('spoolerCleaner', () => {
   concurrentRequest = 0;
 });
 
+function getPathChangeRestriction(commandId) {
+  // Content keys include the full path; server-side path changes do not re-encrypt files.
+  if (store.getState().userSecret.zeroKnowledgeEnabled &&
+      [command.Rename, command.Move, command.Copy].includes(commandId)) {
+    return new Error(i18n.t('zeroknowledge.file_operations_unavailable'));
+  }
+  return null;
+}
+
 export function executeRequest(commandId, data, options = {}) {
   return new Promise((resolve, reject) => {
+    const restriction = getPathChangeRestriction(commandId);
+    if (restriction) {
+      reject(restriction);
+      return;
+    }
     if (commandId === 8) MinHeap.push(spooler, [10, [commandId, data, resolve, reject, options]]);
     else if (commandId === 19) MinHeap.push(spooler, [8, [commandId, data, resolve, reject, options]]);
     else MinHeap.push(spooler, [5, [commandId, data, resolve, reject, options]]);
@@ -678,6 +692,11 @@ async function spoolingRequest() {
       let resolve = toProcessing[2];
       let reject = toProcessing[3];
       const options = toProcessing[4] || {};
+      const restriction = getPathChangeRestriction(commandId);
+      if (restriction) {
+        reject(restriction);
+        return;
+      }
       const suppressSlowModal = !!options.suppressSlowModal;
       logRequestMarker('start', commandId, `queue=${spooler.length},concurrent=${concurrentRequest}`);
 

@@ -34,6 +34,12 @@ let currentScreenList = {
     "Media": 'MediaScreen',
 }
 
+const blockZeroKnowledgePathChange = () => {
+    if (!store.getState().userSecret.zeroKnowledgeEnabled) return false;
+    useErrorAlert(i18n.t('popups.attention'), i18n.t('zeroknowledge.file_operations_unavailable'));
+    return true;
+};
+
 export const downloadFile = async () => {
     const { files: { selectedFile, location }, bottomSheetManager: { fromScreen }, newFileTransfer: { downloadQueue } } = store.getState();
     const editedFile = { ...selectedFile, location: fromScreen === 'CloudScreen' ? location : selectedFile.location }
@@ -169,6 +175,7 @@ export const removeFromFavorite = () => {
 
 
 const renameFileCallback = (file) => {
+    if (blockZeroKnowledgePathChange()) return;
 
     let forceRefresh = null;
     let enqueueList = [];
@@ -220,6 +227,7 @@ const renameFileCallback = (file) => {
 }
 
 const renameFolderCallback = (folder) => {
+    if (blockZeroKnowledgePathChange()) return;
     let enqueueList = ['FavoriteScreen', 'CloudScreen', 'MediaScreen'];
     const { text } = store.getState()?.modalController;
 
@@ -246,6 +254,7 @@ const renameFolderCallback = (folder) => {
 }
 
 export const renameFile = async () => {
+    if (blockZeroKnowledgePathChange()) return;
     const { selectedFile } = store.getState()?.files
 
     if (selectedFile.type === 'folder') {
@@ -445,6 +454,7 @@ export const pickMultiply = async (bottomSheetController, fromScreen) => {
 
 
 export const openCopyMoveSheet = async (bottomSheetController, closeBottomSheet, order) => {
+    if (blockZeroKnowledgePathChange()) return;
     const controlling = new Promise((resolve, reject) => {
         setTimeout(() => {
             resolve(closeBottomSheet());
@@ -457,6 +467,7 @@ export const openCopyMoveSheet = async (bottomSheetController, closeBottomSheet,
 
 // ---- copy ----
 export const copySingle = async (target, setDisabled, closeBottomSheet, locationEditor) => {
+    if (blockZeroKnowledgePathChange()) return;
     setDisabled(true)
     const { selectedFile } = store.getState().files;
     const location = locationGenerator(selectedFile.path);
@@ -474,6 +485,7 @@ export const copySingle = async (target, setDisabled, closeBottomSheet, location
     })
 }
 export const multiplyCopy = (target, setDisabled, closeBottomSheet, locationEditor) => {
+    if (blockZeroKnowledgePathChange()) return;
     setDisabled(true)
     let enqueueList = ['CloudScreen', 'MediaScreen', 'FavoriteScreen', 'ProfileScreen'];
     let current = store.getState().bottomSheetManager.current;
@@ -505,6 +517,7 @@ export const multiplyCopy = (target, setDisabled, closeBottomSheet, locationEdit
 // ---- move ----
 
 export const moveSingle = (target, setDisabled, closeBottomSheet, locationEditor) => {
+    if (blockZeroKnowledgePathChange()) return;
 
     let enqueueList = ['CloudScreen', 'MediaScreen', 'FavoriteScreen'];
 
@@ -533,6 +546,7 @@ const changeFileCredentials = (selectedFile, target) => {
 }
 
 export const multiplyMove = (target, setDisabled, closeBottomSheet, locationEditor) => {
+    if (blockZeroKnowledgePathChange()) return;
     let enqueueList = ['CloudScreen', 'MediaScreen', 'FavoriteScreen'];
     setDisabled(true)
     const { selectedFiles } = store.getState().files;

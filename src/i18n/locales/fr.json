@@ -83,6 +83,7 @@
     "scan_button": "Scanner le code QR"
   },
   "zeroknowledge": {
+    "file_operations_unavailable": "Renommer, déplacer et copier sont temporairement indisponibles pour protéger les fichiers chiffrés avec Zero Knowledge.",
     "head": "Chiffrement Zero Knowledge",
     "passphrase_desc": "Entrez votre phrase de passe de 12 mots du bureau pour activer les noms de fichiers et les contenus cryptés. Appuyez sur Ignorer si Zero Knowledge du bureau n'a jamais été activée.",
     "passphrase_desc_auth": "Entrez votre phrase de passe de 12 mots du bureau avant l'authentification si ce cloud utilise le chiffrement Zero Knowledge. Appuyez sur Ignorer si ce cloud n'a pas été créé avec le chiffrement Zero Knowledge.",

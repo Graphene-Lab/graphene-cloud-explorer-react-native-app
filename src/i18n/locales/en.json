@@ -83,6 +83,7 @@
     "scan_button": "Scan QR Code"
   },
   "zeroknowledge": {
+    "file_operations_unavailable": "Rename, Move and Copy are temporarily unavailable to protect files encrypted with zero-knowledge encryption.",
     "head": "Zero-knowledge encryption",
     "passphrase_desc": "Enter your desktop 12-word passphrase to enable encrypted file names and contents. Tap Skip if desktop zero-knowledge was never enabled.",
     "passphrase_desc_auth": "Enter your desktop 12-word passphrase before authentication if this cloud uses zero-knowledge encryption. Tap Skip if this cloud was not created with zero-knowledge encryption.",

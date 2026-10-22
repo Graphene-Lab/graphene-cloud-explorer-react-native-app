@@ -25,6 +25,7 @@ const CopyMove = () => {
     const [disabled, setDisabled] = useState(false);
     const { closeBottomSheet } = useContextApi();
     const { selectedFile, selectedFiles, mode, order } = useSelector(state => state.files);
+    const pathChangesDisabled = useSelector(state => !!state.userSecret.zeroKnowledgeEnabled);
     const dispatch = useDispatch();
 
     const goBack = () => {
@@ -66,6 +67,7 @@ const CopyMove = () => {
             <View style={styles.container}>
                 {wait && <ActivityIndicator color="#415EB6" style={styles.indicators} />}
                 <Text style={styles.text} >{order == 1 ? t('common.copy_file') : t('common.move_file')}</Text>
+                {pathChangesDisabled && <Text style={styles.title}>{t('zeroknowledge.file_operations_unavailable')}</Text>}
                 <Text style={styles.title} numberOfLines={2}>{selectedFiles?.map((file, i) => (i + 1) + ') ' + file.name + ' ')}</Text>
                 <Header location={location} goBack={goBack} />
                 <FlatList
@@ -84,8 +86,8 @@ const CopyMove = () => {
                     <View style={styles.gap} />
 
                     {selectedFiles?.length ?
-                        <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? multiplyCopy(location, setDisabled, closeBottomSheet, setLocation) : multiplyMove(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
-                        : <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? copySingle(location, setDisabled, closeBottomSheet, setLocation) : moveSingle(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled} wait={disabled} />
+                        <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? multiplyCopy(location, setDisabled, closeBottomSheet, setLocation) : multiplyMove(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled || pathChangesDisabled} wait={disabled} />
+                        : <Button text={order == 1 ? t('common.copy') : t('common.move')} callback={() => order == 1 ? copySingle(location, setDisabled, closeBottomSheet, setLocation) : moveSingle(location, setDisabled, closeBottomSheet, setLocation)} disabled={disabled || pathChangesDisabled} wait={disabled} />
                     }
                 </View>
             </View>

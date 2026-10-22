@@ -24,6 +24,7 @@ import { downloadFile as saveDownload } from '../../../../utils/settings-utils';
 const Settings = () => {
     const { t } = useTranslation();
     const { selectedFile, favorites } = useSelector(state => state.files);
+    const pathChangesDisabled = useSelector(state => !!state.userSecret.zeroKnowledgeEnabled);
     const { downloadQueue } = useSelector(state => state.newFileTransfer);
     const networkStatus = useSelector(state => state.network);
 
@@ -70,11 +71,12 @@ const Settings = () => {
             }
             {selectedFile?.type !== 'folder' && <OptionButton text={t('options.download')} func={() => downloadFile(selectedFile)} icon={<DownIcon />} disabled={selectedFile?.type === 'folder'} />}
             {selectedFile?.type !== 'folder' && <OptionButton text={t('options.share_with')} func={shareFile} icon={<ShareIcon />} disabled={selectedFile?.type === 'folder'} />}
-            <OptionButton text={t('options.copy')} func={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 1)} icon={<CopyIcon />} />
-            <OptionButton text={t('options.move')} func={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 2)} icon={<MoveIcon />} />
+            {pathChangesDisabled && <Text style={styles.fileNameLabel}>{t('zeroknowledge.file_operations_unavailable')}</Text>}
+            <OptionButton text={t('options.copy')} func={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 1)} icon={<CopyIcon />} disabled={pathChangesDisabled} />
+            <OptionButton text={t('options.move')} func={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 2)} icon={<MoveIcon />} disabled={pathChangesDisabled} />
             <OptionButton text={t('options.delete')} func={remove} icon={<DeleteIcon />} />
             {/* <OptionButton text='Sync now' func={test} icon={<SyncIcon />} /> */}
-            <OptionButton text={t('options.rename')} func={renameFile} icon={<RenameIcon />} />
+            <OptionButton text={t('options.rename')} func={renameFile} icon={<RenameIcon />} disabled={pathChangesDisabled} />
         </BottomSheetScrollView>
     )
 }

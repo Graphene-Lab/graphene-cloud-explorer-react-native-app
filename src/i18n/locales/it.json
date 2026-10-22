@@ -83,6 +83,7 @@
     "scan_button": "Scansiona codice QR"
   },
   "zeroknowledge": {
+    "file_operations_unavailable": "Rinomina, Sposta e Copia non sono temporaneamente disponibili per proteggere i file crittografati con Zero Knowledge.",
     "head": "Crittografia Zero Knowledge",
     "passphrase_desc": "Inserisci la tua passphrase di 12 parole del desktop per abilitare i nomi dei file e i contenuti crittografati. Tocca Salta se Zero Knowledge del desktop non è mai stata abilitata.",
     "passphrase_desc_auth": "Inserisci la tua passphrase di 12 parole del desktop prima dell'autenticazione se questo cloud utilizza la crittografia Zero Knowledge. Tocca Salta se questo cloud non è stato creato con la crittografia Zero Knowledge.",

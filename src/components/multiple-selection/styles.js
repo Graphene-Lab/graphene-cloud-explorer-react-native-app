@@ -25,4 +25,7 @@ export const styles = StyleSheet.create({
     icons: {
         marginHorizontal: 5,
     },
+    disabled: {
+        opacity: 0.4,
+    },
 })

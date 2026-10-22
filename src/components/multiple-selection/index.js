@@ -14,6 +14,7 @@ import { openModal } from '../../reducers/modalReducer';
 export const MultipleSelection = ({ router }) => {
   const { t } = useTranslation();
   const { selectedFiles } = useSelector(state => state.files);
+  const pathChangesDisabled = useSelector(state => !!state.userSecret.zeroKnowledgeEnabled);
   // const navigation = useNavigation();
   const dispatch = useDispatch();
   const { closeBottomSheet, bottomSheetController } = useContextApi();
@@ -39,13 +40,29 @@ export const MultipleSelection = ({ router }) => {
         {t('common.items_count', { count: selectedFiles.length })}
       </Text>
       <View style={styles.right}>
-        <TouchableOpacity onActive={0.6} onPress={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 2)} style={styles.icons}>
+        <TouchableOpacity
+          onActive={0.6}
+          onPress={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 2)}
+          style={[styles.icons, pathChangesDisabled && styles.disabled]}
+          disabled={pathChangesDisabled}
+          accessibilityRole="button"
+          accessibilityLabel={t('options.move')}
+          accessibilityHint={pathChangesDisabled ? t('zeroknowledge.file_operations_unavailable') : undefined}
+        >
           <MoveIcon />
         </TouchableOpacity>
-        <TouchableOpacity onActive={0.6} onPress={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 1)} style={styles.icons}>
+        <TouchableOpacity
+          onActive={0.6}
+          onPress={() => openCopyMoveSheet(bottomSheetController, closeBottomSheet, 1)}
+          style={[styles.icons, pathChangesDisabled && styles.disabled]}
+          disabled={pathChangesDisabled}
+          accessibilityRole="button"
+          accessibilityLabel={t('options.copy')}
+          accessibilityHint={pathChangesDisabled ? t('zeroknowledge.file_operations_unavailable') : undefined}
+        >
           <CopyIcon />
         </TouchableOpacity>
-        <TouchableOpacity onActive={0.6} onPress={() => removeHandle()} style={styles.icons}>
+        <TouchableOpacity onActive={0.6} onPress={() => removeHandle()} style={styles.icons} accessibilityRole="button" accessibilityLabel={t('options.delete')}>
           <DeleteIcon />
         </TouchableOpacity>
       </View>

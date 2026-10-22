@@ -83,6 +83,7 @@
     "scan_button": "Escanear código QR"
   },
   "zeroknowledge": {
+    "file_operations_unavailable": "Renombrar, mover y copiar no están disponibles temporalmente para proteger los archivos cifrados con Zero Knowledge.",
     "head": "Cifrado Zero Knowledge",
     "passphrase_desc": "Ingrese su frase de contraseña de 12 palabras del escritorio para habilitar nombres de archivos y contenidos cifrados. Toque Omitir si Zero Knowledge del escritorio nunca se habilitó.",
     "passphrase_desc_auth": "Ingrese su frase de contraseña de 12 palabras del escritorio antes de la autenticación si esta nube utiliza cifrado Zero Knowledge. Toque Omitir si esta nube no se creó con cifrado Zero Knowledge.",
