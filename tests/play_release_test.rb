@@ -57,8 +57,25 @@ class PlayReleaseTest < Minitest::Test
     assert_equal 31, PlayRelease.promotion_version('31', internal_versions: [31, 32], production_versions: [30])
   end
 
-  def test_promotion_rejects_missing_unpublished_or_older_versions
-    ['', '0', '-1', 'latest', '31; echo unsafe', '2100000001'].each do |value|
+  def test_blank_promotion_selects_the_highest_internal_code
+    [nil, '', ' '].each do |value|
+      assert_equal 32, PlayRelease.promotion_version(value, internal_versions: [32, 31], production_versions: [30])
+    end
+  end
+
+  def test_blank_promotion_rejects_an_empty_internal_track
+    error = assert_raises(ArgumentError) { PlayRelease.promotion_version(nil, internal_versions: [], production_versions: [30]) }
+    assert_match(/No version is available/, error.message)
+  end
+
+  def test_latest_promotion_rejects_the_same_or_newer_production_version
+    [32, 33].each do |production|
+      assert_raises(ArgumentError) { PlayRelease.promotion_version(nil, internal_versions: [31, 32], production_versions: [production]) }
+    end
+  end
+
+  def test_promotion_rejects_invalid_unpublished_or_older_versions
+    ['0', '-1', 'latest', '31; echo unsafe', '2100000001'].each do |value|
       assert_raises(ArgumentError) { PlayRelease.promotion_version(value, internal_versions: [31], production_versions: [30]) }
     end
     assert_raises(ArgumentError) { PlayRelease.promotion_version('32', internal_versions: [31], production_versions: [30]) }
@@ -78,10 +95,11 @@ end
 class PublishingLanes
   attr_reader :uploads, :track_reads
 
-  def initialize
+  def initialize(internal: [31, 32], production: [30])
     @lanes = {}
     @uploads = []
     @track_reads = []
+    @track_versions = { 'internal' => internal, 'production' => production }
     filename = File.expand_path('../fastlane/Fastfile', __dir__)
     instance_eval(File.read(filename), filename)
   end
@@ -94,7 +112,7 @@ class PublishingLanes
 
   def google_play_track_version_codes(**options)
     @track_reads << options.fetch(:track)
-    options.fetch(:track) == 'internal' ? [31, 32] : [30]
+    @track_versions.fetch(options.fetch(:track))
   end
 
   def upload_to_play_store(**options) = @uploads << options
@@ -141,11 +159,38 @@ class PublishingLanesTest < Minitest::Test
     end
   end
 
-  def test_missing_promotion_selection_stops_before_any_api_call
+  def test_missing_promotion_selection_promotes_the_latest_internal_code_without_building
+    with_credentials do
+      lanes = PublishingLanes.new
+      lanes.run(:promote)
+      assert_equal %w[internal production], lanes.track_reads
+      assert_equal 1, lanes.uploads.length
+      assert_equal 32, lanes.uploads.first.fetch(:version_code)
+      assert lanes.uploads.first.fetch(:skip_upload_aab)
+    end
+  end
+
+  def test_invalid_promotion_selection_stops_before_any_api_call
     lanes = PublishingLanes.new
-    assert_raises(ArgumentError) { lanes.run(:promote) }
+    assert_raises(ArgumentError) { lanes.run(:promote, version_code: 'invalid') }
     assert_empty lanes.track_reads
     assert_empty lanes.uploads
+  end
+
+  def test_empty_internal_track_never_promotes
+    with_credentials do
+      lanes = PublishingLanes.new(internal: [])
+      assert_raises(ArgumentError) { lanes.run(:promote) }
+      assert_empty lanes.uploads
+    end
+  end
+
+  def test_latest_already_in_production_never_promotes
+    with_credentials do
+      lanes = PublishingLanes.new(production: [32])
+      assert_raises(ArgumentError) { lanes.run(:promote) }
+      assert_empty lanes.uploads
+    end
   end
 
   def test_untested_version_never_reaches_the_upload_action

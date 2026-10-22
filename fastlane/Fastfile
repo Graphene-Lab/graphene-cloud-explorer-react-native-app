@@ -67,12 +67,12 @@ platform :android do
     UI.user_error!(error.message)
   end
 
-  desc 'Promote an explicitly selected internal version to production, without rebuilding'
+  desc 'Promote the selected or latest internal version to production, without rebuilding'
   lane :promote do |options|
-    # Reject a missing selection before making any Google Play API calls.
-    code = options[:version_code].to_s
-    unless code.match?(/\A[1-9]\d*\z/) && code.to_i <= 2_100_000_000
-      UI.user_error!('Provide the exact version_code tested on the internal track.')
+    # A blank selection resolves against Google Play, not the local app's version.
+    code = options[:version_code].to_s.strip
+    unless code.empty? || (code.match?(/\A[1-9]\d*\z/) && code.to_i <= 2_100_000_000)
+      UI.user_error!('Provide a positive version_code, or leave it blank for the latest internal version.')
     end
     credentials = PlayRelease.credentials_file
     tracks = %w[internal production].to_h do |track|
@@ -87,6 +87,7 @@ platform :android do
       internal_versions: tracks.fetch('internal'),
       production_versions: tracks.fetch('production')
     )
+    UI.message("Promoting internal versionCode #{code} to production without rebuilding.")
     upload_to_play_store(
       package_name: PlayRelease::PACKAGE_NAME,
       json_key: credentials,

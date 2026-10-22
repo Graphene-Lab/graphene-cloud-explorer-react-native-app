@@ -18,7 +18,7 @@ on:
         type: string
         required: false
       version_code:
-        description: Exact internal versionCode to promote (only used for promote)
+        description: Internal versionCode to promote (blank = latest internal; only used for promote)
         type: string
         required: false
   push:
@@ -55,7 +55,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs
+      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true

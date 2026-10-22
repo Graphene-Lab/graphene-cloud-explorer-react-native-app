@@ -1,6 +1,6 @@
 # Google Play publishing
 
-The `Android Google Play` GitHub Actions workflow builds a signed Android App Bundle with Fastlane. A pushed `v*` tag uploads to **internal testing**. Production uses a separate manual promotion of an exact version already tested on the internal track.
+The `Android Google Play` GitHub Actions workflow builds a signed Android App Bundle with Fastlane. A pushed `v*` tag uploads to **internal testing**. Production uses a separate manual promotion of the latest internal version by default, or an explicitly selected internal version.
 
 ## Repository configuration
 
@@ -38,9 +38,21 @@ After the workflow files are committed and pushed to `master`:
 2. Select branch `master` and action **build**. Tests run and a signed AAB is saved as a workflow artifact. This action does not authenticate to or upload to Google Play.
 3. Run action **internal**, entering the successful build's **build_run_id** from its GitHub URL (`actions/runs/<build_run_id>`). This downloads and uploads that signed AAB without compiling again. The source run must have succeeded in this repository's Android Google Play workflow, and its artifact must still be available. The Android versionCode must be unused and greater than existing internal/production versions; an already-published version needs a new versionCode and build.
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.
-5. Run action **promote**, providing the exact tested **version_code**. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
+5. Run action **promote**. Leave **version_code** blank to promote the highest versionCode currently on Google Play's internal track, or enter the exact tested code to select a particular version. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
 
 The workflow accepts manual release runs from `master` or `v*` tags in this repository. It serializes releases and never automatically promotes to production. Manual internal uploads use package/version information from the selected artifact's original source commit, so newer source edits do not change or relabel that AAB. To publish newer source changes, select a build that contains them.
+
+You can request production promotion from the terminal using an authenticated GitHub CLI (`gh`):
+
+```powershell
+# Promote the latest version currently on Google Play's internal track.
+npm run release:promote
+
+# Select a particular internal version instead.
+npm run release:promote -- 32
+```
+
+The shortcut starts the `promote` workflow on GitHub's `master`; it does not build or publish locally. The workflow resolves the latest code when it runs, independently of the local app version or GitHub release tags. It logs the selected versionCode and stops if internal is empty or production already contains that code or a newer one. Only run promotion after testing the internal version you intend to publish.
 
 ## Subsequent releases
 
@@ -69,9 +81,9 @@ Google authentication runs immediately before publishing. `google-github-actions
 ## Focused checks
 
 ```powershell
-node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs
+node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs
 ruby tests/play_release_test.rb
 bundle exec fastlane lanes
 ```
 
-The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, and exact-version promotion. Artifact API requests and Google Play actions are mocked; no tests contact Google Play.
+The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, latest and exact-version promotion, and command dispatch. Artifact API requests, GitHub CLI dispatch, and Google Play actions are mocked; no tests publish anything.

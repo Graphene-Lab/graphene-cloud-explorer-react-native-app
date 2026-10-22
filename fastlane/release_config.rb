@@ -50,8 +50,12 @@ module PlayRelease
   end
 
   def self.promotion_version(value, internal_versions:, production_versions:)
+    if value.to_s.strip.empty?
+      value = internal_versions.map(&:to_i).max
+      raise ArgumentError, 'No version is available on the internal testing track.' unless value
+    end
     unless value.to_s.match?(/\A[1-9]\d*\z/) && value.to_i <= 2_100_000_000
-      raise ArgumentError, 'Select the exact positive version_code tested on the internal track.'
+      raise ArgumentError, 'Provide a positive version_code, or leave it blank for the latest internal version.'
     end
     code = value.to_i
     unless internal_versions.map(&:to_i).include?(code)
