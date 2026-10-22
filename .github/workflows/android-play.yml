@@ -29,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: google-play-explorer
+  group: google-play-explorer${{ inputs.action == 'verify' && '-verify' || '' }}
   cancel-in-progress: false
 
 env:
