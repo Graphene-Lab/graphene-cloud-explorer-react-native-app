@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Build, upload an existing build to internal testing, or promote a tested version
+        description: Verify setup, build, upload an existing build, or promote a tested version
         type: choice
         required: true
         default: build
         options:
+          - verify
           - build
           - internal
           - promote
@@ -90,13 +91,13 @@ jobs:
         run: yarn install --frozen-lockfile --non-interactive
 
       - uses: actions/setup-java@v6.1.0
-        if: github.event_name == 'push' || inputs.action == 'build'
+        if: github.event_name == 'push' || inputs.action == 'build' || inputs.action == 'verify'
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Verify upload key and restore Firebase configuration
-        if: github.event_name == 'push' || inputs.action == 'build'
+        if: github.event_name == 'push' || inputs.action == 'build' || inputs.action == 'verify'
         env:
           ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
           APP_UPLOAD_STORE_PASSWORD: ${{ secrets.APP_UPLOAD_STORE_PASSWORD }}
@@ -161,6 +162,10 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
+      - name: Verify Google Play access without publishing
+        if: inputs.action == 'verify'
+        run: bundle exec fastlane android verify_access
+
       - name: Publish to internal testing
         if: github.event_name == 'push' || inputs.action == 'internal'
         run: bundle exec fastlane android internal
@@ -172,5 +177,5 @@ jobs:
         run: bundle exec fastlane android promote version_code:"$PLAY_VERSION_CODE"
 
       - name: Remove restored credential files
-        if: always() && (github.event_name == 'push' || inputs.action == 'build')
+        if: always() && (github.event_name == 'push' || inputs.action == 'build' || inputs.action == 'verify')
         run: rm -f -- "$RUNNER_TEMP/graphenelab-upload.keystore" android/app/google-services.json
