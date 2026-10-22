@@ -36,7 +36,7 @@ After the workflow files are committed and pushed to `master`:
 1. Open **Actions → Android Google Play → Run workflow**.
    Run action **verify** on `master` first to check the signing secrets, Firebase configuration, OIDC authentication, and Google Play track access. It does not compile or publish the app. This verifies read access; release permissions are exercised by an actual upload or promotion.
 2. Prepare and push the app changes and version bump to `master` (see **Subsequent releases**). An already-published Android versionCode cannot be uploaded again.
-3. Select branch `master`, action **release**, and destination **both**. Tests run first. The workflow validates the app version, creates its version tag, publishes the GitHub Release page, then builds a signed AAB and uploads it to Play internal testing.
+3. Select branch `master`, action **release**, and destination **both**. Tests run first. The workflow validates the app version, creates its version tag, publishes the GitHub Release page, then builds a signed AAB and uploads it to Play internal testing. It then downloads Play's signed universal APK, verifies it, and attaches it to the GitHub Release.
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.
 5. Run action **promote**. Leave **version_code** blank to promote the highest versionCode currently on Google Play's internal track, or enter the exact tested code to select a particular version. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
 
@@ -50,14 +50,35 @@ The same workflow can be started from the terminal using an authenticated GitHub
 | --- | --- |
 | `npm run release:github` | Create/reuse the version tag and publish the GitHub Release page. No Android build or Play authentication. |
 | `npm run release:play` | Create/reuse the version tag, build the AAB, and upload to Play internal testing. No GitHub Release page. |
-| `npm run release:both` | Publish GitHub Release first, then build the AAB and upload to Play internal testing. |
+| `npm run release:both` | Publish GitHub Release first, build/upload the AAB to internal testing, then attach Play's signed APK to GitHub. |
 | `npm run release:promote` | Promote the latest version currently on Play's internal track to production, without rebuilding. |
+| `npm run release:attach -- v1.2.8` | Attach an existing version's Play-signed APK to its published GitHub Release. No build, new tag, Play upload, or promotion. |
 
 In the Actions UI, select **action=release** with **destination=github/play/both**, or **action=promote** for production. The destination input is ignored for the other actions. The npm shortcuts send these inputs to GitHub; they do not build, tag, commit, or publish locally. They use the already-pushed `master` commit on GitHub, not uncommitted or unpushed local changes.
 
 The tag is derived from the validated app version (for example, `v1.2.8`) and records the exact workflow source commit. It does not add a commit or trigger another workflow. An existing lightweight or annotated tag is reused only if it points to that same commit. If the version tag points to different code, the workflow stops; bump the app version before releasing new changes. Existing tags are never moved.
 
 GitHub Releases receive automatically generated notes and source archives. A matching published release is reused without changing its notes; an existing matching draft is published with its notes preserved. In **Both**, failure to publish the GitHub page stops the Android release. If the later build or Play upload fails, the GitHub page remains published; a retry from the same commit reuses it. Signed AABs are saved under the run's Actions artifacts for 14 days; they are not attached to the GitHub Release page.
+
+### Automatic APK downloads
+
+**Both** uses Google's generated APK API after the internal upload. It selects the universal APK signed with the configured Play app signing certificate, waits up to ten minutes for processing, and downloads it without a second native build. Android's `apksigner` must verify the actual file and its signing certificate; `aapt2` must confirm the package, version name, and versionCode against the exact version tag. Only then is `Graphene-Cloud-Explorer-<version>.apk` attached to the existing GitHub Release. An identical existing asset is reused; a conflicting or incomplete asset is never overwritten.
+
+The public certificate is pinned in the workflow as `PLAY_APP_SIGNING_SHA256`:
+
+```text
+99:B6:1E:21:1D:F1:66:90:31:3C:08:9D:3F:9C:3D:C2:D7:A9:B9:20:40:D7:9F:64:B0:BF:63:FB:AD:2D:DA:98
+```
+
+This is the **app signing key** fingerprint supplied from Play Console, not the different upload key. Review this pin if Play's signing keys change. The workflow never falls back to an APK signed with the upload/debug key, or to split APKs if Play has no universal APK. Existing OIDC credentials and the built-in GitHub token handle downloading and attachment; no new private signing key is needed.
+
+**GitHub-only** still publishes a page without contacting Play or compiling Android. A new Play-signed APK requires that version's bundle to exist in Play first. After a separate Play upload, or if APK attachment fails after a successful **Both** upload, run:
+
+```powershell
+npm run release:attach -- v1.2.8
+```
+
+In Actions, choose **action=attach** and **release_tag=v1.2.8**. This runs the current workflow tooling but reads the package/versionCode from that tag's immutable source commit, even if `master` has advanced. It does not move the tag, create a release, rebuild, upload another AAB, or promote production. Missing Play permissions, an unavailable universal APK, or a certificate/version mismatch fail the attachment visibly. Retry this attachment action after resolving the problem; do not rerun the full release after Play has already accepted its versionCode.
 
 An explicit internal code can still be selected when promoting:
 
@@ -106,8 +127,9 @@ Google authentication runs immediately before publishing. `google-github-actions
 ## Focused checks
 
 ```powershell
-node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs
+node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs
 ruby tests/play_release_test.rb
+ruby tests/play_apk_test.rb
 bundle exec fastlane lanes
 ```
 

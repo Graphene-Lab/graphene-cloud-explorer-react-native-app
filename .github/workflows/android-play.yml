@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Verify setup, build only, release to a destination, reuse a build, or promote
+        description: Verify, build, release, reuse a build, promote, or attach a Play-signed APK
         type: choice
         required: true
         default: build
@@ -14,6 +14,7 @@ on:
           - release
           - internal
           - promote
+          - attach
       destination:
         description: Destination for action=release (both publishes GitHub first)
         type: choice
@@ -31,6 +32,10 @@ on:
         description: Internal versionCode to promote (blank = latest internal; only used for promote)
         type: string
         required: false
+      release_tag:
+        description: Existing GitHub release tag for APK attachment (only used for attach)
+        type: string
+        required: false
 
 permissions:
   contents: read
@@ -44,6 +49,8 @@ env:
   FASTLANE_OPT_OUT_USAGE: '1'
   FASTLANE_SKIP_UPDATE_CHECK: '1'
   FASTLANE_SKIP_DOCS: '1'
+  # Public app signing certificate from Play Console; this is not the upload key.
+  PLAY_APP_SIGNING_SHA256: '99:B6:1E:21:1D:F1:66:90:31:3C:08:9D:3F:9C:3D:C2:D7:A9:B9:20:40:D7:9F:64:B0:BF:63:FB:AD:2D:DA:98'
 
 jobs:
   tests:
@@ -62,11 +69,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs
+      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
       - run: ruby tests/play_release_test.rb
+      - run: ruby tests/play_apk_test.rb
 
   release:
     needs: tests
@@ -95,6 +103,7 @@ jobs:
           RELEASE_DESTINATION: ${{ inputs.destination }}
           PLAY_BUILD_RUN_ID: ${{ inputs.build_run_id }}
           PLAY_VERSION_CODE: ${{ inputs.version_code }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
         run: node scripts/release-plan.mjs
 
       - uses: ruby/setup-ruby@v1
@@ -113,12 +122,22 @@ jobs:
           RELEASE_VERSION_FILE: ${{ runner.temp }}/play-release-version.json
         run: node scripts/prepare-github-release.mjs
 
+      - name: Resolve the tagged APK version
+        if: steps.plan.outputs.attach_apk == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_ACTION: ${{ inputs.action }}
+          RELEASE_DESTINATION: ${{ inputs.destination }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_VERSION_FILE: ${{ runner.temp }}/play-release-version.json
+        run: node scripts/github-release-apk.mjs resolve
+
       - name: Install JavaScript dependencies
         if: steps.plan.outputs.build_android == 'true'
         run: yarn install --frozen-lockfile --non-interactive
 
       - uses: actions/setup-java@v6.1.0
-        if: steps.plan.outputs.prepare_signing == 'true'
+        if: steps.plan.outputs.prepare_signing == 'true' || steps.plan.outputs.attach_apk == 'true'
         with:
           distribution: temurin
           java-version: '21'
@@ -134,7 +153,11 @@ jobs:
         run: node scripts/prepare-android-ci.mjs
 
       - uses: android-actions/setup-android@v4.0.4
-        if: steps.plan.outputs.build_android == 'true'
+        if: steps.plan.outputs.android_tools == 'true'
+
+      - name: Install APK verification tools
+        if: inputs.action == 'attach'
+        run: sdkmanager 'build-tools;36.0.0'
 
       - name: Install Android build tools
         if: steps.plan.outputs.build_android == 'true'
@@ -196,6 +219,21 @@ jobs:
       - name: Publish to internal testing
         if: steps.plan.outputs.publish_internal == 'true'
         run: bundle exec fastlane android internal
+
+      - name: Download the Play-signed universal APK
+        if: steps.plan.outputs.attach_apk == 'true'
+        timeout-minutes: 15
+        run: bundle exec ruby scripts/download-play-apk.rb
+
+      - name: Verify APK and attach it to the GitHub Release
+        if: steps.plan.outputs.attach_apk == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_ACTION: ${{ inputs.action }}
+          RELEASE_DESTINATION: ${{ inputs.destination }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_VERSION_FILE: ${{ runner.temp }}/play-release-version.json
+        run: node scripts/github-release-apk.mjs publish
 
       - name: Promote tested version to production
         if: inputs.action == 'promote'

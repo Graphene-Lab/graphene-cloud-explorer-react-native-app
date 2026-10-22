@@ -13,6 +13,7 @@ test('GitHub-only release creates a tag/page without Android build, signing, or 
   assert.deepEqual(plan('release', { RELEASE_DESTINATION: 'github' }), {
     prepare_release: true, build_android: false, prepare_signing: false,
     authenticate_play: false, publish_internal: false, download_aab: false,
+    attach_apk: false, android_tools: false,
   });
 });
 
@@ -21,6 +22,7 @@ test('Play and Both build once and upload only to internal testing', () => {
     assert.deepEqual(plan('release', { RELEASE_DESTINATION: destination }), {
       prepare_release: true, build_android: true, prepare_signing: true,
       authenticate_play: true, publish_internal: true, download_aab: false,
+      attach_apk: destination === 'both', android_tools: true,
     });
   }
 });
@@ -54,9 +56,18 @@ test('promotion accepts latest or a valid code but never builds, tags, or upload
   for (const code of ['', '32']) {
     const result = plan('promote', { PLAY_VERSION_CODE: code });
     assert.equal(result.authenticate_play, true);
-    for (const key of ['prepare_release', 'build_android', 'publish_internal', 'download_aab', 'prepare_signing']) assert.equal(result[key], false);
+    for (const key of ['prepare_release', 'build_android', 'publish_internal', 'download_aab', 'prepare_signing', 'attach_apk', 'android_tools']) assert.equal(result[key], false);
   }
   assert.throws(() => plan('promote', { PLAY_VERSION_CODE: '1.2.8' }), /positive version_code/);
+});
+
+test('attachment uses an existing tag and Play read access without rebuilding, signing, tagging, or uploading an AAB', () => {
+  const result = plan('attach', { RELEASE_TAG: 'v1.2.8' });
+  assert.equal(result.authenticate_play, true);
+  assert.equal(result.attach_apk, true);
+  assert.equal(result.android_tools, true);
+  for (const key of ['prepare_release', 'build_android', 'prepare_signing', 'publish_internal', 'download_aab']) assert.equal(result[key], false);
+  for (const tag of ['', '1.2.8', '../v1.2.8', 'v1.2.8; unsafe']) assert.throws(() => plan('attach', { RELEASE_TAG: tag }), /release_tag/);
 });
 
 test('automatic tag events, other repositories, branches, and invalid destinations cannot release', () => {
@@ -79,9 +90,14 @@ test('workflow runs only manually and orders GitHub publication before build and
   const github = position('Record version tag and publish GitHub Release first');
   const build = position('Build signed release bundle');
   const play = position('Publish to internal testing');
+  const download = position('Download the Play-signed universal APK');
+  const attach = position('Verify APK and attach it to the GitHub Release');
   assert.ok(github >= 0 && github < build && build < play);
+  assert.ok(play < download && download < attach);
   assert.equal(job.steps[github].if, "steps.plan.outputs.prepare_release == 'true'");
   assert.equal(job.steps[build].if, "steps.plan.outputs.build_android == 'true'");
   assert.equal(job.steps[play].if, "steps.plan.outputs.publish_internal == 'true'");
+  assert.equal(job.steps[download].if, "steps.plan.outputs.attach_apk == 'true'");
+  assert.equal(job.steps[attach].if, "steps.plan.outputs.attach_apk == 'true'");
   assert.equal(job.steps[position('Promote tested version to production')].if, "inputs.action == 'promote'");
 });

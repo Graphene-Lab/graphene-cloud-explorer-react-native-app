@@ -44,6 +44,22 @@ test('release shortcuts dispatch the selected destination without production pro
   }
 });
 
+test('attachment dispatches an explicit existing tag without releasing or promoting', () => {
+  let calls = 0;
+  const run = (_command, args) => {
+    calls++;
+    assert.ok(args.includes('action=attach'));
+    assert.ok(args.includes('release_tag=v1.2.8'));
+    assert.ok(!args.includes('action=release'));
+    assert.ok(!args.includes('action=promote'));
+    return { status: 0 };
+  };
+  assert.deepEqual(runReleaseWorkflow(['attach', 'v1.2.8'], { run }), { tag: 'v1.2.8' });
+  assert.equal(calls, 1);
+  for (const value of [undefined, '1.2.8', '../v1.2.8']) assert.throws(() => runReleaseWorkflow(['attach', value], { run }), /existing release tag/);
+  assert.equal(calls, 1);
+});
+
 test('invalid versions and extra arguments fail before starting any workflow', () => {
   const run = () => assert.fail('Invalid input must never dispatch a production workflow.');
   for (const value of ['', '0', '-1', '1.2.8', 'latest', '32; echo unsafe', '2100000001']) {
