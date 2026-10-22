@@ -27,7 +27,7 @@ identifies the account; it does not guarantee that storage is ready for pairing.
 | --- | --- |
 | PENDING / IN_PROGRESS | Preparation message; polls while the screen is visible. After 45 seconds, replaces the spinner with a longer-wait message. |
 | RETRY_SCHEDULED | Explains the failure and shows the next scheduled time; no continuous spinner. |
-| FAILED + CLOUD_SPACE_RETRY_LIMIT_REACHED | Try again starts one new bounded round through POST `me/cloud-space/retry`. |
+| FAILED + CLOUD_SPACE_RETRY_LIMIT_REACHED | Try again starts one new bounded round through POST `me/cloud-space/init`. |
 | Other FAILED, including missing assigned credentials | Contact support; no initialization retry button. |
 | READY | Fetch credentials and continue the existing pairing and encryption setup. |
 | Request error / timeout | Show an actionable error. Try again checks status; it does not start another backend round. |

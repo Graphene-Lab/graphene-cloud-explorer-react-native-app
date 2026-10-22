@@ -97,7 +97,7 @@ export const createCloudSpaceInitialization = ({ apiClient, onChange, onReady, o
       let result;
       try {
         result = manualRetry
-          ? await apiClient.post('me/cloud-space/retry', null, options)
+          ? await apiClient.post('me/cloud-space/init', null, options)
           : await apiClient.get('me/cloud-space/status', options);
       } catch (error) {
         if (!isCurrent()) return;

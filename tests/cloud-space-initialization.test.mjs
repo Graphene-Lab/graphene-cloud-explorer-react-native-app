@@ -80,7 +80,7 @@ test('automatic retry exhaustion stops polling but permits one explicit new roun
   await h.flow.retry();
   assert.equal(h.phase(), 'initializing');
   assert.equal(h.calls.filter(call => call.method === 'POST').length, 1);
-  assert.equal(h.calls.at(-1).path, 'me/cloud-space/retry');
+  assert.equal(h.calls.at(-1).path, 'me/cloud-space/init');
 });
 
 test('permanent failures stop polling and cannot be manually retried', async t => {
