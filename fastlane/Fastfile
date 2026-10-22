@@ -3,6 +3,21 @@ require_relative 'release_config'
 default_platform(:android)
 
 platform :android do
+  desc 'Verify Google Play track access without building or publishing'
+  lane :verify_access do
+    credentials = PlayRelease.credentials_file
+    %w[internal production].each do |track|
+      codes = google_play_track_version_codes(
+        package_name: PlayRelease::PACKAGE_NAME,
+        json_key: credentials,
+        track: track
+      )
+      UI.message("Google Play #{track} access verified (version codes: #{codes.join(', ')}).")
+    end
+  rescue ArgumentError => error
+    UI.user_error!(error.message)
+  end
+
   desc 'Build a signed release AAB without uploading it'
   lane :build_release do
     version = PlayRelease.version_info

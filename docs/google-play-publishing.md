@@ -34,6 +34,7 @@ Each additional app should have its own service account, repository filter, Play
 After the workflow files are committed and pushed to `master`:
 
 1. Open **Actions → Android Google Play → Run workflow**.
+   Run action **verify** on `master` first to check the signing secrets, Firebase configuration, OIDC authentication, and Google Play track access. It does not compile or publish the app. This verifies read access; release permissions are exercised by an actual upload or promotion.
 2. Select branch `master` and action **build**. Tests run and a signed AAB is saved as a workflow artifact. This action does not authenticate to or upload to Google Play.
 3. Run action **internal**, entering the successful build's **build_run_id** from its GitHub URL (`actions/runs/<build_run_id>`). This downloads and uploads that signed AAB without compiling again. The source run must have succeeded in this repository's Android Google Play workflow, and its artifact must still be available. The Android versionCode must be unused and greater than existing internal/production versions; an already-published version needs a new versionCode and build.
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.

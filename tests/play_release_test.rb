@@ -116,6 +116,15 @@ class PublishingLanesTest < Minitest::Test
     end
   end
 
+  def test_access_verification_reads_tracks_without_building_or_uploading
+    with_credentials do
+      lanes = PublishingLanes.new
+      lanes.run(:verify_access)
+      assert_equal %w[internal production], lanes.track_reads
+      assert_empty lanes.uploads
+    end
+  end
+
   def test_production_promotes_only_the_requested_version_without_building
     with_credentials do
       lanes = PublishingLanes.new
