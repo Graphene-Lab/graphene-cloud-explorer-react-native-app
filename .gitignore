@@ -126,3 +126,10 @@ android/app/google-services.json
 scripts/generate-android-splash.ps1
 run-android copy.ps1
 android/keystore.properties
+
+# Ruby dependencies and generated publishing credentials
+/.bundle/
+/vendor/bundle/
+gha-creds-*.json
+/fastlane/report.xml
+/fastlane/README.md

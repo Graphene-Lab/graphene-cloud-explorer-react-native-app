@@ -20,6 +20,11 @@ def signingKeyPassword   = resolveSigningProp('APP_UPLOAD_KEY_PASSWORD')
 
 def hasReleaseSigningConfig = signingStoreFile && signingStorePassword &&
                               signingKeyAlias  && signingKeyPassword
+
+if (System.getenv('REQUIRE_RELEASE_SIGNING') == 'true' && !hasReleaseSigningConfig) {
+    throw new GradleException('Release publishing requires all four APP_UPLOAD_* signing properties.')
+}
+
 def hasGoogleServicesConfig = file("google-services.json").exists()
 if (hasGoogleServicesConfig) {
     apply plugin: "com.google.gms.google-services"

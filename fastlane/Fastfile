@@ -1,0 +1,91 @@
+require_relative 'release_config'
+
+default_platform(:android)
+
+platform :android do
+  desc 'Build a signed release AAB without uploading it'
+  lane :build_release do
+    version = PlayRelease.version_info
+    PlayRelease.signing_store
+    ENV['REQUIRE_RELEASE_SIGNING'] = 'true'
+    UI.message("Building Graphene Explorer #{version[:name]} (#{version[:code]})")
+    gradle(
+      task: 'bundle',
+      build_type: 'Release',
+      project_dir: File.join(PlayRelease::ROOT, 'android'),
+      flags: '--no-daemon --stacktrace --max-workers=2'
+    )
+  rescue ArgumentError => error
+    UI.user_error!(error.message)
+  end
+
+  desc 'Upload the built AAB to internal testing'
+  lane :internal do
+    version = PlayRelease.version_info
+    credentials = PlayRelease.credentials_file
+    UI.user_error!('Build the release AAB first.') unless File.file?(PlayRelease::AAB_PATH)
+    existing_codes = %w[internal production].flat_map do |track|
+      google_play_track_version_codes(
+        package_name: PlayRelease::PACKAGE_NAME,
+        json_key: credentials,
+        track: track
+      )
+    end
+    if existing_codes.any? { |code| code.to_i >= version[:code] }
+      UI.user_error!('Increase Android versionCode before uploading a new bundle (npm run version:bump).')
+    end
+    upload_to_play_store(
+      package_name: PlayRelease::PACKAGE_NAME,
+      json_key: credentials,
+      aab: PlayRelease::AAB_PATH,
+      track: 'internal',
+      release_status: 'completed',
+      version_name: "#{version[:name]} (#{version[:code]})",
+      skip_upload_apk: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  rescue ArgumentError => error
+    UI.user_error!(error.message)
+  end
+
+  desc 'Promote an explicitly selected internal version to production, without rebuilding'
+  lane :promote do |options|
+    # Reject a missing selection before making any Google Play API calls.
+    code = options[:version_code].to_s
+    unless code.match?(/\A[1-9]\d*\z/) && code.to_i <= 2_100_000_000
+      UI.user_error!('Provide the exact version_code tested on the internal track.')
+    end
+    credentials = PlayRelease.credentials_file
+    tracks = %w[internal production].to_h do |track|
+      [track, google_play_track_version_codes(
+        package_name: PlayRelease::PACKAGE_NAME,
+        json_key: credentials,
+        track: track
+      )]
+    end
+    code = PlayRelease.promotion_version(
+      code,
+      internal_versions: tracks.fetch('internal'),
+      production_versions: tracks.fetch('production')
+    )
+    upload_to_play_store(
+      package_name: PlayRelease::PACKAGE_NAME,
+      json_key: credentials,
+      track: 'internal',
+      track_promote_to: 'production',
+      version_code: code,
+      release_status: 'completed',
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_metadata: true,
+      skip_upload_changelogs: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  rescue ArgumentError => error
+    UI.user_error!(error.message)
+  end
+end

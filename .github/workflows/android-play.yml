@@ -1,0 +1,149 @@
+name: Android Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Build only, publish to internal testing, or promote a tested version
+        type: choice
+        required: true
+        default: build
+        options:
+          - build
+          - internal
+          - promote
+      version_code:
+        description: Exact internal versionCode to promote (only used for promote)
+        type: string
+        required: false
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: google-play-explorer
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+  FASTLANE_OPT_OUT_USAGE: '1'
+  FASTLANE_SKIP_UPDATE_CHECK: '1'
+  FASTLANE_SKIP_DOCS: '1'
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '22'
+          cache: yarn
+      - run: yarn install --frozen-lockfile --non-interactive
+      - run: npm run test:auth
+      - run: npm run test:screens
+      - run: node --test tests/android-publishing.test.mjs
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+      - run: ruby tests/play_release_test.rb
+
+  release:
+    needs: tests
+    # Keep release credentials restricted to this repository's main branch and release tags.
+    if: >-
+      github.repository_id == '1016678903' &&
+      (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - uses: actions/setup-node@v7.1.0
+        if: inputs.action != 'promote'
+        with:
+          node-version: '22'
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        if: inputs.action != 'promote'
+        run: yarn install --frozen-lockfile --non-interactive
+
+      - uses: actions/setup-java@v6.1.0
+        if: inputs.action != 'promote'
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v4.0.4
+        if: inputs.action != 'promote'
+
+      - name: Install Android build tools
+        if: inputs.action != 'promote'
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;27.1.12297006'
+
+      - uses: gradle/actions/setup-gradle@v6.4.0
+        if: inputs.action != 'promote'
+
+      - name: Restore signing and Firebase configuration
+        if: inputs.action != 'promote'
+        env:
+          ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          APP_UPLOAD_STORE_PASSWORD: ${{ secrets.APP_UPLOAD_STORE_PASSWORD }}
+          APP_UPLOAD_KEY_ALIAS: ${{ secrets.APP_UPLOAD_KEY_ALIAS }}
+          APP_UPLOAD_KEY_PASSWORD: ${{ secrets.APP_UPLOAD_KEY_PASSWORD }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: node scripts/prepare-android-ci.mjs
+
+      - name: Build signed release bundle
+        if: inputs.action != 'promote'
+        env:
+          ORG_GRADLE_PROJECT_APP_UPLOAD_STORE_PASSWORD: ${{ secrets.APP_UPLOAD_STORE_PASSWORD }}
+          ORG_GRADLE_PROJECT_APP_UPLOAD_KEY_ALIAS: ${{ secrets.APP_UPLOAD_KEY_ALIAS }}
+          ORG_GRADLE_PROJECT_APP_UPLOAD_KEY_PASSWORD: ${{ secrets.APP_UPLOAD_KEY_PASSWORD }}
+        run: |
+          chmod +x android/gradlew
+          bundle exec fastlane android build_release
+
+      - name: Save release bundle
+        if: inputs.action != 'promote'
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: graphene-explorer-${{ github.sha }}
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      # Authenticate after the native build so the short-lived credentials are fresh for upload.
+      - name: Authenticate to Google Play
+        if: github.event_name == 'push' || inputs.action != 'build'
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: graphene-play-publishing
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Publish to internal testing
+        if: github.event_name == 'push' || inputs.action == 'internal'
+        run: bundle exec fastlane android internal
+
+      - name: Promote tested version to production
+        if: inputs.action == 'promote'
+        env:
+          PLAY_VERSION_CODE: ${{ inputs.version_code }}
+        run: bundle exec fastlane android promote version_code:"$PLAY_VERSION_CODE"
+
+      - name: Remove restored credential files
+        if: always() && inputs.action != 'promote'
+        run: rm -f -- "$RUNNER_TEMP/graphenelab-upload.keystore" android/app/google-services.json
