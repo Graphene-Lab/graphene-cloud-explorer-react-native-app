@@ -34,8 +34,10 @@ platform :android do
     UI.user_error!(error.message)
   end
 
-  desc 'Upload the built AAB to internal testing'
-  lane :internal do
+  desc 'Upload the built AAB to the selected Play track (internal by default)'
+  lane :publish do |options|
+    track = options.fetch(:track, 'internal')
+    UI.user_error!('Play track must be internal or production.') unless %w[internal production].include?(track)
     source = ENV['PLAY_RELEASE_SOURCE']
     version = source ? PlayRelease.version_info(root: source, env: {}) : PlayRelease.version_info
     credentials = PlayRelease.credentials_file
@@ -54,7 +56,7 @@ platform :android do
       package_name: PlayRelease::PACKAGE_NAME,
       json_key: credentials,
       aab: PlayRelease::AAB_PATH,
-      track: 'internal',
+      track: track,
       release_status: 'completed',
       version_name: "#{version[:name]} (#{version[:code]})",
       skip_upload_apk: true,

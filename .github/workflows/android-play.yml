@@ -23,6 +23,14 @@ on:
           - github
           - play
           - both
+      play_track:
+        description: Play track for action=release with destination=play/both
+        type: choice
+        required: false
+        default: internal
+        options:
+          - internal
+          - production
       build_run_id:
         description: Successful build run ID to upload (only used for internal; no rebuild)
         type: string
@@ -96,6 +104,7 @@ jobs:
         env:
           RELEASE_ACTION: ${{ inputs.action }}
           RELEASE_DESTINATION: ${{ inputs.destination }}
+          PLAY_TRACK: ${{ inputs.play_track }}
           PLAY_BUILD_RUN_ID: ${{ inputs.build_run_id }}
           PLAY_VERSION_CODE: ${{ inputs.version_code }}
         run: node scripts/release-plan.mjs
@@ -205,9 +214,11 @@ jobs:
         if: inputs.action == 'verify'
         run: bundle exec fastlane android verify_access
 
-      - name: Publish to internal testing
-        if: steps.plan.outputs.publish_internal == 'true'
-        run: bundle exec fastlane android internal
+      - name: Publish to Google Play
+        if: steps.plan.outputs.publish_bundle == 'true'
+        env:
+          PLAY_TARGET_TRACK: ${{ steps.plan.outputs.play_track }}
+        run: bundle exec fastlane android publish track:"$PLAY_TARGET_TRACK"
 
       - name: Download the Play-signed universal APK
         if: steps.plan.outputs.attach_apk == 'true'

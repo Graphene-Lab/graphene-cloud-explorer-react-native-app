@@ -201,7 +201,7 @@ class PublishingLanesTest < Minitest::Test
     end
   end
 
-  def test_internal_upload_uses_the_selected_build_versions_without_rebuilding
+  def with_release_bundle
     with_credentials do
       Dir.mktmpdir do |source|
         FileUtils.mkdir_p(File.join(source, 'android/app'))
@@ -212,18 +212,54 @@ class PublishingLanesTest < Minitest::Test
         ENV['PLAY_RELEASE_SOURCE'] = source
         original_file = File.method(:file?)
         begin
-          lanes = PublishingLanes.new
           File.stub(:file?, ->(filename) { filename == PlayRelease::AAB_PATH || original_file.call(filename) }) do
-            lanes.run(:internal)
+            yield
           end
-          assert_equal %w[internal production], lanes.track_reads
-          assert_equal 1, lanes.uploads.length
-          request = lanes.uploads.first
-          assert_equal '9.8.7 (33)', request.fetch(:version_name)
-          assert_equal PlayRelease::AAB_PATH, request.fetch(:aab)
-          assert_equal 'internal', request.fetch(:track)
         ensure
           ENV['PLAY_RELEASE_SOURCE'] = previous
+        end
+      end
+    end
+  end
+
+  def test_upload_uses_the_selected_track_and_build_versions_without_rebuilding
+    with_release_bundle do
+      [{}, { track: 'internal' }, { track: 'production' }].each do |options|
+        lanes = PublishingLanes.new
+        lanes.run(:publish, options)
+        assert_equal %w[internal production], lanes.track_reads
+        assert_equal 1, lanes.uploads.length
+        request = lanes.uploads.first
+        assert_equal '9.8.7 (33)', request.fetch(:version_name)
+        assert_equal PlayRelease::AAB_PATH, request.fetch(:aab)
+        assert_equal options.fetch(:track, 'internal'), request.fetch(:track)
+        assert_equal 'completed', request.fetch(:release_status)
+        refute request.key?(:track_promote_to)
+        refute request[:skip_upload_aab]
+        %i[skip_upload_apk skip_upload_metadata skip_upload_changelogs skip_upload_images skip_upload_screenshots].each do |flag|
+          assert request.fetch(flag)
+        end
+      end
+    end
+  end
+
+  def test_invalid_upload_track_stops_before_any_api_call
+    ['', 'closed', 'Production', 'production; echo unsafe'].each do |track|
+      lanes = PublishingLanes.new
+      assert_raises(ArgumentError) { lanes.run(:publish, track: track) }
+      assert_empty lanes.track_reads
+      assert_empty lanes.uploads
+    end
+  end
+
+  def test_both_upload_tracks_reject_an_existing_or_newer_version_code
+    with_release_bundle do
+      %w[internal production].each do |track|
+        [{ internal: [33] }, { production: [34] }].each do |existing|
+          lanes = PublishingLanes.new(**existing)
+          error = assert_raises(ArgumentError) { lanes.run(:publish, track: track) }
+          assert_match(/Increase Android versionCode/, error.message)
+          assert_empty lanes.uploads
         end
       end
     end

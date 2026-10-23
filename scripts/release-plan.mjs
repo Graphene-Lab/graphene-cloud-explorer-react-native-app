@@ -19,13 +19,16 @@ export function releasePlan(env = process.env) {
     throw new Error('Provide a positive version_code, or leave it blank for the latest internal version.');
   }
   const releaseToPlay = releasing && destination !== 'github';
+  const playTrack = releaseToPlay ? (env.PLAY_TRACK || 'internal') : 'internal';
+  if (!['internal', 'production'].includes(playTrack)) throw new Error('Play track must be internal or production.');
   const build = action === 'build' || releaseToPlay;
   return {
     prepare_release: releasing,
     build_android: build,
     prepare_signing: build || action === 'verify',
     authenticate_play: releaseToPlay || ['verify', 'internal', 'promote'].includes(action),
-    publish_internal: releaseToPlay || action === 'internal',
+    publish_bundle: releaseToPlay || action === 'internal',
+    play_track: playTrack,
     download_aab: action === 'internal',
     attach_apk: releasing && destination === 'both',
   };

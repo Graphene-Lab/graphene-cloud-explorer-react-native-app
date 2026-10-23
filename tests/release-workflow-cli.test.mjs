@@ -27,7 +27,7 @@ test('an explicit version selects that exact internal build', () => {
   assert.ok(calls[0].includes('version_code=32'));
 });
 
-test('release shortcuts dispatch the selected destination without production promotion', () => {
+test('release shortcuts default to internal testing and dispatch only the selected destination', () => {
   for (const destination of ['github', 'play', 'both']) {
     let calls = 0;
     const run = (command, args) => {
@@ -37,11 +37,45 @@ test('release shortcuts dispatch the selected destination without production pro
       assert.ok(args.includes(`destination=${destination}`));
       assert.ok(!args.includes('action=promote'));
       assert.ok(!args.some(arg => arg.startsWith('version_code=')));
+      if (destination === 'github') {
+        assert.ok(!args.some(arg => arg.startsWith('play_track=')));
+      } else {
+        assert.ok(args.includes('play_track=internal'));
+      }
       return { status: 0 };
     };
-    assert.deepEqual(runReleaseWorkflow([destination], { run }), { destination });
+    assert.deepEqual(runReleaseWorkflow([destination], { run }), {
+      destination, ...(destination === 'github' ? {} : { track: 'internal' }),
+    });
     assert.equal(calls, 1);
   }
+});
+
+test('Play and Both can explicitly upload a new bundle directly to production', () => {
+  for (const destination of ['play', 'both']) {
+    for (const track of ['internal', 'production']) {
+      const calls = [];
+      const run = (_command, args) => { calls.push(args); return { status: 0 }; };
+      assert.deepEqual(runReleaseWorkflow([destination, '--play-track', track], { run }), { destination, track });
+      assert.equal(calls.length, 1);
+      assert.ok(calls[0].includes('action=release'));
+      assert.ok(calls[0].includes(`destination=${destination}`));
+      assert.ok(calls[0].includes(`play_track=${track}`));
+      assert.ok(!calls[0].includes('action=promote'));
+    }
+  }
+});
+
+test('invalid track selections and flags fail before dispatch', () => {
+  const run = () => assert.fail('Invalid track selection must never dispatch a workflow.');
+  for (const track of ['', 'closed', 'Production', 'production; echo unsafe']) {
+    assert.throws(() => runReleaseWorkflow(['play', '--play-track', track], { run }), /track must be/);
+  }
+  for (const args of [
+    ['both', '--play-track'], ['play', '--production'], ['play', '--play-track', 'production', 'extra'],
+    ['github', '--play-track', 'production'], ['promote', '--play-track', 'production'],
+    ['play', '--track', 'production'],
+  ]) assert.throws(() => runReleaseWorkflow(args, { run }), /Usage/);
 });
 
 test('invalid versions and extra arguments fail before starting any workflow', () => {

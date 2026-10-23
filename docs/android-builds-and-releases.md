@@ -1,6 +1,21 @@
-# Google Play publishing
+# Android builds and releases
 
-The `Android Google Play` GitHub Actions workflow is started explicitly from the Actions UI or an npm shortcut. Select **GitHub**, **Play**, or **Both** as the destination. Ordinary commits, version bumps, and tag pushes do not start publishing. Production uses a separate manual promotion of the latest internal version by default, or an explicitly selected internal version.
+The `Android Google Play` GitHub Actions workflow is started explicitly from the Actions UI or an npm shortcut. Select **GitHub**, **Play**, or **Both** as the destination. Play uploads default to **internal** testing; explicitly select **production** to upload a new version directly to production. An existing internal version can also be promoted without rebuilding. Ordinary commits, version bumps, and tag pushes do not start publishing.
+
+## Local and EAS builds
+
+Build commands create files without starting the publishing workflow:
+
+| Command | Result |
+| --- | --- |
+| `npm run build:local:apk` | Build a release APK on this computer. |
+| `npm run build:local:aab` | Build a release AAB on this computer. |
+| `npm run build:local:both` | Build both release files on this computer. |
+| `npm run build:eas:apk` | Request a cloud APK build using the Expo EAS preview profile. |
+
+The local commands use `run-android.ps1` and the current working files, including uncommitted changes. Outputs are `android/app/build/outputs/apk/release/app-release.apk` and `android/app/build/outputs/bundle/release/app-release.aab`.
+
+The `release:*` commands below start GitHub Actions using the pushed `master` commit. The workflow builds its own AAB; it does not upload local build outputs. **Both** downloads the APK for the GitHub Release from Google Play, signed with Play's app signing certificate.
 
 ## Repository configuration
 
@@ -40,7 +55,7 @@ After the workflow files are committed and pushed to `master`:
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.
 5. Run action **promote**. Leave **version_code** blank to promote the highest versionCode currently on Google Play's internal track, or enter the exact tested code to select a particular version. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
 
-The workflow accepts manual release runs from this repository's `master` branch. It serializes releases and never automatically promotes to production.
+The workflow accepts manual release runs from this repository's `master` branch. It serializes releases. The sequence above uses the default internal track; direct production requires the explicit choice described below.
 
 ## Release destinations and shortcuts
 
@@ -51,9 +66,15 @@ The same workflow can be started from the terminal using an authenticated GitHub
 | `npm run release:github` | Create/reuse the version tag and publish the GitHub Release page. No Android build or Play authentication. |
 | `npm run release:play` | Create/reuse the version tag, build the AAB, and upload to Play internal testing. No GitHub Release page. |
 | `npm run release:both` | Publish GitHub Release first, build/upload the AAB to internal testing, then attach Play's signed APK to GitHub. |
+| `npm run release:play -- --play-track production` | Create/reuse the version tag, build the AAB, and upload directly to Play production. No GitHub Release page. |
+| `npm run release:both -- --play-track production` | Publish GitHub Release first, build/upload the AAB directly to production, then attach Play's signed APK to GitHub. |
 | `npm run release:promote` | Promote the latest version currently on Play's internal track to production, without rebuilding. |
 
-In the Actions UI, select **action=release** with **destination=github/play/both**, or **action=promote** for production. The destination input is ignored for the other actions. The npm shortcuts send these inputs to GitHub; they do not build, tag, commit, or publish locally. They use the already-pushed `master` commit on GitHub, not uncommitted or unpushed local changes.
+In the Actions UI, select **action=release** with **destination=github/play/both**. For Play or Both, **play_track=internal** is the default; select **production** for a direct production upload. Use **action=promote** to move an existing internal version to production without rebuilding. The destination input is ignored for the other actions, and **play_track** is used only for release to Play/Both. Artifact reuse with **action=internal** always uploads to internal testing. The npm shortcuts send these inputs to GitHub; they do not build, tag, commit, or publish locally. They use the already-pushed `master` commit on GitHub, not uncommitted or unpushed local changes.
+
+Direct production runs the same automated tests, signing checks, and single AAB build. It skips Play's internal/closed testing tracks and submits a completed production release through Fastlane. Google review, production eligibility, and managed-publishing settings still apply, so workflow success does not guarantee immediate public availability. No additional secrets are required; the existing service account needs production-release permission.
+
+A direct upload requires a new, unused Android versionCode. To publish a bundle already on internal testing, use `release:promote` instead of uploading it again. For example, if version 1.2.8 (32) has already been uploaded, a new build needs a version bump (normally 1.2.9 / 33).
 
 The tag is derived from the validated app version (for example, `v1.2.8`) and records the exact workflow source commit. It does not add a commit or trigger another workflow. An existing lightweight or annotated tag is reused only if it points to that same commit. If the version tag points to different code, the workflow stops; bump the app version before releasing new changes. Existing tags are never moved.
 
@@ -61,7 +82,7 @@ GitHub Releases receive automatically generated notes and source archives. A mat
 
 ### Automatic APK downloads
 
-**Both** uses Google's generated APK API after the internal upload. It selects the universal APK signed with the configured Play app signing certificate, waits up to ten minutes for processing, and downloads it without a second native build. Android's `apksigner` must verify the actual file and its signing certificate; `aapt2` must confirm the package, version name, and versionCode against the exact version tag. Only then is `Graphene-Cloud-Explorer-<version>.apk` attached to the existing GitHub Release. An identical existing asset is reused; a conflicting or incomplete asset is never overwritten.
+**Both** uses Google's generated APK API after the upload to the selected Play track. It selects the universal APK signed with the configured Play app signing certificate, waits up to ten minutes for processing, and downloads it without a second native build. Android's `apksigner` must verify the actual file and its signing certificate; `aapt2` must confirm the package, version name, and versionCode against the exact version tag. Only then is `Graphene-Cloud-Explorer-<version>.apk` attached to the existing GitHub Release. An identical existing asset is reused; a conflicting or incomplete asset is never overwritten.
 
 The public certificate is pinned in the workflow as `PLAY_APP_SIGNING_SHA256`:
 
@@ -113,7 +134,7 @@ Fastlane requires Ruby 3.2 or later. Existing CocoaPods dependencies remain in t
 
 The upload keystore is restored into the runner's temporary directory. Before Android SDK installation or native compilation, a Java preflight opens the keystore, checks that the alias refers to a private key, and unlocks it with the key password. Failures identify the relevant secret names without printing credentials. Passwords are then passed to Gradle through `ORG_GRADLE_PROJECT_APP_UPLOAD_*` environment variables, and Gradle enforces `REQUIRE_RELEASE_SIGNING=true` for the Fastlane release build. Existing local development build commands keep their behavior.
 
-Artifact-based internal uploads require only Ruby, Node, read access to the selected GitHub Actions artifact, and Google authentication. They skip JavaScript dependency installation, Android SDK/NDK setup, signing secrets, and compilation. The artifact download verifies its digest. **Play** and **Both** build once and upload to internal testing in the same run. The release job has `contents: write` to create version tags and GitHub Releases using its built-in `GITHUB_TOKEN`; an additional GitHub secret is not required.
+Artifact-based internal uploads require only Ruby, Node, read access to the selected GitHub Actions artifact, and Google authentication. They skip JavaScript dependency installation, Android SDK/NDK setup, signing secrets, and compilation. The artifact download verifies its digest. **Play** and **Both** build once and upload to the selected Play track in the same run. The release job has `contents: write` to create version tags and GitHub Releases using its built-in `GITHUB_TOKEN`; an additional GitHub secret is not required.
 
 Google authentication runs immediately before publishing. `google-github-actions/auth` exchanges the GitHub OIDC token and creates a short-lived credential configuration for the service account. Fastlane reads that file through `GOOGLE_APPLICATION_CREDENTIALS`; a downloaded service-account private key is not needed. Generated credential files are ignored by Git and excluded from the AAB artifact. The workflow removes the restored keystore and Firebase configuration on completion.
 
@@ -126,4 +147,4 @@ ruby tests/play_apk_test.rb
 bundle exec fastlane lanes
 ```
 
-The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, latest and exact-version promotion, command dispatch, destination selection, GitHub release ordering, tag conflicts, and retries. GitHub API requests, CLI dispatch, and Google Play actions are mocked; no tests publish anything.
+The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, latest and exact-version promotion, command dispatch, destination/track selection, rejection of invalid production requests, GitHub release ordering, tag conflicts, and retries. GitHub API requests, CLI dispatch, and Google Play actions are mocked; no tests publish anything.
