@@ -18,9 +18,11 @@ function fixture(t) {
   const env = {
     GITHUB_REPOSITORY: 'Graphene-Lab/graphene-cloud-explorer-react-native-app', GITHUB_REPOSITORY_ID: '1016678903',
     GITHUB_REF: 'refs/heads/master', GITHUB_EVENT_NAME: 'workflow_dispatch', GITHUB_TOKEN: 'dummy-token',
-    GITHUB_SHA: 'b'.repeat(40), RUNNER_TEMP: directory, ANDROID_HOME: path.join(directory, 'sdk'),
-    RELEASE_ACTION: 'attach', RELEASE_TAG: 'v1.2.8', PLAY_APP_SIGNING_SHA256: certificate,
+    GITHUB_SHA: sourceSha, RUNNER_TEMP: directory, ANDROID_HOME: path.join(directory, 'sdk'),
+    RELEASE_ACTION: 'release', RELEASE_DESTINATION: 'both', PLAY_APP_SIGNING_SHA256: certificate,
+    RELEASE_VERSION_FILE: path.join(directory, 'version.json'),
   };
+  fs.writeFileSync(env.RELEASE_VERSION_FILE, JSON.stringify({ name: '1.2.8', code: 32 }));
   const state = { sourceSha, name: '1.2.8', draft: false, assets: [], signature: certificate, package: 'com.graphenelab.cloudexplorer', code: '32', toolStatus: 0, apiFailure: 0 };
   const filename = 'Graphene-Cloud-Explorer-1.2.8.apk';
   const bytes = Buffer.from('test APK bytes');
@@ -38,13 +40,7 @@ function fixture(t) {
     if (endpoint === '/git/ref/tags/v1.2.8') data = { object: { type: 'tag', sha: 'c'.repeat(40) } };
     else if (endpoint === `/git/tags/${'c'.repeat(40)}`) data = { object: { type: 'commit', sha: state.sourceSha } };
     else if (endpoint === '/releases/tags/v1.2.8') data = { id: 42, tag_name: 'v1.2.8', draft: state.draft };
-    else if (endpoint.startsWith('/contents/')) {
-      assert.ok(endpoint.endsWith(`?ref=${state.sourceSha}`), 'Version files must come from the exact tagged commit.');
-      const content = endpoint.includes('package.json') ? JSON.stringify({ version: state.name }) : endpoint.includes('app.json') ?
-        JSON.stringify({ expo: { version: state.name, android: { package: 'com.graphenelab.cloudexplorer' } } }) :
-        `applicationId 'com.graphenelab.cloudexplorer'\nversionName "${state.name}"\nversionCode 32\n`;
-      data = { encoding: 'base64', content: Buffer.from(content).toString('base64') };
-    } else if (endpoint === '/releases/42/assets?per_page=100&page=1') data = state.assets;
+    else if (endpoint === '/releases/42/assets?per_page=100&page=1') data = state.assets;
     else if (options.method === 'POST' && endpoint === `/releases/42/assets?name=${filename}`) {
       assert.ok(url.startsWith('https://uploads.github.com/'));
       const chunks = [];
@@ -68,19 +64,18 @@ function fixture(t) {
   return f;
 }
 
-test('attachment reads the exact tag source even when master has advanced', async t => {
+test('Both uses its validated release version and verifies the matching source tag', async t => {
   const f = fixture(t);
   const result = await resolveApkRelease(f);
   assert.equal(result.sourceSha, f.sourceSha);
-  assert.notEqual(result.sourceSha, f.env.GITHUB_SHA);
+  assert.equal(result.sourceSha, f.env.GITHUB_SHA);
   assert.deepEqual(result, { tag: 'v1.2.8', name: '1.2.8', code: 32, sourceSha: f.sourceSha, releaseId: 42 });
   assert.ok(f.calls.every(c => c.method === 'GET'));
 });
 
 test('Both requires its version tag to identify the actual workflow commit', async t => {
   const f = fixture(t);
-  Object.assign(f.env, { RELEASE_ACTION: 'release', RELEASE_DESTINATION: 'both', RELEASE_VERSION_FILE: path.join(f.env.RUNNER_TEMP, 'version.json') });
-  fs.writeFileSync(f.env.RELEASE_VERSION_FILE, JSON.stringify({ name: '1.2.8', code: 32 }));
+  f.env.GITHUB_SHA = 'b'.repeat(40);
   await assert.rejects(resolveApkRelease(f), /different source/);
   f.env.GITHUB_SHA = f.sourceSha;
   assert.equal((await resolveApkRelease(f)).code, 32);
@@ -128,16 +123,20 @@ test('tag changes during download fail before any APK attachment', async t => {
   const f = fixture(t);
   await f.record();
   f.state.sourceSha = 'd'.repeat(40);
-  await assert.rejects(publishReleaseApk(f), /changed during/);
+  await assert.rejects(publishReleaseApk(f), /different source/);
   assert.equal(f.runs.length, 0);
   assert.ok(f.calls.every(c => c.method === 'GET'));
 });
 
-test('unpublished releases and tag/version mismatches are rejected', async t => {
-  for (const values of [{ draft: true }, { name: '1.2.9' }]) {
+test('unpublished releases and invalid validated versions are rejected', async t => {
+  const unpublished = fixture(t);
+  unpublished.state.draft = true;
+  await assert.rejects(resolveApkRelease(unpublished), /published GitHub Release/);
+  for (const values of [{ name: '../bad', code: 32 }, { name: '1.2.8', code: 0 }, { name: '1.2.8', code: '32' }]) {
     const f = fixture(t);
-    Object.assign(f.state, values);
-    await assert.rejects(resolveApkRelease(f), /published GitHub Release|must agree/);
+    fs.writeFileSync(f.env.RELEASE_VERSION_FILE, JSON.stringify(values));
+    await assert.rejects(resolveApkRelease(f), /version is invalid/);
+    assert.equal(f.calls.length, 0);
   }
 });
 
@@ -152,6 +151,7 @@ test('other repositories, automatic events, branches, and release destinations c
   for (const values of [
     { GITHUB_REPOSITORY_ID: '999' }, { GITHUB_REPOSITORY: 'someone/else' }, { GITHUB_EVENT_NAME: 'push' },
     { GITHUB_REF: 'refs/tags/v1.2.8' }, { RELEASE_ACTION: 'release', RELEASE_DESTINATION: 'play' },
+    { RELEASE_ACTION: 'attach' },
   ]) {
     const f = fixture(t);
     Object.assign(f.env, values);

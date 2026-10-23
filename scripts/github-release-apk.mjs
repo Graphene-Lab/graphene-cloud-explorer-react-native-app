@@ -13,8 +13,8 @@ function githubClient(env, fetchImpl) {
   if (env.GITHUB_REPOSITORY !== repository || env.GITHUB_REPOSITORY_ID !== '1016678903' ||
       env.GITHUB_REF !== 'refs/heads/master' || env.GITHUB_EVENT_NAME !== 'workflow_dispatch' ||
       !env.GITHUB_TOKEN || !env.RUNNER_TEMP ||
-      !(env.RELEASE_ACTION === 'attach' || (env.RELEASE_ACTION === 'release' && env.RELEASE_DESTINATION === 'both'))) {
-    throw new Error('APK attachment is restricted to this repository\'s manual master Both/Attach workflow.');
+      env.RELEASE_ACTION !== 'release' || env.RELEASE_DESTINATION !== 'both') {
+    throw new Error('APK attachment is restricted to this repository\'s manual master Both release.');
   }
   return async (endpoint, options = {}) => {
     const response = await fetchImpl(`https://api.github.com/repos/${repository}${endpoint}`, {
@@ -28,32 +28,22 @@ function githubClient(env, fetchImpl) {
 
 export async function resolveApkRelease({ env = process.env, fetchImpl = fetch } = {}) {
   const get = githubClient(env, fetchImpl);
-  const tag = env.RELEASE_ACTION === 'attach' ? env.RELEASE_TAG :
-    `v${JSON.parse(fs.readFileSync(env.RELEASE_VERSION_FILE, 'utf8')).name}`;
-  if (!/^v\d+\.\d+\.\d+$/.test(tag || '')) throw new Error('Select an existing release tag such as v1.2.8.');
+  const { name, code } = JSON.parse(fs.readFileSync(env.RELEASE_VERSION_FILE, 'utf8'));
+  if (!/^\d+\.\d+\.\d+$/.test(name || '') || !Number.isInteger(code) || code < 1 || code > 2_100_000_000) {
+    throw new Error('The validated release version is invalid.');
+  }
+  const tag = `v${name}`;
   let object = (await get(`/git/ref/tags/${tag}`)).object;
   for (let depth = 0; depth < 5 && object?.type === 'tag' && validSha(object.sha); depth++) {
     object = (await get(`/git/tags/${object.sha}`)).object;
   }
   if (object?.type !== 'commit' || !validSha(object.sha)) throw new Error('Cannot resolve the release tag to an immutable commit.');
   const sourceSha = object.sha;
-  if (env.RELEASE_ACTION === 'release' && sourceSha !== env.GITHUB_SHA) throw new Error('The release tag points at different source. Existing tags are preserved.');
+  if (sourceSha !== env.GITHUB_SHA) throw new Error('The release tag points at different source. Existing tags are preserved.');
   const release = await get(`/releases/tags/${tag}`);
   if (release.tag_name !== tag || release.draft !== false || !Number.isSafeInteger(release.id) || release.id < 1) {
     throw new Error('Select an existing published GitHub Release.');
   }
-  // Always read the released version from its tag, even when master has advanced.
-  const [packageFile, expoFile, gradle] = await Promise.all(['package.json', 'app.json', 'android/app/build.gradle'].map(async filename => {
-    const file = await get(`/contents/${filename}?ref=${sourceSha}`);
-    if (file.encoding !== 'base64' || typeof file.content !== 'string') throw new Error('Cannot read the tagged release version.');
-    return Buffer.from(file.content, 'base64').toString('utf8');
-  }));
-  const name = JSON.parse(packageFile).version;
-  const expo = JSON.parse(expoFile).expo;
-  const code = Number(gradle.match(/\bversionCode\s+(\d+)/)?.[1]);
-  if (`v${name}` !== tag || expo.version !== name || gradle.match(/\bversionName\s+"([^"]+)"/)?.[1] !== name ||
-      expo.android?.package !== packageName || gradle.match(/\bapplicationId\s+'([^']+)'/)?.[1] !== packageName ||
-      !Number.isInteger(code) || code < 1 || code > 2_100_000_000) throw new Error('Tagged package, version, and Android versionCode must agree.');
   return { tag, name, code, sourceSha, releaseId: release.id };
 }
 
@@ -108,7 +98,7 @@ export async function publishReleaseApk({ env = process.env, fetchImpl = fetch, 
       'X-GitHub-Api-Version': '2026-03-10', 'Content-Type': 'application/vnd.android.package-archive', 'Content-Length': String(size) },
     body: fs.createReadStream(apkPath), duplex: 'half', signal: AbortSignal.timeout(300000), redirect: 'error',
   });
-  if (!response.ok) throw new Error(`GitHub APK upload failed (HTTP ${response.status}); retry action=attach with the same tag.`);
+  if (!response.ok) throw new Error(`GitHub APK upload failed (HTTP ${response.status}).`);
   const asset = await response.json();
   checkAsset(asset);
   console.log(`Verified Play-signed APK attached to ${version.tag}: ${filename}.`);

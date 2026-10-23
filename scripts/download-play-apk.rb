@@ -38,7 +38,7 @@ module PlayApk
         wait.call
       end
     end
-    raise ArgumentError, 'Play has no matching universal APK yet. Retry action=attach with the existing release tag; no rebuild or new Play upload is needed.' if selected.to_s.empty?
+    raise ArgumentError, 'Play did not provide a matching universal APK before the processing deadline; no APK was attached.' if selected.to_s.empty?
 
     FileUtils.mkdir_p(directory)
     filename = File.join(directory, "Graphene-Cloud-Explorer-#{name}.apk")
@@ -74,7 +74,7 @@ if $PROGRAM_NAME == __FILE__
     )
   rescue StandardError => error
     # Do not print SDK errors: their request URLs or response bodies may contain credentials.
-    warn(error.is_a?(ArgumentError) ? error.message : "Play APK download failed (#{error.class.name.split('::').last}). Check API access and retry action=attach.")
+    warn(error.is_a?(ArgumentError) ? error.message : "Play APK download failed (#{error.class.name.split('::').last}). Check API access and APK processing.")
     exit 1
   end
 end

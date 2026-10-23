@@ -89,11 +89,11 @@ class PlayApkTest < Minitest::Test
     end
   end
 
-  def test_processing_timeout_can_be_retried_by_tag
+  def test_processing_timeout_stops_without_downloading_an_apk
     Dir.mktmpdir do |directory|
       service = Service.new([group(id: nil)])
       error = assert_raises(ArgumentError) { download(service, directory, wait: -> {}) }
-      assert_match(/action=attach/, error.message)
+      assert_match(/processing deadline/, error.message)
       assert_equal 3, service.reads.length
       assert_empty service.downloads
     end

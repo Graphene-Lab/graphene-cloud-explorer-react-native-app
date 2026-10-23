@@ -52,7 +52,6 @@ The same workflow can be started from the terminal using an authenticated GitHub
 | `npm run release:play` | Create/reuse the version tag, build the AAB, and upload to Play internal testing. No GitHub Release page. |
 | `npm run release:both` | Publish GitHub Release first, build/upload the AAB to internal testing, then attach Play's signed APK to GitHub. |
 | `npm run release:promote` | Promote the latest version currently on Play's internal track to production, without rebuilding. |
-| `npm run release:attach -- v1.2.8` | Attach an existing version's Play-signed APK to its published GitHub Release. No build, new tag, Play upload, or promotion. |
 
 In the Actions UI, select **action=release** with **destination=github/play/both**, or **action=promote** for production. The destination input is ignored for the other actions. The npm shortcuts send these inputs to GitHub; they do not build, tag, commit, or publish locally. They use the already-pushed `master` commit on GitHub, not uncommitted or unpushed local changes.
 
@@ -72,13 +71,7 @@ The public certificate is pinned in the workflow as `PLAY_APP_SIGNING_SHA256`:
 
 This is the **app signing key** fingerprint supplied from Play Console, not the different upload key. Review this pin if Play's signing keys change. The workflow never falls back to an APK signed with the upload/debug key, or to split APKs if Play has no universal APK. Existing OIDC credentials and the built-in GitHub token handle downloading and attachment; no new private signing key is needed.
 
-**GitHub-only** still publishes a page without contacting Play or compiling Android. A new Play-signed APK requires that version's bundle to exist in Play first. After a separate Play upload, or if APK attachment fails after a successful **Both** upload, run:
-
-```powershell
-npm run release:attach -- v1.2.8
-```
-
-In Actions, choose **action=attach** and **release_tag=v1.2.8**. This runs the current workflow tooling but reads the package/versionCode from that tag's immutable source commit, even if `master` has advanced. It does not move the tag, create a release, rebuild, upload another AAB, or promote production. Missing Play permissions, an unavailable universal APK, or a certificate/version mismatch fail the attachment visibly. Retry this attachment action after resolving the problem; do not rerun the full release after Play has already accepted its versionCode.
+**GitHub-only** publishes a page without contacting Play or compiling Android. Automatic APK attachment runs only as part of **Both**, for the version validated in that same run. Missing Play permissions, an unavailable universal APK, or a certificate/version mismatch fail the attachment visibly. Play may already have accepted the AAB at that point; do not rerun the full release to repair an APK attachment failure.
 
 An explicit internal code can still be selected when promoting:
 

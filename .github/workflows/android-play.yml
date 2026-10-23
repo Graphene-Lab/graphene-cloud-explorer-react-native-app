@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: Verify, build, release, reuse a build, promote, or attach a Play-signed APK
+        description: Verify setup, build only, release to a destination, reuse a build, or promote
         type: choice
         required: true
         default: build
@@ -14,7 +14,6 @@ on:
           - release
           - internal
           - promote
-          - attach
       destination:
         description: Destination for action=release (both publishes GitHub first)
         type: choice
@@ -30,10 +29,6 @@ on:
         required: false
       version_code:
         description: Internal versionCode to promote (blank = latest internal; only used for promote)
-        type: string
-        required: false
-      release_tag:
-        description: Existing GitHub release tag for APK attachment (only used for attach)
         type: string
         required: false
 
@@ -103,7 +98,6 @@ jobs:
           RELEASE_DESTINATION: ${{ inputs.destination }}
           PLAY_BUILD_RUN_ID: ${{ inputs.build_run_id }}
           PLAY_VERSION_CODE: ${{ inputs.version_code }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
         run: node scripts/release-plan.mjs
 
       - uses: ruby/setup-ruby@v1
@@ -128,7 +122,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           RELEASE_ACTION: ${{ inputs.action }}
           RELEASE_DESTINATION: ${{ inputs.destination }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
           RELEASE_VERSION_FILE: ${{ runner.temp }}/play-release-version.json
         run: node scripts/github-release-apk.mjs resolve
 
@@ -137,7 +130,7 @@ jobs:
         run: yarn install --frozen-lockfile --non-interactive
 
       - uses: actions/setup-java@v6.1.0
-        if: steps.plan.outputs.prepare_signing == 'true' || steps.plan.outputs.attach_apk == 'true'
+        if: steps.plan.outputs.prepare_signing == 'true'
         with:
           distribution: temurin
           java-version: '21'
@@ -153,11 +146,7 @@ jobs:
         run: node scripts/prepare-android-ci.mjs
 
       - uses: android-actions/setup-android@v4.0.4
-        if: steps.plan.outputs.android_tools == 'true'
-
-      - name: Install APK verification tools
-        if: inputs.action == 'attach'
-        run: sdkmanager 'build-tools;36.0.0'
+        if: steps.plan.outputs.build_android == 'true'
 
       - name: Install Android build tools
         if: steps.plan.outputs.build_android == 'true'
@@ -231,7 +220,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           RELEASE_ACTION: ${{ inputs.action }}
           RELEASE_DESTINATION: ${{ inputs.destination }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
           RELEASE_VERSION_FILE: ${{ runner.temp }}/play-release-version.json
         run: node scripts/github-release-apk.mjs publish
 
