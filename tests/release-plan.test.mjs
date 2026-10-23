@@ -102,11 +102,14 @@ test('workflow runs only manually and orders GitHub publication before build and
   assert.equal(job.needs, 'tests');
   const position = name => job.steps.findIndex(step => step.name === name);
   const github = position('Record version tag and publish GitHub Release first');
+  const validate = position('Validate release version and notes');
   const build = position('Build signed release bundle');
   const play = position('Publish to Google Play');
   const download = position('Download the Play-signed universal APK');
   const attach = position('Verify APK and attach it to the GitHub Release');
-  assert.ok(github >= 0 && github < build && build < play);
+  assert.ok(validate >= 0 && validate < github && github < build && build < play);
+  assert.equal(job.steps[validate].env.RELEASE_DESTINATION, '${{ inputs.destination }}');
+  assert.match(job.steps[validate].run, /PlayRelease\.release_info/);
   assert.ok(play < download && download < attach);
   assert.equal(job.steps[github].if, "steps.plan.outputs.prepare_release == 'true'");
   assert.equal(job.steps[build].if, "steps.plan.outputs.build_android == 'true'");

@@ -18,6 +18,8 @@ function fixture(t, { run: overrides = {}, artifacts } = {}) {
     'package.json': JSON.stringify({ version: '1.2.7' }),
     'app.json': JSON.stringify({ expo: { version: '1.2.7', android: { package: 'com.graphenelab.cloudexplorer' } } }),
     'android/app/build.gradle': 'versionCode 31',
+    'fastlane/metadata/android/en-US/changelogs/31.txt': 'Short English notes from the build commit.',
+    'fastlane/metadata/android/fr-FR/changelogs/31.txt': 'Notes françaises du commit compilé.',
   };
   const calls = [];
   const fetchImpl = async (url, options) => {
@@ -35,8 +37,13 @@ function fixture(t, { run: overrides = {}, artifacts } = {}) {
     } else {
       const filename = new URL(url).pathname.split('/contents/')[1];
       assert.equal(new URL(url).searchParams.get('ref'), sha, 'Source metadata must use the immutable build commit.');
-      assert.ok(filename in source, `Unexpected source file: ${filename}`);
-      data = { encoding: 'base64', content: Buffer.from(source[filename]).toString('base64') };
+      if (filename === 'fastlane/metadata/android') {
+        const languages = [...new Set(Object.keys(source).map(file => file.match(/^fastlane\/metadata\/android\/([^/]+)\//)?.[1]).filter(Boolean))];
+        data = languages.map(name => ({ type: 'dir', name }));
+      } else {
+        if (!(filename in source)) return { ok: false, status: 404 };
+        data = { encoding: 'base64', content: Buffer.from(source[filename]).toString('base64') };
+      }
     }
     return { ok: true, json: async () => data };
   };
@@ -53,6 +60,26 @@ test('selects the signed artifact and source versions from the successful build 
   const exported = fs.readFileSync(env.GITHUB_ENV, 'utf8');
   assert.ok(exported.includes('PLAY_AAB_ARTIFACT_ID=5678'));
   assert.ok(!exported.includes(env.GITHUB_TOKEN));
+});
+
+test('artifact upload does not fetch notes for other versions or copy default fallbacks', async t => {
+  const f = fixture(t);
+  f.source['fastlane/metadata/android/de-DE/changelogs/30.txt'] = 'Old translated notes.';
+  f.source['fastlane/metadata/android/en-US/changelogs/default.txt'] = 'Stale default.';
+  const result = await resolvePlayBuild(f);
+  assert.equal(fs.readFileSync(path.join(result.source, 'fastlane/metadata/android/en-US/changelogs/31.txt'), 'utf8'), f.source['fastlane/metadata/android/en-US/changelogs/31.txt']);
+  assert.ok(!fs.existsSync(path.join(result.source, 'fastlane/metadata/android/en-US/changelogs/default.txt')));
+  assert.ok(!f.calls.some(url => url.includes('/default.txt') || url.includes('/30.txt')));
+});
+
+test('a build without its own required English notes cannot be selected for publishing', async t => {
+  for (const historical of [false, true]) {
+    const f = fixture(t);
+    delete f.source['fastlane/metadata/android/en-US/changelogs/31.txt'];
+    if (historical) f.source['fastlane/metadata/android/en-US/changelogs/default.txt'] = 'Old fallback notes.';
+    await assert.rejects(resolvePlayBuild(f), historical ? /HTTP 404/ : /must include Play release notes/);
+    assert.ok(!fs.existsSync(f.env.GITHUB_ENV));
+  }
 });
 
 test('rejects failed or unfinished builds before looking for artifacts', async t => {

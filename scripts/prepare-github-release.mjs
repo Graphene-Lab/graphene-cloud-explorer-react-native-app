@@ -15,6 +15,10 @@ export async function prepareGithubRelease({ env = process.env, fetchImpl = fetc
   if (!/^\d+\.\d+\.\d+$/.test(version.name) || !Number.isInteger(version.code) || version.code < 1 || version.code > 2_100_000_000) {
     throw new Error('The validated release version is invalid.');
   }
+  if (env.RELEASE_DESTINATION !== 'play' && (typeof version.github_notes !== 'string' ||
+      !version.github_notes.replace(/<!--[\s\S]*?-->/g, '').trim() || version.github_notes.includes('RELEASE_NOTES_TODO'))) {
+    throw new Error('Fill in the GitHub release notes before publishing.');
+  }
   const tag = `v${version.name}`;
   const base = `${env.GITHUB_API_URL || 'https://api.github.com'}/repos/${env.GITHUB_REPOSITORY}`;
   const request = async (method, endpoint, body, allowed = []) => {
@@ -64,11 +68,15 @@ export async function prepareGithubRelease({ env = process.env, fetchImpl = fetc
     if (!release) {
       release = await request('POST', '/releases', {
         tag_name: tag, target_commitish: env.GITHUB_SHA, name: tag,
+        body: version.github_notes,
         draft: false, prerelease: false, generate_release_notes: true, make_latest: 'true',
       });
-    } else if (release.draft) {
-      if (!Number.isSafeInteger(release.id) || release.id < 1) throw new Error('GitHub returned an invalid draft release.');
-      release = await request('PATCH', `/releases/${release.id}`, { draft: false });
+    } else if (release.draft || !release.body?.trim()) {
+      if (!Number.isSafeInteger(release.id) || release.id < 1) throw new Error('GitHub returned an invalid release ID.');
+      release = await request('PATCH', `/releases/${release.id}`, {
+        ...(release.draft ? { draft: false } : {}),
+        ...(!release.body?.trim() ? { body: version.github_notes } : {}),
+      });
     }
     if (release.tag_name !== tag || release.draft !== false) throw new Error('GitHub Release was not published; the Android release has not started.');
     releaseUrl = release.html_url;

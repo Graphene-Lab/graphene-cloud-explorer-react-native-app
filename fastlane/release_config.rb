@@ -1,4 +1,6 @@
 require 'json'
+require 'tmpdir'
+require 'fileutils'
 
 module PlayRelease
   ROOT = File.expand_path('..', __dir__)
@@ -40,6 +42,46 @@ module PlayRelease
     raise ArgumentError, 'The upload keystore file is missing.' unless File.file?(path)
 
     path
+  end
+
+  def self.read_notes(filename, limit: nil)
+    raise ArgumentError, "Missing release notes: #{filename}" unless File.file?(filename)
+
+    text = File.read(filename, encoding: 'bom|utf-8').strip
+    unless text.valid_encoding? && !text.gsub(/<!--.*?-->/m, '').strip.empty? && !text.include?('RELEASE_NOTES_TODO')
+      raise ArgumentError, "Fill in the release notes before publishing: #{filename}"
+    end
+    raise ArgumentError, "Play release notes must be at most #{limit} Unicode characters: #{filename}" if limit && text.length > limit
+
+    text
+  end
+
+  def self.play_notes(code, root: ROOT)
+    unless code.is_a?(Integer) && code.between?(1, 2_100_000_000)
+      raise ArgumentError, 'Invalid release-notes versionCode.'
+    end
+    metadata = File.join(root, 'fastlane/metadata/android')
+    english = File.join(metadata, 'en-US/changelogs', "#{code}.txt")
+    notes = { 'en-US' => read_notes(english, limit: 500) }
+    Dir.glob(File.join(metadata, '*/changelogs', "#{code}.txt")).sort.each do |filename|
+      language = File.basename(File.dirname(File.dirname(filename)))
+      raise ArgumentError, "Invalid release-notes language: #{language}" unless language.match?(/\A[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*\z/)
+      next if language == 'en-US'
+
+      notes[language] = read_notes(filename, limit: 500)
+    end
+    notes
+  end
+
+  def self.release_info(destination, root: ROOT, env: ENV)
+    raise ArgumentError, 'Select github, play, or both as the release destination.' unless %w[github play both].include?(destination)
+
+    version = version_info(root: root, env: env)
+    if destination != 'play'
+      version[:github_notes] = read_notes(File.join(root, 'release-notes', "#{version[:name]}.md"))
+    end
+    play_notes(version[:code], root: root) if destination != 'github'
+    version
   end
 
   def self.credentials_file(env: ENV)

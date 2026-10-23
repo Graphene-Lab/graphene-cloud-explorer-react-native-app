@@ -72,7 +72,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs
+      - run: node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs tests/version-bump.test.mjs
       - uses: ruby/setup-ruby@v1
         with:
           bundler-cache: true
@@ -113,9 +113,11 @@ jobs:
         with:
           bundler-cache: true
 
-      - name: Validate release version
+      - name: Validate release version and notes
         if: steps.plan.outputs.prepare_release == 'true'
-        run: ruby -r ./fastlane/release_config -r json -e 'File.write(File.join(ENV.fetch("RUNNER_TEMP"), "play-release-version.json"), JSON.generate(PlayRelease.version_info))'
+        env:
+          RELEASE_DESTINATION: ${{ inputs.destination }}
+        run: ruby -r ./fastlane/release_config -r json -e 'File.write(File.join(ENV.fetch("RUNNER_TEMP"), "play-release-version.json"), JSON.generate(PlayRelease.release_info(ENV.fetch("RELEASE_DESTINATION"))))'
 
       - name: Record version tag and publish GitHub Release first
         if: steps.plan.outputs.prepare_release == 'true'

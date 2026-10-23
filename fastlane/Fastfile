@@ -40,6 +40,7 @@ platform :android do
     UI.user_error!('Play track must be internal or production.') unless %w[internal production].include?(track)
     source = ENV['PLAY_RELEASE_SOURCE']
     version = source ? PlayRelease.version_info(root: source, env: {}) : PlayRelease.version_info
+    notes = PlayRelease.play_notes(version[:code], root: source || PlayRelease::ROOT)
     credentials = PlayRelease.credentials_file
     UI.user_error!('Build the release AAB first.') unless File.file?(PlayRelease::AAB_PATH)
     existing_codes = %w[internal production].flat_map do |track|
@@ -52,19 +53,28 @@ platform :android do
     if existing_codes.any? { |code| code.to_i >= version[:code] }
       UI.user_error!('Increase Android versionCode before uploading a new bundle (npm run version:bump).')
     end
-    upload_to_play_store(
-      package_name: PlayRelease::PACKAGE_NAME,
-      json_key: credentials,
-      aab: PlayRelease::AAB_PATH,
-      track: track,
-      release_status: 'completed',
-      version_name: "#{version[:name]} (#{version[:code]})",
-      skip_upload_apk: true,
-      skip_upload_metadata: true,
-      skip_upload_changelogs: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true
-    )
+    # Give Fastlane only this version's notes, so older locales/default.txt cannot leak into a new release.
+    Dir.mktmpdir('play-changelogs-', ENV['RUNNER_TEMP']) do |metadata|
+      notes.each do |language, text|
+        directory = File.join(metadata, language, 'changelogs')
+        FileUtils.mkdir_p(directory)
+        File.write(File.join(directory, "#{version[:code]}.txt"), text, encoding: 'utf-8')
+      end
+      upload_to_play_store(
+        package_name: PlayRelease::PACKAGE_NAME,
+        json_key: credentials,
+        aab: PlayRelease::AAB_PATH,
+        track: track,
+        release_status: 'completed',
+        version_name: "#{version[:name]} (#{version[:code]})",
+        metadata_path: metadata,
+        skip_upload_apk: true,
+        skip_upload_metadata: true,
+        skip_upload_changelogs: false,
+        skip_upload_images: true,
+        skip_upload_screenshots: true
+      )
+    end
   rescue ArgumentError => error
     UI.user_error!(error.message)
   end

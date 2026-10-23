@@ -16,7 +16,8 @@ function fixture(t, options = {}) {
   const tagSha = 'b'.repeat(40);
   const tag = 'v1.2.8';
   const versionFile = path.join(directory, 'version.json');
-  fs.writeFileSync(versionFile, JSON.stringify({ name: '1.2.8', code: 32 }));
+  const githubNotes = '## Changes\n\nDetailed GitHub fixes and links.';
+  fs.writeFileSync(versionFile, JSON.stringify({ name: '1.2.8', code: 32, github_notes: githubNotes }));
   const env = {
     GITHUB_REPOSITORY: 'Graphene-Lab/graphene-cloud-explorer-react-native-app',
     GITHUB_REPOSITORY_ID: '1016678903', GITHUB_REF: 'refs/heads/master', GITHUB_EVENT_NAME: 'workflow_dispatch',
@@ -55,21 +56,21 @@ function fixture(t, options = {}) {
     if (key === 'POST /releases') {
       assert.equal(body.target_commitish, sha);
       assert.equal(body.generate_release_notes, true);
+      assert.equal(body.body, githubNotes);
       assert.equal(body.draft, false);
-      state.release = { id: 42, tag_name: tag, draft: state.responseDraft, html_url: `https://github.com/${env.GITHUB_REPOSITORY}/releases/tag/${tag}` };
+      state.release = { id: 42, tag_name: tag, draft: state.responseDraft, body: body.body, html_url: `https://github.com/${env.GITHUB_REPOSITORY}/releases/tag/${tag}` };
       return response(201, state.release);
     }
     if (key === 'PATCH /releases/42') {
-      assert.deepEqual(body, { draft: false }, 'Publishing a draft must preserve its notes and title.');
-      state.release = { ...state.release, draft: false };
+      state.release = { ...state.release, ...body };
       return response(200, state.release);
     }
     assert.fail(`Unexpected GitHub API request: ${key}`);
   };
-  return { env, fetchImpl, calls, state, sha, tagSha, tag };
+  return { env, fetchImpl, calls, state, sha, tagSha, tag, githubNotes };
 }
 
-test('GitHub and Both create an annotated source tag, then publish a release with generated notes', async t => {
+test('GitHub and Both publish the prepared Markdown notes with the generated changelog', async t => {
   for (const destination of ['github', 'both']) {
     const f = fixture(t);
     f.env.RELEASE_DESTINATION = destination;
@@ -84,19 +85,20 @@ test('GitHub and Both create an annotated source tag, then publish a release wit
 test('Play-only records the same version tag without creating or editing a GitHub Release', async t => {
   const f = fixture(t);
   f.env.RELEASE_DESTINATION = 'play';
+  fs.writeFileSync(f.env.RELEASE_VERSION_FILE, JSON.stringify({ name: '1.2.8', code: 32 }));
   const result = await prepareGithubRelease(f);
   assert.equal(result.releaseUrl, null);
   assert.ok(f.calls.every(c => !c.endpoint.startsWith('/releases')));
 });
 
 test('reusing a matching lightweight tag and published release performs no writes', async t => {
-  const f = fixture(t, { ref: { type: 'commit', sha: 'a'.repeat(40) }, release: { tag_name: 'v1.2.8', draft: false } });
+  const f = fixture(t, { ref: { type: 'commit', sha: 'a'.repeat(40) }, release: { tag_name: 'v1.2.8', draft: false, body: 'Published notes' } });
   await prepareGithubRelease(f);
   assert.ok(f.calls.every(c => c.method === 'GET'));
 });
 
 test('reusing a matching annotated tag preserves the original reference', async t => {
-  const f = fixture(t, { ref: { type: 'tag', sha: 'b'.repeat(40) }, release: { tag_name: 'v1.2.8', draft: false } });
+  const f = fixture(t, { ref: { type: 'tag', sha: 'b'.repeat(40) }, release: { tag_name: 'v1.2.8', draft: false, body: 'Published notes' } });
   await prepareGithubRelease(f);
   assert.ok(f.calls.some(c => c.endpoint === `/git/tags/${f.tagSha}`));
   assert.ok(f.calls.every(c => c.method === 'GET'));
@@ -116,7 +118,28 @@ test('an existing matching draft is published without replacing its notes', asyn
   await prepareGithubRelease(f);
   assert.equal(f.state.release.body, 'Hand-written notes');
   assert.equal(f.state.release.name, 'Custom title');
+  assert.deepEqual(f.calls.find(c => c.method === 'PATCH').body, { draft: false });
   assert.deepEqual(f.calls.filter(c => c.method !== 'GET').map(c => c.method), ['PATCH']);
+});
+
+test('blank matching draft or published release notes are filled without changing the title', async t => {
+  for (const draft of [true, false]) {
+    const f = fixture(t, { ref: { type: 'commit', sha: 'a'.repeat(40) }, release: { id: 42, tag_name: 'v1.2.8', draft, body: ' ', name: 'Custom title' } });
+    await prepareGithubRelease(f);
+    assert.equal(f.state.release.body, f.githubNotes);
+    assert.equal(f.state.release.name, 'Custom title');
+    assert.equal(f.state.release.draft, false);
+    assert.equal(f.calls.filter(c => c.method !== 'GET').length, 1);
+  }
+});
+
+test('missing, empty, or unfinished GitHub notes fail before any tag or release API request', async t => {
+  for (const notes of [undefined, '', '  ', '<!-- empty -->', '<!-- RELEASE_NOTES_TODO -->']) {
+    const f = fixture(t);
+    fs.writeFileSync(f.env.RELEASE_VERSION_FILE, JSON.stringify({ name: '1.2.8', code: 32, github_notes: notes }));
+    await assert.rejects(prepareGithubRelease(f), /Fill in the GitHub release notes/);
+    assert.equal(f.calls.length, 0);
+  }
 });
 
 test('API access failure stops before writes and does not echo credentials', async t => {

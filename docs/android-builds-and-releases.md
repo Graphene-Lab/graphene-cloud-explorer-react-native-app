@@ -50,8 +50,8 @@ After the workflow files are committed and pushed to `master`:
 
 1. Open **Actions → Android Google Play → Run workflow**.
    Run action **verify** on `master` first to check the signing secrets, Firebase configuration, OIDC authentication, and Google Play track access. It does not compile or publish the app. This verifies read access; release permissions are exercised by an actual upload or promotion.
-2. Prepare and push the app changes and version bump to `master` (see **Subsequent releases**). An already-published Android versionCode cannot be uploaded again.
-3. Select branch `master`, action **release**, and destination **both**. Tests run first. The workflow validates the app version, creates its version tag, publishes the GitHub Release page, then builds a signed AAB and uploads it to Play internal testing. It then downloads Play's signed universal APK, verifies it, and attaches it to the GitHub Release.
+2. Prepare and push the app changes, version bump, and completed release notes to `master` (see **Subsequent releases**). An already-published Android versionCode cannot be uploaded again.
+3. Select branch `master`, action **release**, and destination **both**. Tests run first. The workflow validates the app version and both release-note files, creates its version tag, publishes the GitHub Release page, then builds a signed AAB and uploads it with its Play notes to internal testing. It then downloads Play's signed universal APK, verifies it, and attaches it to the GitHub Release.
 4. Install the internal build through Google Play and verify the app, including updates from the previous version.
 5. Run action **promote**. Leave **version_code** blank to promote the highest versionCode currently on Google Play's internal track, or enter the exact tested code to select a particular version. This promotes that existing AAB to a completed production release without rebuilding it. Google review and managed-publishing settings still control availability.
 
@@ -78,7 +78,7 @@ A direct upload requires a new, unused Android versionCode. To publish a bundle 
 
 The tag is derived from the validated app version (for example, `v1.2.8`) and records the exact workflow source commit. It does not add a commit or trigger another workflow. An existing lightweight or annotated tag is reused only if it points to that same commit. If the version tag points to different code, the workflow stops; bump the app version before releasing new changes. Existing tags are never moved.
 
-GitHub Releases receive automatically generated notes and source archives. A matching published release is reused without changing its notes; an existing matching draft is published with its notes preserved. In **Both**, failure to publish the GitHub page stops the Android release. If the later build or Play upload fails, the GitHub page remains published; a retry from the same commit reuses it. Signed AABs are saved under the run's Actions artifacts for 14 days; they are not attached to the GitHub Release page.
+GitHub Releases receive the version's Markdown notes followed by GitHub's generated changelog, plus source archives. A matching release with existing notes keeps them; an existing matching draft is published with its notes preserved. A matching release with a blank body receives the prepared Markdown notes. In **Both**, failure to publish the GitHub page stops the Android release. If the later build or Play upload fails, the GitHub page remains published; a retry from the same commit reuses it. Signed AABs are saved under the run's Actions artifacts for 14 days; they are not attached to the GitHub Release page.
 
 ### Automatic APK downloads
 
@@ -104,15 +104,15 @@ npm run release:promote
 npm run release:promote -- 32
 ```
 
-The workflow resolves the latest code when it runs, independently of the local app version or GitHub release tags. It logs the selected versionCode and stops if internal is empty or production already contains that code or a newer one. Only run promotion after testing the internal version you intend to publish.
+The workflow resolves the latest code when it runs, independently of the local app version or GitHub release tags. It logs the selected versionCode and stops if internal is empty or production already contains that code or a newer one. Promotion preserves the selected internal release's notes already stored on Play; it does not replace them with files from the current checkout. Only run promotion after testing the internal version you intend to publish.
 
 ## Build-only and artifact reuse
 
-Run **action=build** to test compilation and save a signed AAB without creating a tag or publishing to GitHub or Google Play.
+Run **action=build** to test compilation and save a signed AAB without creating a tag or publishing to GitHub or Google Play. Local and build-only commands do not require completed release notes to compile.
 
 To upload that exact artifact later, run **action=internal**, entering the successful build's **build_run_id** from its GitHub URL (`actions/runs/<build_run_id>`). This downloads and uploads the signed AAB without compiling again. The source run must have succeeded in this repository's Android Google Play workflow and its artifact must still be available. The versionCode must be unused and greater than existing internal/production versions.
 
-Artifact uploads use package/version information from the selected build's original source commit, so newer source edits do not relabel that AAB. To publish newer changes, choose a build containing them. The build/internal path does not create version tags or GitHub Release pages.
+Artifact uploads use package/version information and Play notes from the selected build's original source commit, so newer source edits do not relabel that AAB or change its notes. Commit completed Play notes before starting a build you intend to upload later; a build whose source is missing those notes cannot be published through this path. To publish newer changes, choose a build containing them. The build/internal path does not create version tags or GitHub Release pages.
 
 ## Subsequent releases
 
@@ -122,9 +122,20 @@ Before committing a release, increment the version:
 npm run version:bump
 ```
 
-This updates `package.json`, `app.json`, and the Android version name/code together. Commit the reviewed changes and version bump, then push `master`. Nothing is published by that push. When ready, start the release workflow with the desired destination, for example `npm run release:both`. The workflow creates the tag automatically. Reusing a versionCode is rejected; a failed upload can be retried only if Google Play did not already accept that bundle.
+This updates `package.json`, `app.json`, and the Android version name/code together. It also creates two separate release-note templates, preserving any files you already prepared for the new version. For example, bumping 1.2.8 / 32 creates:
 
-Listing text, screenshots, and release notes remain managed in Play Console; the lanes skip those metadata uploads.
+| Destination | File | Contents |
+| --- | --- | --- |
+| GitHub Release | `release-notes/1.2.9.md` | Markdown with detailed changes, fixes, and useful links. |
+| Google Play | `fastlane/metadata/android/en-US/changelogs/33.txt` | A short plain-text summary for users, at most 500 Unicode characters. |
+
+Replace each `RELEASE_NOTES_TODO` template with reviewed text. These files can have different wording; one is not copied into the other. For additional Play languages, add the same versionCode file under that locale, for example `fastlane/metadata/android/fr-FR/changelogs/33.txt`. Every supplied translation must also be complete and within 500 characters. Save note files as UTF-8.
+
+Commit the reviewed app changes, version bump, and completed notes, then push `master`. Nothing is published by that push. When ready, start the release workflow with the desired destination, for example `npm run release:both`. The workflow creates the tag automatically. Reusing a versionCode is rejected; a failed upload can be retried only if Google Play did not already accept that bundle.
+
+**GitHub** requires the Markdown file, **Play** requires the versionCode's English Play file and validates any supplied translations, and **Both** requires both. Missing, blank, or unchanged templates stop the release before creating a tag or publishing a page. Play notes use the exact versionCode file; historical notes and `default.txt` do not substitute for it.
+
+Play uploads send these changelogs with the AAB. Listing text, screenshots, and images remain managed in Play Console; those uploads are skipped. Changing a local note file alone does not update an already-published GitHub or Play release.
 
 ## Runtime and credentials
 
@@ -141,10 +152,10 @@ Google authentication runs immediately before publishing. `google-github-actions
 ## Focused checks
 
 ```powershell
-node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs
+node --test tests/android-publishing.test.mjs tests/play-build-artifact.test.mjs tests/release-workflow-cli.test.mjs tests/release-plan.test.mjs tests/github-release.test.mjs tests/github-release-apk.test.mjs tests/version-bump.test.mjs
 ruby tests/play_release_test.rb
 ruby tests/play_apk_test.rb
 bundle exec fastlane lanes
 ```
 
-The focused tests require Java 21+ and keytool. They use temporary keystores and dummy credentials to check actual private-key access, credential restoration, artifact provenance, package/version/tag consistency, latest and exact-version promotion, command dispatch, destination/track selection, rejection of invalid production requests, GitHub release ordering, tag conflicts, and retries. GitHub API requests, CLI dispatch, and Google Play actions are mocked; no tests publish anything.
+The focused tests require Java 21+ and keytool. They use temporary projects, keystores, and dummy credentials to check private-key access, credential restoration, artifact provenance, package/version/tag consistency, latest and exact-version promotion, command dispatch, destination/track selection, rejection of invalid production requests, GitHub release ordering, tag conflicts, and retries. They also cover note-template creation, destination-specific validation, Play's Unicode length limit, translations, and the notes sent when reusing a build. GitHub API requests, CLI dispatch, and Google Play actions are mocked; no tests publish anything.

@@ -53,6 +53,75 @@ class PlayReleaseTest < Minitest::Test
     assert_raises(ArgumentError) { PlayRelease.credentials_file(env: {}) }
   end
 
+  def write_notes(root, name: '1.2.7', code: 31, github: '## GitHub details', play: 'Short Play summary.')
+    files = {
+      File.join(root, 'release-notes', "#{name}.md") => github,
+      File.join(root, 'fastlane/metadata/android/en-US/changelogs', "#{code}.txt") => play
+    }
+    files.each do |filename, text|
+      FileUtils.mkdir_p(File.dirname(filename))
+      File.write(filename, text)
+    end
+  end
+
+  def test_release_info_selects_distinct_notes_and_only_requires_the_chosen_destination
+    with_project do |root|
+      write_notes(root)
+      info = PlayRelease.release_info('both', root: root, env: {})
+      assert_equal '## GitHub details', info.fetch(:github_notes)
+      assert_equal({ 'en-US' => 'Short Play summary.' }, PlayRelease.play_notes(31, root: root))
+      File.delete(File.join(root, 'release-notes/1.2.7.md'))
+      refute PlayRelease.release_info('play', root: root, env: {}).key?(:github_notes)
+      assert_raises(ArgumentError) { PlayRelease.release_info('both', root: root, env: {}) }
+      write_notes(root)
+      File.delete(File.join(root, 'fastlane/metadata/android/en-US/changelogs/31.txt'))
+      assert_equal '## GitHub details', PlayRelease.release_info('github', root: root, env: {}).fetch(:github_notes)
+      assert_raises(ArgumentError) { PlayRelease.release_info('both', root: root, env: {}) }
+    end
+  end
+
+  def test_missing_blank_or_unfinished_notes_cannot_prepare_a_release
+    with_project do |root|
+      assert_raises(ArgumentError) { PlayRelease.release_info('both', root: root, env: {}) }
+      ['', '  ', '<!-- Only a comment -->', '<!-- RELEASE_NOTES_TODO: fill this -->'].each do |text|
+        write_notes(root, github: text)
+        assert_raises(ArgumentError) { PlayRelease.release_info('both', root: root, env: {}) }
+      end
+      ['', '  ', 'RELEASE_NOTES_TODO: fill this'].each do |text|
+        write_notes(root, play: text)
+        assert_raises(ArgumentError) { PlayRelease.release_info('both', root: root, env: {}) }
+      end
+    end
+  end
+
+  def test_play_notes_validate_unicode_length_and_every_supplied_translation
+    with_project do |root|
+      write_notes(root, play: "\u{1F600}" * 500)
+      assert_equal 500, PlayRelease.play_notes(31, root: root).fetch('en-US').length
+      write_notes(root, play: "\u{1F600}" * 501)
+      assert_raises(ArgumentError) { PlayRelease.play_notes(31, root: root) }
+      write_notes(root)
+      translated = File.join(root, 'fastlane/metadata/android/fr-FR/changelogs/31.txt')
+      FileUtils.mkdir_p(File.dirname(translated))
+      File.write(translated, 'Notes en français.')
+      assert_equal 'Notes en français.', PlayRelease.play_notes(31, root: root).fetch('fr-FR')
+      File.write(translated, ' ')
+      assert_raises(ArgumentError) { PlayRelease.play_notes(31, root: root) }
+    end
+  end
+
+  def test_other_versions_and_default_notes_do_not_replace_the_required_version_file
+    with_project do |root|
+      write_notes(root)
+      directory = File.join(root, 'fastlane/metadata/android/en-US/changelogs')
+      File.write(File.join(directory, 'default.txt'), 'Old default notes.')
+      File.write(File.join(directory, '32.txt'), 'Another version.')
+      File.delete(File.join(directory, '31.txt'))
+      assert_raises(ArgumentError) { PlayRelease.play_notes(31, root: root) }
+      assert_raises(ArgumentError) { PlayRelease.play_notes('../31', root: root) }
+    end
+  end
+
   def test_promotion_selects_the_requested_tested_version
     assert_equal 31, PlayRelease.promotion_version('31', internal_versions: [31, 32], production_versions: [30])
   end
@@ -93,11 +162,12 @@ module UI
 end
 
 class PublishingLanes
-  attr_reader :uploads, :track_reads
+  attr_reader :uploads, :track_reads, :uploaded_notes
 
   def initialize(internal: [31, 32], production: [30])
     @lanes = {}
     @uploads = []
+    @uploaded_notes = []
     @track_reads = []
     @track_versions = { 'internal' => internal, 'production' => production }
     filename = File.expand_path('../fastlane/Fastfile', __dir__)
@@ -115,7 +185,11 @@ class PublishingLanes
     @track_versions.fetch(options.fetch(:track))
   end
 
-  def upload_to_play_store(**options) = @uploads << options
+  def upload_to_play_store(**options)
+    metadata = options[:metadata_path]
+    @uploaded_notes << (metadata ? Dir.glob(File.join(metadata, '*/changelogs/*.txt')).to_h { |file| [file.split(/[\\\/]/).last(3).join('/'), File.read(file)] } : {})
+    @uploads << options
+  end
   def gradle(**_options) = raise('A promotion must not build the app.')
 end
 
@@ -156,6 +230,7 @@ class PublishingLanesTest < Minitest::Test
       assert_equal 'completed', request.fetch(:release_status)
       assert request.fetch(:skip_upload_aab)
       assert request.fetch(:skip_upload_apk)
+      assert request.fetch(:skip_upload_changelogs), 'Promotion must keep the source release notes instead of uploading checkout notes.'
     end
   end
 
@@ -208,12 +283,14 @@ class PublishingLanesTest < Minitest::Test
         File.write(File.join(source, 'package.json'), JSON.generate(version: '9.8.7'))
         File.write(File.join(source, 'app.json'), JSON.generate(expo: { version: '9.8.7', android: { package: PlayRelease::PACKAGE_NAME } }))
         File.write(File.join(source, 'android/app/build.gradle'), "applicationId '#{PlayRelease::PACKAGE_NAME}'\nversionName \"9.8.7\"\nversionCode 33\n")
+        FileUtils.mkdir_p(File.join(source, 'fastlane/metadata/android/en-US/changelogs'))
+        File.write(File.join(source, 'fastlane/metadata/android/en-US/changelogs/33.txt'), 'Play notes from the selected build.')
         previous = ENV['PLAY_RELEASE_SOURCE']
         ENV['PLAY_RELEASE_SOURCE'] = source
         original_file = File.method(:file?)
         begin
           File.stub(:file?, ->(filename) { filename == PlayRelease::AAB_PATH || original_file.call(filename) }) do
-            yield
+            yield source
           end
         ensure
           ENV['PLAY_RELEASE_SOURCE'] = previous
@@ -236,9 +313,38 @@ class PublishingLanesTest < Minitest::Test
         assert_equal 'completed', request.fetch(:release_status)
         refute request.key?(:track_promote_to)
         refute request[:skip_upload_aab]
-        %i[skip_upload_apk skip_upload_metadata skip_upload_changelogs skip_upload_images skip_upload_screenshots].each do |flag|
+        refute request.fetch(:skip_upload_changelogs)
+        assert_equal({ 'en-US/changelogs/33.txt' => 'Play notes from the selected build.' }, lanes.uploaded_notes.first)
+        refute File.exist?(request.fetch(:metadata_path)), 'The temporary notes directory is cleaned after upload.'
+        %i[skip_upload_apk skip_upload_metadata skip_upload_images skip_upload_screenshots].each do |flag|
           assert request.fetch(flag)
         end
+      end
+    end
+  end
+
+  def test_upload_stages_only_the_selected_versions_notes_without_other_metadata
+    with_release_bundle do |source|
+      directory = File.join(source, 'fastlane/metadata/android/fr-FR/changelogs')
+      FileUtils.mkdir_p(directory)
+      File.write(File.join(directory, '32.txt'), 'Previous French notes.')
+      File.write(File.join(directory, 'default.txt'), 'Stale fallback.')
+      File.write(File.join(source, 'fastlane/metadata/android/en-US/title.txt'), 'Do not upload listing metadata.')
+      lanes = PublishingLanes.new
+      lanes.run(:publish, track: 'production')
+      assert_equal({ 'en-US/changelogs/33.txt' => 'Play notes from the selected build.' }, lanes.uploaded_notes.first)
+    end
+  end
+
+  def test_missing_or_unfinished_play_notes_stop_before_any_google_api_call
+    with_release_bundle do |source|
+      file = File.join(source, 'fastlane/metadata/android/en-US/changelogs/33.txt')
+      ['', 'RELEASE_NOTES_TODO: fill this', nil].each do |text|
+        text ? File.write(file, text) : File.delete(file)
+        lanes = PublishingLanes.new
+        assert_raises(ArgumentError) { lanes.run(:publish, track: 'production') }
+        assert_empty lanes.track_reads
+        assert_empty lanes.uploads
       end
     end
   end
